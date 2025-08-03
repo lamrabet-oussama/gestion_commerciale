@@ -1,12 +1,15 @@
 package com.moonsystem.gestion_commerciale.model;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
+import com.moonsystem.gestion_commerciale.model.enums.VilleMaroc;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -14,21 +17,26 @@ import java.util.List;
 @Entity
 @Table(name = "Tiers")
 public class Tier {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_tier")
     private Integer id;
 
-    @Column(name = "Qualite", length = 15)
-    private String qualite;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "Qualite")
+    private TypeTier qualite;
 
-    @Column(name = "typ", length = 12)
+    @Column(name = "actif", nullable = false)
+    private boolean actif = true;
+
+    @Column(name = "typ")
     private String type;
 
     @Column(name = "Ref", unique = true)
     private Integer ref;
 
-    @Column(name = "Nom", length = 50, unique = true)
+    @Column(name = "Nom")
     private String nom;
 
     @Column(length = 12)
@@ -43,8 +51,8 @@ public class Tier {
     @Column(name = "Adres", length = 500)
     private String adresse;
 
-    @Column(length = 50)
-    private String ville;
+    @Enumerated(EnumType.STRING)
+    private VilleMaroc ville;
 
     @Column(length = 50)
     private String fon;
@@ -75,7 +83,6 @@ public class Tier {
     private BigDecimal soldeFact;
 
     // ... autres champs ...
-
     @OneToMany(mappedBy = "tier")
     private List<Bonsorti> bonsortis;
 

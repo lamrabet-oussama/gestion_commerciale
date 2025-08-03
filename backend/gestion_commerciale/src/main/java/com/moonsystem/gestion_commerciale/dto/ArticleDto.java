@@ -1,7 +1,6 @@
 package com.moonsystem.gestion_commerciale.dto;
 
 import com.moonsystem.gestion_commerciale.model.Article;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,6 +10,7 @@ import java.util.Optional;
 @Data
 @Builder
 public class ArticleDto {
+
     private Integer cod;
     private Integer ref;
     private String designation;

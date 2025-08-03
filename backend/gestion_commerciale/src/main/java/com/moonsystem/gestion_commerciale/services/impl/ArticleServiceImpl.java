@@ -37,7 +37,6 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
 
-
     // Méthode privée centrale pour récupérer un article actif ou lancer une exception
     private Article getActiveArticleEntityByCod(Integer cod) {
         if (cod == null) {
@@ -234,6 +233,7 @@ public class ArticleServiceImpl implements ArticleService {
         Article updatedArticle = articleRepository.save(existingArticle);
         return ArticleDto.fromEntity(updatedArticle);
     }
+
     @Override
     @Transactional
     public boolean delete(Integer code) {

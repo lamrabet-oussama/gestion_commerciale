@@ -1,19 +1,24 @@
 package com.moonsystem.gestion_commerciale.handlers;
 
-
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.moonsystem.gestion_commerciale.exception.EntityNotFoundException;
 import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
 import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
 import com.moonsystem.gestion_commerciale.exception.InvalidOperationException;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
 
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -58,33 +63,42 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorDto, badRequest);
     }
 
-//    @ExceptionHandler(BadCredentialsException.class)
-//    public ResponseEntity<ErrorDto> handleException(BadCredentialsException exception, WebRequest webRequest) {
-//        final HttpStatus badRequest = HttpStatus.BAD_REQUEST;
-//
-//        final ErrorDto errorDto = ErrorDto.builder()
-//                .code(ErrorCodes.BAD_CREDENTIALS)
-//                .httpCode(badRequest.value())
-//                .message(exception.getMessage())
-//                .errors(Collections.singletonList("Login et / ou mot de passe incorrecte"))
-//                .build();
-//
-//        return new ResponseEntity<>(errorDto, badRequest);
-//    }
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception,
+            HttpHeaders headers,
+            HttpStatusCode status,
+            WebRequest request) {
 
-@ExceptionHandler(Exception.class)
-public ResponseEntity<ErrorDto> handleGlobalException(Exception exception, WebRequest webRequest) {
-    final HttpStatus internalServerError = HttpStatus.INTERNAL_SERVER_ERROR;
+        Map<String, String> errors = new HashMap<>();
+        exception.getBindingResult().getFieldErrors().forEach(err -> {
+            errors.put(err.getField(), err.getDefaultMessage());
+        });
 
-    final ErrorDto errorDto = ErrorDto.builder()
-            .code(ErrorCodes.INTERNAL_ERROR)
-            .httpCode(internalServerError.value())
-            .message("Une erreur inattendue s’est produite")
-            .errors(Collections.singletonList(exception.getMessage()))
-            .build();
+        final ErrorDto errorDto = ErrorDto.builder()
+                .code(ErrorCodes.VALIDATION_ERROR)
+                .httpCode(HttpStatus.BAD_REQUEST.value())
+                .message("Validation error")
+                .errors(new ArrayList<>(errors.values()))
+                .build();
 
-    return new ResponseEntity<>(errorDto, internalServerError);
-}
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
 
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorDto> handleGlobalException(Exception exception, WebRequest webRequest) {
+        final HttpStatus internalServerError = HttpStatus.INTERNAL_SERVER_ERROR;
+
+        final ErrorDto errorDto = ErrorDto.builder()
+                .code(ErrorCodes.INTERNAL_ERROR)
+                .httpCode(internalServerError.value())
+                .message("Une erreur inattendue s’est produite")
+                .errors(Collections.singletonList(exception.getMessage()))
+                .build();
+
+        return new ResponseEntity<>(errorDto, internalServerError);
+    }
 
 }

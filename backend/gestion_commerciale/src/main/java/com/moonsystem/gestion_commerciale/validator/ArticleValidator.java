@@ -1,13 +1,12 @@
 package com.moonsystem.gestion_commerciale.validator;
 
-import com.moonsystem.gestion_commerciale.dto.ArticleDto;
-import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
-import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
-import org.springframework.util.StringUtils;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.util.StringUtils;
+
+import com.moonsystem.gestion_commerciale.dto.ArticleDto;
 
 public class ArticleValidator {
 
@@ -19,12 +18,10 @@ public class ArticleValidator {
             return errors;
         }
 
-
         if (!isUpdate || dto.getRef() != null) {
             if (dto.getRef() == null) {
                 errors.add("La référence de l'article est obligatoire");
-            }
-            else if (dto.getRef() <= 0) {
+            } else if (dto.getRef() <= 0) {
                 errors.add("La référence de l'article doit etre > 0");
             }
         }
@@ -40,7 +37,6 @@ public class ArticleValidator {
                 errors.add("Le prix d'article doit être supérieur à zéro");
             }
         }
-
 
         if (!isUpdate || dto.getPrixAchat() != null) {
             if (dto.getPrixAchat() == null || dto.getPrixAchat().compareTo(BigDecimal.ZERO) <= 0) {
@@ -71,9 +67,6 @@ public class ArticleValidator {
             }
         }
 
-
-
-
         if (!isUpdate) {
             // En création : le stock est obligatoire et doit être > 0
             if (dto.getStock() == null || dto.getStock().compareTo(BigDecimal.ZERO) < 0 || dto.getStock().stripTrailingZeros().scale() > 0) {
@@ -85,9 +78,6 @@ public class ArticleValidator {
                 errors.add("Le stock est obligatoire et doit être supérieur ou égale à zéro.");
             }
         }
-
-
-
 
         if (!isUpdate || dto.getFamille() != null) {
             if (dto.getFamille() == null) {
@@ -104,5 +94,3 @@ public class ArticleValidator {
         return errors;
     }
 }
-
-
