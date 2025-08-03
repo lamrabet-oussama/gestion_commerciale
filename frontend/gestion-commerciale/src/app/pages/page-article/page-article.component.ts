@@ -95,7 +95,7 @@ export class PageArticleComponent implements OnInit {
         // Vérification de la structure de la réponse
         if (data && data.content) {
           this.articles = data.content;
-          this.articleDto.ref=(data.content.length+2);
+          this.articleDto.ref=(data.content.length+1);
           this.resultNum=data.totalElements ?? 0;
           this.currentPage = data.currentPage ?? page;
           this.totalPages = data.totalPages ?? 0;
@@ -129,10 +129,7 @@ gatArticle(code:number){
     this.errorMsg = []; // Reset des erreurs avant validation
     let valide = true;
 
-    if (!this.articleDto.cod || this.articleDto.cod <= 0) {
-      this.errorMsg.push("Le code de l'article est obligatoire.");
-      valide = false;
-    }
+   
     if (!this.articleDto.ref || this.articleDto.ref <= 0) {
       this.errorMsg.push("La référence de l'article est obligatoire.");
       valide = false;

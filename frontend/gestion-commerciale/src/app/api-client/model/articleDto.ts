@@ -10,7 +10,6 @@
 
 
 export interface ArticleDto { 
-    id?: number;
     cod?: number;
     ref?: number;
     designation?: string;

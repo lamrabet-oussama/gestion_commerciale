@@ -1,3 +1,5 @@
 export * from './articles.service';
 import { ArticlesService } from './articles.service';
-export const APIS = [ArticlesService];
+export * from './tiers.service';
+import { TiersService } from './tiers.service';
+export const APIS = [ArticlesService, TiersService];

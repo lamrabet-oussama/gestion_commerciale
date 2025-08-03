@@ -4,6 +4,7 @@ api.base.service.ts
 api.module.ts
 api/api.ts
 api/articles.service.ts
+api/tiers.service.ts
 configuration.ts
 encoder.ts
 git_push.sh
@@ -11,5 +12,6 @@ index.ts
 model/articleDto.ts
 model/models.ts
 model/pageResponse.ts
+model/tierDto.ts
 param.ts
 variables.ts
