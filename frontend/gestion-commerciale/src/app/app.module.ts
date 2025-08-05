@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import {HttpClient, HttpClientModule} from "@angular/common/http";
 import { PageDashboardComponent } from './pages/page-dashboard/page-dashboard.component';
 import { PageArticleComponent } from './pages/page-article/page-article.component';
@@ -42,7 +42,8 @@ import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
       {
         positionClass: 'toast-center',
       }
-    )
+    ),
+    ReactiveFormsModule
   ],
   providers: [HttpClient],
   bootstrap: [AppComponent]

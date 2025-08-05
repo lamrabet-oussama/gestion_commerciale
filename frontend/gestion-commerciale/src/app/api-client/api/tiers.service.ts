@@ -17,7 +17,7 @@ import { CustomHttpParameterCodec }                          from '../encoder';
 import { Observable }                                        from 'rxjs';
 
 // @ts-ignore
-import { ArticleDto } from '../model/articleDto';
+import { PageResponse } from '../model/pageResponse';
 // @ts-ignore
 import { TierDto } from '../model/tierDto';
 
@@ -298,6 +298,53 @@ export class TiersService extends BaseService {
     }
 
     /**
+     * Nombre total de tiers
+     * Permet de retourner le nombre total de tiers dans le système
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public numberOfTiers(observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext}): Observable<any>;
+    public numberOfTiers(observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext}): Observable<HttpResponse<any>>;
+    public numberOfTiers(observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext}): Observable<HttpEvent<any>>;
+    public numberOfTiers(observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext}): Observable<any> {
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/gestioncommerciale/tiers/number`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<any>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Rechercher des tiers
      * Permet de rechercher des tiers en utilisant un mot-clé qui sera appliqué sur différents champs 
      * @param keyword 
@@ -306,9 +353,9 @@ export class TiersService extends BaseService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<Array<ArticleDto>>;
-    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<Array<ArticleDto>>>;
-    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<Array<ArticleDto>>>;
+    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<PageResponse>;
+    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<PageResponse>>;
+    public search(keyword?: string, page?: number, pageSize?: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<PageResponse>>;
     public search(keyword?: string, page?: number, pageSize?: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
 
         let localVarQueryParameters = new HttpParams({encoder: this.encoder});
@@ -344,7 +391,7 @@ export class TiersService extends BaseService {
 
         let localVarPath = `/gestioncommerciale/tiers/search`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<Array<ArticleDto>>('get', `${basePath}${localVarPath}`,
+        return this.httpClient.request<PageResponse>('get', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 params: localVarQueryParameters,

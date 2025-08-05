@@ -12,7 +12,7 @@
 export interface TierDto { 
     id?: number;
     qualite: string;
-    type: string;
+    type?: string;
     ref: number;
     nom: string;
     nif?: string;

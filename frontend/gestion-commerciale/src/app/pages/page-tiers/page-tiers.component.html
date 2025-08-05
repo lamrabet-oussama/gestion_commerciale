@@ -1,1 +1,194 @@
-<p>page-tiers works!</p>
+<div class="p-2 p-md-3">
+  <div class="container-fluid">
+    <div class="card shadow-lg p-3 p-md-4 ">
+      <h4 class="text-center text-primary mb-3 mb-md-4">
+        <i class="fas fa-info-circle me-2"></i>Informations de Personne
+      </h4>
+
+      <!-- Alerts -->
+      <!-- <div *ngIf="successMsg" class="alert alert-success alert-dismissible fade show">
+        {{ successMsg }}
+        <button type="button" class="btn-close" (click)="successMsg = ''"></button>
+      </div> -->
+
+      <!-- <div *ngIf="message" class="alert alert-success alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" (click)="message = ''"></button>
+      </div> -->
+
+      <div *ngIf="errorMsgValidation?.length" class="alert alert-danger">
+        <div *ngFor="let msg of errorMsgValidation">
+          <span>{{ msg }}</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <form class="p-2 rounded w-sm bg-white">
+    <div class="row g-4">
+      <!-- Première colonne -->
+      <div class="col-12 col-md-6">
+        <div class="mb-3">
+          <label for="tierQualite" class="form-label">Qualité</label>
+          <select class="form-select" [(ngModel)]="tierDto.qualite" id="tierQualite" name="tierQualite">
+            <option *ngFor="let qualite of qualites" [value]="qualite">{{ qualite }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="nom" class="form-label ">Nom/Raison</label>
+          <input type="text" class="form-control" [(ngModel)]="tierDto.nom" id="nom" name="nom" placeholder="Nom">
+        </div>
+
+      
+
+        <div class="mb-3">
+          <label for="adresse" class="form-label ">Adresse</label>
+          <input type="text" class="form-control" [(ngModel)]="tierDto.adresse" id="adresse" name="adresse" placeholder="Adresse">
+        </div>
+
+        <div class="mb-3">
+          <label for="telephone" class="form-label ">Téléphone</label>
+          <input type="tel" class="form-control" id="telephone" name="telephone" [(ngModel)]="tierDto.fon" placeholder="XXXXXXXXXX">
+        </div>
+      </div>
+
+      <!-- Deuxième colonne -->
+      <div class="col-12 col-md-6">
+        <div class="mb-3">
+          <label for="ref" class="form-label ">Num</label>
+          <input type="number" class="form-control" id="ref" [(ngModel)]="tierDto.ref" name="ref" placeholder="0">
+        </div>
+
+        <div class="mb-3">
+          <label for="tierVille" class="form-label ">Ville</label>
+          <select class="form-select" [(ngModel)]="tierDto.ville" id="tierVille" name="tierVille">
+            <option *ngFor="let ville of villes" [value]="ville">{{ ville }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="solde" class="form-label ">Solde</label>
+          <input type="number" class="form-control" [(ngModel)]="tierDto.solde" id="solde" name="solde" placeholder="0.00">
+        </div>
+
+        <div class="mb-3">
+          <label for="plafond" class="form-label ">Plafond</label>
+          <input type="number" class="form-control" [(ngModel)]="tierDto.plafond" id="plafond" name="plafond" placeholder="0.00">
+        </div>
+
+        <div class="mb-3">
+          <label for="gsm" class="form-label ">GSM</label>
+          <input type="tel" class="form-control" [(ngModel)]="tierDto.gsm" id="gsm" name="gsm" placeholder="XXXXXXXXXX">
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div class="col-12 mt-2">
+        <label for="note" class="form-label ">Note</label>
+        <textarea class="form-control" id="note" [(ngModel)]="tierDto.note" name="note" placeholder="Ajouter une note" rows="3" style="resize: none;"></textarea>
+      </div>
+
+      <!-- Boutons -->
+      <div class="col-12 d-flex flex-wrap justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-danger" (click)="cancel()">
+          <i class="fas fa-ban"></i> Annuler
+        </button>
+        <button type="button" class="btn btn-primary" (click)="creerTier()">
+          <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="modifierTier()">
+          <i class="fas fa-edit"></i> Modifier
+        </button>
+      </div>
+    </div>
+  </form>
+
+
+    </div>
+
+    <!-- Liste des articles -->
+    <div class="mt-4 mt-md-5">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+        <h4 class="mb-0">Liste des Personnes</h4>
+        <div class=" w-md-auto">
+          <form class="d-flex" (input)="listerTiers()" >
+            <input
+              class="form-control me-2"
+              type="search"
+              placeholder="Rechercher..."
+              aria-label="Search"
+              id="keyword"
+              [(ngModel)]="keyword"
+               (ngModelChange)="onSearchChange()"
+              name="keyword"
+            >
+            <button
+              class="btn btn-outline-success"
+              type="button"
+              (click)="listerTiers()"
+            >
+              <i class="fas fa-search d-md-none"></i>
+              <span class="d-none d-md-inline">Search</span>
+            </button>
+          </form>
+          <!-- <p class="text-center" >Resultats:{{resultNum}}</p> -->
+
+        </div>
+      </div>
+
+      <!-- Table responsive wrapper -->
+      <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+        <table class="table table-bordered table-hover text-center mb-0">
+          <thead class="table-dark sticky-top">
+          <tr >
+            <th class="text-nowrap">Réf</th>
+            <th style="width:60%">Nom</th> <!-- s'étire -->
+            <th class="text-nowrap d-none d-md-table-cell" style="width: 20%;">GSM</th>
+            <th class="text-nowrap d-none d-md-table-cell" style="width: 20%;">Téléphone</th>
+            <th class="text-nowrap">Solde</th>
+            <th class="text-nowrap">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="pointer" *ngFor="let t of tiers" (click)="findById(t.id ?? 0)"  >
+            <td class="text-nowrap">{{ t.ref }}</td>
+            <td class="text-truncate" style="max-width: 150px;">{{t.nom}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{t.gsm}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{t.fon}}</td>
+            <td class="text-nowrap">{{t.solde}}</td>
+            <td>
+              <button class="btn btn-sm " (click)="deleteTier(t.id || 0)" data-bs-toggle="modal" data-bs-target="#deleteModal" >
+                <fa-icon [icon]="faX" style="color: #ff6666;"></fa-icon>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+    <app-pagination  [currentPage]="page"
+  [totalPages]="totalPages"
+  (pageChange)="onPageChange($event)"></app-pagination>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Confirmation</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        Êtes-vous sûr de vouloir supprimer cet article ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
