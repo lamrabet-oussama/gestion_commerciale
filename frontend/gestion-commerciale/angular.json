@@ -32,9 +32,19 @@
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.scss",
+              "src/assets/css/iconify-icons.css",
+              "src/assets/css/core.css",
+              "src/assets/css/demo.css",
+              "src/assets/css/perfect-scrollbar.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/js/helpers.js",
+              "src/assets/js/config.js",
+              "src/assets/js/menu.js",
+              "src/assets/js/main.js",
+              "src/assets/js/perfect-scrollbar.js"
+            ]
           },
           "configurations": {
             "production": {

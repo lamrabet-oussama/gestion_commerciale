@@ -19,12 +19,12 @@ export interface MesInfoxDto {
     note01?: string;
     note02?: string;
     blogo?: string;
-    bnom?: string;
-    bserial?: string;
+    bactivite?: string;
     flogo?: string;
     fcod?: string;
     bcod?: string;
+    bserial?: string;
+    bnom?: string;
     badresse?: string;
-    bactivite?: string;
 }
 

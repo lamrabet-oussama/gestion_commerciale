@@ -1,14 +1,53 @@
-<div class="accordion" id="appMenuAccordion">
-  <div class="card" *ngFor="let menu of menuProperties">
-    <button (click)="navigate(menu.url)" type="button" class="card-header border-none " id="menu{{menu.id}}">
-      <h2 class="mb-0">
-        <div  class="btn p-2 pointer-event border-none  btn-block  text-sm-start"  data-toggle="collapse"
-                [attr.data-target]="'#collapse' + menu.id" aria-expanded="true" aria-controls="collapseOne">
-          <i class="{{menu.icon}}"></i>&nbsp;
-          {{menu.title}}
-        </div>
-      </h2>
-    </button>
+<!-- Bouton OPEN (hamburger) - visible uniquement sur mobile -->
+<button type="button"
+        class="menu-toggle-btn d-block d-md-none"
+        *ngIf="!menuOpen"
+        (click)="toggleMenu()"
+        [attr.aria-label]="'Ouvrir le menu'"
+        [attr.aria-expanded]="false">
+  <i class="bx bx-menu"></i>
+</button>
 
+<!-- Overlay pour mobile -->
+<div class="menu-overlay d-md-none"
+     *ngIf="menuOpen"
+     (click)="closeMenu()"></div>
+
+<!-- Menu latéral -->
+<aside id="layout-menu"
+       class="layout-menu"
+       [class.menu-open]="menuOpen"
+       [attr.aria-hidden]="!menuOpen">
+
+  <!-- Header du menu mobile -->
+  <div class="menu-header d-block d-md-none">
+    <button type="button"
+            class="menu-close-btn"
+            (click)="closeMenu()"
+            [attr.aria-label]="'Fermer le menu'">
+      <i class="bx bx-x"></i>
+    </button>
+    <h5 class="menu-title">Menu</h5>
   </div>
-</div>
+
+  <!-- Contenu du menu -->
+  <div class="menu-content">
+    <div class="menu-brand">
+      <h4 class="brand-title">Gestion Commerciale</h4>
+    </div>
+
+    <nav class="menu-navigation">
+      <ul *ngFor="let menu of menuProperties" class="menu-list">
+
+
+        <li class="menu-item">
+          <button class="menu-btn" type="button" (click)="navigate(menu.url)">
+            <div class="menu-content-inner">
+              <span class="menu-text">{{menu.title}}</span>
+            </div>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

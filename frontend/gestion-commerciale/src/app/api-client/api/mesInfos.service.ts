@@ -36,22 +36,71 @@ export class MesInfosService extends BaseService {
     }
 
     /**
+     * Récupérer les informations de l\&#39;entreprise
+     * Permet de récupérer les informations de l\&#39;entreprise par son ID
+     * @param id 
+     * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
+     * @param reportProgress flag to report request and response progress.
+     */
+    public findById1(id: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<MesInfoxDto>;
+    public findById1(id: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<MesInfoxDto>>;
+    public findById1(id: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<MesInfoxDto>>;
+    public findById1(id: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
+        if (id === null || id === undefined) {
+            throw new Error('Required parameter id was null or undefined when calling findById1.');
+        }
+
+        let localVarHeaders = this.defaultHeaders;
+
+        const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
+        ]);
+        if (localVarHttpHeaderAcceptSelected !== undefined) {
+            localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
+        }
+
+        const localVarHttpContext: HttpContext = options?.context ?? new HttpContext();
+
+
+        let responseType_: 'text' | 'json' | 'blob' = 'json';
+        if (localVarHttpHeaderAcceptSelected) {
+            if (localVarHttpHeaderAcceptSelected.startsWith('text')) {
+                responseType_ = 'text';
+            } else if (this.configuration.isJsonMime(localVarHttpHeaderAcceptSelected)) {
+                responseType_ = 'json';
+            } else {
+                responseType_ = 'blob';
+            }
+        }
+
+        let localVarPath = `/gestioncommerciale/mes-infos/${this.configuration.encodeParam({name: "id", value: id, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int32"})}`;
+        const { basePath, withCredentials } = this.configuration;
+        return this.httpClient.request<MesInfoxDto>('get', `${basePath}${localVarPath}`,
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
+    /**
      * Créer ou mettre à jour les informations personnelles
      * Permet de créer une nouvelle fiche avec une image. Si une image existe déjà, elle sera supprimée et remplacée.
-     * @param mesInfox 
+     * @param mesInfos 
      * @param file 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public update1(mesInfox: MesInfoxDto, file: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<MesInfoxDto>;
-    public update1(mesInfox: MesInfoxDto, file: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<MesInfoxDto>>;
-    public update1(mesInfox: MesInfoxDto, file: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<MesInfoxDto>>;
-    public update1(mesInfox: MesInfoxDto, file: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
-        if (mesInfox === null || mesInfox === undefined) {
-            throw new Error('Required parameter mesInfox was null or undefined when calling update1.');
-        }
-        if (file === null || file === undefined) {
-            throw new Error('Required parameter file was null or undefined when calling update1.');
+    public update1(mesInfos: MesInfoxDto, file?: Blob, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<MesInfoxDto>;
+    public update1(mesInfos: MesInfoxDto, file?: Blob, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<MesInfoxDto>>;
+    public update1(mesInfos: MesInfoxDto, file?: Blob, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<MesInfoxDto>>;
+    public update1(mesInfos: MesInfoxDto, file?: Blob, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
+        if (mesInfos === null || mesInfos === undefined) {
+            throw new Error('Required parameter mesInfos was null or undefined when calling update1.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -84,8 +133,8 @@ export class MesInfosService extends BaseService {
             localVarFormParams = new HttpParams({encoder: this.encoder});
         }
 
-        if (mesInfox !== undefined) {
-            localVarFormParams = localVarFormParams.append('mesInfox', localVarUseForm ? new Blob([JSON.stringify(mesInfox)], {type: 'application/json'}) : <any>mesInfox) as any || localVarFormParams;
+        if (mesInfos !== undefined) {
+            localVarFormParams = localVarFormParams.append('mesInfos', localVarUseForm ? new Blob([JSON.stringify(mesInfos)], {type: 'application/json'}) : <any>mesInfos) as any || localVarFormParams;
         }
         if (file !== undefined) {
             localVarFormParams = localVarFormParams.append('file', <any>file) as any || localVarFormParams;

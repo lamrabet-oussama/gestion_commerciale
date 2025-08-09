@@ -1,1 +1,173 @@
 
+/* styles.css ou component.css */
+
+/* Layout de base */
+.layout-wrapper {
+  min-height: 100vh;
+}
+
+.layout-menu {
+  width: 260px;
+  background: #fff;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  z-index: 1050;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Menu responsive */
+@media (max-width: 991.98px) {
+  .layout-menu {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(-100%);
+    z-index: 1050;
+  }
+
+  .layout-menu.show {
+    transform: translateX(0);
+  }
+}
+
+/* Overlay pour mobile */
+.layout-overlay {
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  backdrop-filter: blur(2px);
+}
+
+/* Adjustements pour le contenu principal */
+.main-container {
+  padding: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .main-container {
+    padding: 1rem;
+  }
+}
+
+/* Cards responsives */
+.card {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+@media (max-width: 575.98px) {
+  .card-body {
+    padding: 0.75rem;
+  }
+}
+
+/* Menu items */
+.menu-inner {
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  margin: 0;
+}
+
+.menu-link {
+  display: block;
+  padding: 0.75rem 1.5rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  border-left: 3px solid transparent;
+}
+
+.menu-link:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+  border-left-color: #007bff;
+}
+
+.menu-link.active {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-left-color: #1976d2;
+  font-weight: 500;
+}
+
+/* App brand */
+.app-brand {
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.app-brand-text {
+  font-size: 1.25rem;
+  color: #495057;
+}
+
+/* Navbar responsive */
+.navbar-detached {
+  background: #fff !important;
+  border-bottom: 1px solid #e9ecef;
+}
+
+@media (max-width: 991.98px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Utilities responsives */
+.min-vh-100 {
+  min-height: 100vh;
+}
+
+/* Scrollbar personnalisé */
+.overflow-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation pour les transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .card {
+    transition: box-shadow 0.15s ease-in-out;
+  }
+
+  .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+/* Breakpoints spécifiques */
+@media (max-width: 575.98px) {
+  .fs-6 {
+    font-size: 0.9rem !important;
+  }
+
+  .py-5 {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container-xxl {
+    max-width: 1320px;
+  }
+}

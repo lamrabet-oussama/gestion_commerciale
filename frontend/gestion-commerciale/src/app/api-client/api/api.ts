@@ -1,7 +1,11 @@
 export * from './articles.service';
 import { ArticlesService } from './articles.service';
+export * from './caisseJourController.service';
+import { CaisseJourControllerService } from './caisseJourController.service';
 export * from './mesInfos.service';
 import { MesInfosService } from './mesInfos.service';
 export * from './tiers.service';
 import { TiersService } from './tiers.service';
-export const APIS = [ArticlesService, MesInfosService, TiersService];
+export * from './userController.service';
+import { UserControllerService } from './userController.service';
+export const APIS = [ArticlesService, CaisseJourControllerService, MesInfosService, TiersService, UserControllerService];

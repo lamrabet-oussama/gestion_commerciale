@@ -1,9 +1,240 @@
-.main-container {
-  margin: 50px;
+/* ===== DASHBOARD CONTAINER ===== */
+.dashboard-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
 }
-.min-height-600 {
-  min-height: 600px;
+
+/* ===== DASHBOARD LAYOUT ===== */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
 }
-.no-flex-wrap {
-  flex-wrap: inherit !important;
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  background: #fff;
+  border-right: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1010;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Prevents flex item overflow */
+  position: relative;
+}
+
+/* ===== DASHBOARD HEADER ===== */
+.dashboard-header {
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  display: flex;
+  align-items: center;
+  min-height: 70px;
+  padding: 0.5rem 1rem;
+}
+
+.mobile-menu-toggle {
+  margin-right: 1rem;
+}
+
+.header-content {
+  flex: 1;
+}
+
+/* ===== CONTENT AREA ===== */
+.content-area {
+  flex: 1;
+  padding: 1rem;
+  overflow-x: auto;
+  background: #f8f9fa;
+}
+
+/* ===== DASHBOARD FOOTER ===== */
+.dashboard-footer {
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  margin-top: auto;
+}
+
+.footer-content {
+  padding: 1rem;
+  font-size: 0.875rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Large desktops */
+@media (min-width: 1400px) {
+  .sidebar {
+    width: 280px;
+    min-width: 280px;
+  }
+
+  .content-area {
+    padding: 1.5rem;
+  }
+}
+
+/* Standard desktops */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+  }
+}
+
+/* Small desktops and large tablets */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+  }
+
+  .content-area {
+    padding: 1rem;
+  }
+}
+
+/* Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .sidebar {
+    width: 220px;
+    min-width: 220px;
+  }
+
+  .content-area {
+    padding: 0.75rem;
+  }
+
+  .dashboard-header {
+    min-height: 65px;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 767.98px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    display: none; /* Hidden on mobile, controlled by menu component */
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .dashboard-header {
+    min-height: 60px;
+    padding: 0.5rem;
+    position: sticky;
+    top: 0;
+  }
+
+  .mobile-menu-toggle {
+    margin-right: 0.75rem;
+  }
+
+  .content-area {
+    padding: 0.75rem;
+    flex: 1;
+    min-height: calc(100vh - 120px); /* Adjust for header and footer */
+  }
+
+  .footer-content {
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 575.98px) {
+  .dashboard-header {
+    min-height: 55px;
+    padding: 0.375rem;
+  }
+
+  .mobile-menu-toggle {
+    margin-right: 0.5rem;
+  }
+
+  .content-area {
+    padding: 0.5rem;
+    min-height: calc(100vh - 110px);
+  }
+
+  .footer-content {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 374.98px) {
+  .dashboard-header {
+    min-height: 50px;
+    padding: 0.25rem;
+  }
+
+  .content-area {
+    padding: 0.375rem;
+    min-height: calc(100vh - 100px);
+  }
+
+  .footer-content {
+    padding: 0.375rem;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.card-responsive {
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.card-responsive:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Ensure proper scrolling on mobile */
+.content-area {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Print styles */
+@media print {
+  .dashboard-header,
+  .dashboard-footer,
+  .sidebar,
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+
+  .main-content {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .content-area {
+    padding: 0 !important;
+    background: #fff !important;
+  }
 }

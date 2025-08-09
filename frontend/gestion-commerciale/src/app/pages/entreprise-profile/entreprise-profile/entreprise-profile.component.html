@@ -1,0 +1,82 @@
+<div class="profile-page">
+  <div class="page-container">
+    <form class="profile-form card-responsive p-4 rounded">
+      <h4 class="form-title mb-4 text-center">Informations de l'entreprise</h4>
+
+  <!-- Affichage du logo actuel -->
+  <div class="text-center mb-4" *ngIf="mesInfos.blogo">
+    <img
+      [src]="mesInfos.blogo"
+      alt="Logo de l’entreprise"
+      class="img-thumbnail"
+      style="max-height: 150px;"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="num" class="form-label">Numéro</label>
+    <input
+      type="number"
+      class="form-control"
+      [(ngModel)]="mesInfos.num"
+      name="num"
+      id="num"
+      placeholder="Entrez le numéro"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="nomSociete" class="form-label">Nom de la société</label>
+    <input
+      type="text"
+      class="form-control"
+      [(ngModel)]="mesInfos.nomSociete"
+      name="nomSociete"
+      id="nomSociete"
+      placeholder="Entrez le nom de la société"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="activite" class="form-label">Activité</label>
+    <input
+      type="text"
+      class="form-control"
+      [(ngModel)]="mesInfos.activite"
+      name="activite"
+      id="activite"
+      placeholder="Entrez l’activité principale"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="adresse" class="form-label">Adresse</label>
+    <input
+      type="text"
+      class="form-control"
+      [(ngModel)]="mesInfos.adresse"
+      name="adresse"
+      id="adresse"
+      placeholder="Entrez l’adresse"
+    />
+  </div>
+
+  <div class="mb-3">
+    <label for="bLogo" class="form-label">Changer le logo</label>
+    <input
+      type="file"
+      class="form-control"
+      (change)="onFileSelected($event)"
+      id="bLogo"
+    />
+  </div>
+
+  <div class="text-center">
+    <button type="button" class="btn btn-primary btn-responsive" (click)="updateInfos()">
+      <i class="fas fa-save me-2"></i>
+      <span class="btn-text">Mettre à jour</span>
+    </button>
+  </div>
+    </form>
+  </div>
+</div>

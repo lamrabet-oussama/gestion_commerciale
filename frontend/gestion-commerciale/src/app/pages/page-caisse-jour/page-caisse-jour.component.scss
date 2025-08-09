@@ -1,0 +1,474 @@
+/* ===== CAISSE PAGE ===== */
+.caisse-page {
+  padding: 0;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ===== CARD RESPONSIVE ===== */
+.card-responsive {
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.card-responsive:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* ===== BONS SECTION ===== */
+.bons-section {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.section-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+}
+
+/* ===== TOTALS SECTION ===== */
+.totals-section {
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.total-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+}
+
+.total-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+}
+
+.card-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* ===== PRINT SECTION ===== */
+.print-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-responsive {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.btn-responsive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-responsive .btn-text {
+  font-size: 0.875rem;
+}
+
+/* ===== DATE INPUT STYLES ===== */
+.date-selector-container {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.form-label i {
+  color: #007bff;
+}
+
+.date-input-wrapper {
+  position: relative;
+}
+
+.date-input {
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  background: #fff;
+  width: 100%;
+}
+
+.date-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  outline: none;
+}
+
+.date-input:hover {
+  border-color: #adb5bd;
+}
+
+.simple-date-input {
+  font-size: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.simple-date-input:focus {
+  border-color: #007bff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* ===== TABLE STYLES ===== */
+.table-responsive {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.table {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.table th {
+  background-color: #343a40 !important;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 1rem 0.75rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+  border-color: #e9ecef;
+}
+
+.table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* ===== FORM ENHANCEMENTS ===== */
+.form-control {
+  border-radius: 0.375rem;
+  border: 1px solid #ced4da;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select {
+  border-radius: 0.375rem;
+  border: 1px solid #ced4da;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Large desktops */
+@media (min-width: 1400px) {
+  .page-container {
+    max-width: 1320px;
+    padding: 1.5rem;
+  }
+}
+
+/* Standard desktops */
+@media (min-width: 1200px) and (max-width: 1399.98px) {
+  .page-container {
+    max-width: 1140px;
+    padding: 1.25rem;
+  }
+}
+
+/* Small desktops and large tablets */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+  .page-container {
+    max-width: 960px;
+    padding: 1rem;
+  }
+}
+
+/* Tablets */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .page-container {
+    max-width: 720px;
+    padding: 1rem;
+  }
+
+  .card-responsive {
+    padding: 1rem 1.5rem !important;
+  }
+
+  .bons-section,
+  .totals-section {
+    padding: 1.25rem;
+  }
+
+  .btn-responsive {
+    padding: 0.625rem 1.25rem;
+  }
+
+  .table th {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .table td {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .card-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 767.98px) {
+  .caisse-page {
+    padding: 0;
+  }
+
+  .page-container {
+    padding: 0.75rem;
+  }
+
+  .card-responsive {
+    padding: 1rem !important;
+    border-radius: 0.375rem;
+  }
+
+  .bons-section,
+  .totals-section {
+    padding: 1rem;
+    border-radius: 0.375rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 1rem;
+  }
+
+  .btn-responsive {
+    padding: 0.75rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .table-responsive {
+    font-size: 0.75rem;
+  }
+
+  .table th {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.6875rem;
+  }
+
+  .table td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .card-value {
+    font-size: 1.125rem;
+  }
+
+  .date-selector-container {
+    padding: 1rem;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 575.98px) {
+  .page-container {
+    padding: 0.5rem;
+  }
+
+  .card-responsive {
+    padding: 0.75rem !important;
+  }
+
+  .bons-section,
+  .totals-section {
+    padding: 0.75rem;
+  }
+
+  .btn-responsive {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .btn-responsive .btn-text {
+    font-size: 0.8125rem;
+  }
+
+  .table-responsive {
+    font-size: 0.6875rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.375rem 0.1875rem;
+  }
+
+  .card-value {
+    font-size: 1rem;
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 374.98px) {
+  .page-container {
+    padding: 0.375rem;
+  }
+
+  .card-responsive {
+    padding: 0.5rem !important;
+  }
+
+  .bons-section,
+  .totals-section {
+    padding: 0.5rem;
+  }
+
+  .btn-responsive {
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .btn-responsive .btn-text {
+    font-size: 0.75rem;
+  }
+
+  .table-responsive {
+    font-size: 0.625rem;
+  }
+
+  .card-value {
+    font-size: 0.875rem;
+  }
+
+  .card-title {
+    font-size: 0.6875rem;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-responsive,
+.bons-section,
+.totals-section {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  right: 2.5rem;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .print-section {
+    display: none !important;
+  }
+
+  .card-responsive,
+  .bons-section,
+  .totals-section {
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
+  .table {
+    font-size: 12px !important;
+  }
+
+  .table th {
+    background-color: #f8f9fa !important;
+    color: #000 !important;
+  }
+}

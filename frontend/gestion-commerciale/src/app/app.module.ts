@@ -16,6 +16,12 @@ import {ApiModule, Configuration} from "./api-client";
 import {ToastrModule} from "ngx-toastr";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
+import { EntrepriseProfileComponent } from './pages/entreprise-profile/entreprise-profile/entreprise-profile.component';
+import { PageCaisseJourComponent } from './pages/page-caisse-jour/page-caisse-jour.component';
+import { StoreModule } from '@ngrx/store';
+import { mesInfosReducer } from 'src/store/mes-infos/mesInfos.reducers';
+import { EffectsModule } from '@ngrx/effects';
+import { MesInfosEffects } from 'src/store/mes-infos/mesInfos.effects';
 
 @NgModule({
   declarations: [
@@ -26,7 +32,9 @@ import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
     PageTiersComponent,
     HeaderComponent,
     DetailArticleComponent,
-    PaginationComponent
+    PaginationComponent,
+    EntrepriseProfileComponent,
+    PageCaisseJourComponent
   ],
   imports: [
     BrowserModule,
@@ -34,6 +42,8 @@ import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
     FormsModule,
     HttpClientModule,
     FontAwesomeModule,
+    StoreModule.forRoot({mesInfos:mesInfosReducer}),
+    EffectsModule.forRoot([MesInfosEffects]),
     ApiModule.forRoot(() => new Configuration({
       basePath: 'http://localhost:8080'
     })),

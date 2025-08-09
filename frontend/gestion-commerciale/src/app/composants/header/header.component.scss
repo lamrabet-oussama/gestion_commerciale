@@ -1,1 +1,103 @@
 
+/* Header Container */
+.header-container {
+  background-color: #fff;
+  top: 0;
+  z-index: 1020;
+}
+
+/* Header Title */
+.header-title {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 1px;
+  font-size: 1.5rem;
+}
+
+/* Company Info Section */
+.company-info {
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* Logo Styles */
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 2px solid #007bff;
+  transition: transform 0.3s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+}
+
+/* Company Name */
+.company-name {
+  cursor: default;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+/* Responsive Design */
+@media (max-width: 1199.98px) {
+  .company-name {
+    max-width: 120px;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .header-title {
+    font-size: 1.25rem;
+  }
+
+  .company-name {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .header-container {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+  }
+
+  .logo-img {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .header-container {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .header-title {
+    font-size: 1rem;
+  }
+
+  .logo-img {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 374.98px) {
+  .header-title {
+    font-size: 0.9rem;
+  }
+
+  .logo-img {
+    width: 24px;
+    height: 24px;
+  }
+}
