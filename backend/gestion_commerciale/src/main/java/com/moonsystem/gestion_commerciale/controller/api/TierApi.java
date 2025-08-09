@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.moonsystem.gestion_commerciale.dto.ArticleDto;
 import com.moonsystem.gestion_commerciale.dto.TierDto;
 import static com.moonsystem.gestion_commerciale.utils.Constants.APP_ROOT;
 import com.moonsystem.gestion_commerciale.utils.PageResponse;
@@ -192,10 +191,10 @@ public interface TierApi {
     @ApiResponses(value = {
         @ApiResponse(
                 responseCode = "200",
-                description = "Résultats de recherche récupérés avec succès",
+                description = "Tiers paginés récupérés avec succès",
                 content = @Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        array = @ArraySchema(schema = @Schema(implementation = ArticleDto.class))
+                        schema = @Schema(implementation = PageResponse.class)
                 )
         ),
         @ApiResponse(
@@ -210,4 +209,16 @@ public interface TierApi {
         )
     })
     PageResponse<TierDto> search(@RequestParam(defaultValue = "") String keyword, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size);
+
+    @GetMapping(value = APP_ROOT + "/tiers/number", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Nombre total de tiers",
+            description = "Permet de retourner le nombre total de tiers dans le système"
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Nombre bien récupéré",
+            content = @Content
+    )
+    Integer numberOfTiers();
 }

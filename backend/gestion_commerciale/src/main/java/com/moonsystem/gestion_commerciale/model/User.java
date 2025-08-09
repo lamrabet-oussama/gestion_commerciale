@@ -1,5 +1,6 @@
 package com.moonsystem.gestion_commerciale.model;
 
+import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "Users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Cod")
@@ -43,6 +45,9 @@ public class User {
 
     @Column(name = "état", length = 10)
     private String etat;
+
+    @OneToMany(mappedBy = "user")
+    private List<Bonsorti> bonsSortis;
 
     // getters and setters
 }

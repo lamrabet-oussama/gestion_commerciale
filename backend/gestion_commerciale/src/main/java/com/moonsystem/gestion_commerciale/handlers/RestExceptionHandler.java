@@ -5,11 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.moonsystem.gestion_commerciale.exception.EntityNotFoundException;
-import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
-import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
-import com.moonsystem.gestion_commerciale.exception.InvalidOperationException;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -20,7 +15,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.moonsystem.gestion_commerciale.exception.EntityNotFoundException;
+import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
+import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
+import com.moonsystem.gestion_commerciale.exception.InvalidOperationException;
+
 @RestControllerAdvice
+
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -31,6 +32,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .code(exception.getErrorCode())
                 .httpCode(notFound.value())
                 .message(exception.getMessage())
+                .errors(exception.getErrors())
                 .build();
 
         return new ResponseEntity<>(errorDto, notFound);
@@ -44,6 +46,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .code(exception.getErrorCode())
                 .httpCode(notFound.value())
                 .message(exception.getMessage())
+                .errors(exception.getErrors())
                 .build();
 
         return new ResponseEntity<>(errorDto, notFound);
@@ -84,8 +87,6 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
     }
-
-
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGlobalException(Exception exception, WebRequest webRequest) {

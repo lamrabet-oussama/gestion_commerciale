@@ -9,10 +9,11 @@ public interface TierService {
 
     TierDto save(TierDto dto);
 
-     TierDto update(TierDto dto);
+    TierDto update(TierDto dto);
 
-     TierDto findById(int id);
-        TierDto findById(Integer id);
+    TierDto findById(int id);
+
+    TierDto findById(Integer id);
 
     boolean delete(Integer id);
 
@@ -21,5 +22,7 @@ public interface TierService {
     List<String> getAllTierType();
 
     List<String> getAllVillesMaroc();
+
+    Integer numberOfTiers();
 
 }

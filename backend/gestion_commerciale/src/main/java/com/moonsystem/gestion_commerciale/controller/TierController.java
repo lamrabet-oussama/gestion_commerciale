@@ -50,4 +50,8 @@ public class TierController implements TierApi {
         return this.tierService.search(keyword, page, pageSize);
     }
 
+    public Integer numberOfTiers() {
+        return tierService.numberOfTiers();
+    }
+
 }

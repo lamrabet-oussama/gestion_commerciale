@@ -1,6 +1,12 @@
 package com.moonsystem.gestion_commerciale.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "MesInfox")
 public class MesInfox {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "num")
@@ -31,8 +38,7 @@ public class MesInfox {
     @Column(length = 25)
     private String serial;
 
-    @Lob
-    private byte[] fLogo;
+    private String fLogo;
 
     @Column(length = 25)
     private String fCod;
@@ -49,8 +55,7 @@ public class MesInfox {
     @Column(length = 500)
     private String bAdresse;
 
-    @Lob
-    private byte[] bLogo;
+    private String bLogo;
 
     @Column(length = 25)
     private String bCod;
@@ -63,4 +68,3 @@ public class MesInfox {
 
     // getters and setters
 }
-

@@ -39,8 +39,8 @@ public enum ErrorCodes {
     UNKNOWN_CONTEXT(14001),
     INTERNAL_ERROR(500),
     VALIDATION_ERROR(400),
-    ARTICLE_DUPLICATED(7000);
-
+    ARTICLE_DUPLICATED(7000),
+    INFOX_NOT_FOUND(15000);
     private int code;
 
     ErrorCodes(int code) {

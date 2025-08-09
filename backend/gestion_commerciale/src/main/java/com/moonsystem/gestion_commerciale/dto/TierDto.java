@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import com.moonsystem.gestion_commerciale.model.Tier;
 import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import com.moonsystem.gestion_commerciale.model.enums.VilleMaroc;
-import com.moonsystem.gestion_commerciale.validator.UniqueRef;
 import com.moonsystem.gestion_commerciale.validator.ValidEnum;
 
 import jakarta.validation.constraints.NotBlank;
@@ -26,11 +25,10 @@ public class TierDto {
     @ValidEnum(enumClass = TypeTier.class, message = "Type invalide de qualité")
     private String qualite;
 
-    @NotBlank(message = "Le type est requis")
     private String type;
 
     @NotNull(message = "La référence est requise")
-    @UniqueRef(message = "Cette référence existe déjà")
+    // @UniqueRef(message = "Cette référence existe déjà")
     private Integer ref;
 
     @NotBlank(message = "Le nom est requis")
