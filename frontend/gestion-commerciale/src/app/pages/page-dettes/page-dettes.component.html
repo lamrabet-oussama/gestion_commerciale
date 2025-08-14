@@ -1,0 +1,86 @@
+<div class="caisse-page">
+  <div class="page-container">
+    <div class="card-responsive p-3 p-md-4">
+      <h4 class="text-center text-primary mb-3 mb-md-4">
+        <i class="fas fa-info-circle me-2"></i>Dettes et Créeances
+      </h4>
+
+
+
+
+
+      <!-- Form -->
+      <form class="p-3 rounded bg-white shadow-sm d-flex flex-column flex-md-row align-items-start gap-3">
+        <!-- Première colonne : Année -->
+        <div class="">
+          <label for="year" class="form-label fw-semibold">Année</label>
+          <input
+            type="number"
+            [(ngModel)]="selectedYear"
+            (ngModelChange)="onYearChange($event)"
+            class="form-control "
+            name="dateInput"
+            id="dateInput"
+            [max]="maxYear"
+            placeholder="YYYY"
+          />
+        </div>
+
+        <!-- Deuxième colonne : Mouvement -->
+        <div class="">
+          <label for="mvt" class="form-label fw-semibold">Type</label>
+          <select
+            class="form-select"
+            [(ngModel)]="selectedMvt"
+            id="mvt"
+            name="mvt"
+            (ngModelChange)="onMvtSelected($event)"
+          >
+            <option [value]="'VENTE'" selected>Créances</option>
+            <option [value]="'ACHAT'">Dettes</option>
+          </select>
+        </div>
+      </form>
+    </div>
+
+    <!-- Liste des bons -->
+    <div class="bons-section mt-4 mt-md-5">
+      <div class="section-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+        <h4 class="section-title mb-0">Liste</h4>
+      </div>
+
+      <!-- Table responsive wrapper -->
+      <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+        <table class="table table-bordered table-hover text-center mb-0">
+          <thead class="table-dark sticky-top">
+          <tr >
+            <th class="text-nowrap" style="width:30%">Client</th>
+            <th class="text-nowrap d-none d-md-table-cell" >Chiffre Annuelle</th>
+            <th class="text-nowrap d-none d-md-table-cell" >Dette Final</th>
+            <th class="text-nowrap">Taux</th>
+            <th class="text-nowrap" style="width: 20%;">Dernier Paie</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="" *ngFor="let dette of dettesDto"   >
+            <td class="text-nowrap">{{ dette.nomTier }}</td>
+            <td class="text-truncate" style="max-width: 150px;">{{dette.chiffreAnnuelle}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{dette.detteFinal}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{dette.taux}}%</td>
+            <td class="text-nowrap">{{dette.dateRegl}}</td>
+
+          </tr>
+        <tr>
+            <td class="d-none d-md-table-cell text-truncate fw-bold">Total:</td>
+          <td class="d-none d-md-table-cell text-truncate fw-bold">{{totalChiffre}}</td>
+          <td class="d-none d-md-table-cell text-truncate fw-bold">{{totalCredits}}</td>
+            <td class="d-none d-md-table-cell text-truncate fw-bold">{{tauxMoyenne}}%</td>
+          <td class="d-none d-md-table-cell text-truncate fw-bold"></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>

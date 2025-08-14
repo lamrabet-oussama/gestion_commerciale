@@ -11,11 +11,11 @@ import { NotificationService } from 'src/app/services/notification/notification.
 export class PageCaisseJourComponent implements OnInit {
   caisseJourDto: CaisseJourDto = {};
   selectedDate: string = '';
-  selectedUser:UserDto={};
+  selectedUser: UserDto = {};
   minDate: string = '';
   maxDate: string = '';
 
-  users:UserDto[]=[];
+  users: UserDto[] = [];
   public constructor(
     private caisseJourService: CaisseJourService,
     private notificationService: NotificationService
@@ -28,8 +28,6 @@ export class PageCaisseJourComponent implements OnInit {
   }
 
   private initializeDateLimits(): void {
-    
-
     // Date maximum : aujourd'hui
     const today = new Date();
     this.maxDate = this.formatDateForInput(today);
@@ -65,9 +63,12 @@ export class PageCaisseJourComponent implements OnInit {
         console.log('Utilisateurs chargés:', this.users);
       },
       error: (error) => {
-        this.notificationService.error('Erreur lors du chargement des utilisateurs', 'Erreur');
+        this.notificationService.error(
+          'Erreur lors du chargement des utilisateurs',
+          'Erreur'
+        );
         this.users = [];
-      }
+      },
     });
   }
 
@@ -100,7 +101,7 @@ export class PageCaisseJourComponent implements OnInit {
     const selectedDate = new Date(dateString);
     const maxDate = new Date(this.maxDate);
 
-    return  selectedDate <= maxDate;
+    return selectedDate <= maxDate;
   }
 
   getCaisseJour(): void {
@@ -111,6 +112,7 @@ export class PageCaisseJourComponent implements OnInit {
       );
       return;
     }
+let userCode = this.selectedUser ? this.selectedUser.cod : undefined;
 
     // Convertir la date au format ISO DateTime requis par le backend
     const startDateTime = `${this.selectedDate}T00:00:00`;
@@ -122,42 +124,34 @@ export class PageCaisseJourComponent implements OnInit {
       )}...`
     );
 
-    this.caisseJourService
-      .getCaisseJour(this.selectedUser.cod, startDateTime)
-      .subscribe({
-        next: (caisseJour) => {
-          this.caisseJourDto = caisseJour;
-          console.log('Caisse du jour:', caisseJour, this.selectedUser);
+    this.caisseJourService.getCaisseJour(userCode, startDateTime).subscribe({
+      next: (caisseJour) => {
+        this.caisseJourDto = caisseJour;
+        console.log('Caisse du jour:', caisseJour, this.selectedUser);
 
-          // Notification de succès optionnelle
-          this.notificationService.success(
-            `Données chargées pour le ${this.formatDateForDisplay(
-              this.selectedDate
-            )}`,
-            'Succès'
-          );
-        },
-        error: (error) => {
-          console.error('Erreur API:', error);
-          this.caisseJourDto = {}; // Réinitialiser en cas d'erreur
 
-          let errorMessage =
-            'Erreur lors de la récupération de la caisse du jour';
+      },
+      error: (error) => {
+        console.error('Erreur API:', error);
+        this.caisseJourDto = {}; // Réinitialiser en cas d'erreur
 
-          // Personnaliser le message d'erreur selon le code d'erreur
-          if (error.status === 404) {
-            errorMessage = `Aucune donnée trouvée pour le ${this.formatDateForDisplay(
-              this.selectedDate
-            )}`;
-          } else if (error.status === 400) {
-            errorMessage = 'Format de date invalide';
-          } else if (error.status === 500) {
-            errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
-          }
+        let errorMessage =
+          'Erreur lors de la récupération de la caisse du jour';
 
-          this.notificationService.error(errorMessage, 'Erreur');
-        },
-      });
+        // Personnaliser le message d'erreur selon le code d'erreur
+        if (error.status === 404) {
+          errorMessage = `Aucune donnée trouvée pour le ${this.formatDateForDisplay(
+            this.selectedDate
+          )}`;
+        } else if (error.status === 400) {
+          errorMessage = 'Format de date invalide';
+        } else if (error.status === 500) {
+          errorMessage = 'Erreur serveur. Veuillez réessayer plus tard.';
+        }
+
+        this.notificationService.error(errorMessage, 'Erreur');
+      },
+    });
   }
 
   // Méthodes utilitaires pour les boutons de navigation rapide (optionnelles)
@@ -231,18 +225,28 @@ export class PageCaisseJourComponent implements OnInit {
     return date.toLocaleDateString('fr-FR', options);
   }
 
-  downloadCaisseJourPdf(){
-    this.caisseJourService.downloadCaisseJour(this.selectedUser.cod,`${this.selectedDate}T00:00:00`
-).subscribe({
-      next:(pdf:Blob)=>{
-        const fileURL=URL.createObjectURL(pdf);
-         window.open(fileURL);
-       
-      },
-      error:err=>{
-        console.log(err);
-        this.notificationService.error(err.error.message,"Erreur")
-      }
-    })
+  downloadCaisseJourPdf() {
+    this.caisseJourService
+      .downloadCaisseJour(
+        this.selectedUser.cod,
+        `${this.selectedDate}T00:00:00`
+      )
+      .subscribe({
+        next: (pdf: Blob) => {
+          const fileName = `CaisseJour_${this.selectedDate}.pdf`; // nom voulu
+          const fileURL = URL.createObjectURL(pdf);
+          const a = document.createElement('a');
+          a.href = fileURL;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(fileURL);
+        },
+        error: (err) => {
+          console.log(err);
+          this.notificationService.error(err.error.message, 'Erreur');
+        },
+      });
   }
 }

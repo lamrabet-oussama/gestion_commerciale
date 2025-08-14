@@ -1,9 +1,33 @@
 <div class="article-page">
   <div class="page-container">
     <div class="card-responsive p-3 p-md-4">
-      <h4 class="text-center text-primary mb-3 mb-md-4">
-        <i class="fas fa-info-circle me-2"></i>Informations de l'article
-      </h4>
+      <div class="d-flex justify-content-center gap-6 align-items-center">
+        <h4 class="text-center text-primary mb-3 mb-md-4">
+          <i class="fas fa-info-circle me-2"></i>Informations de l'article
+
+        </h4>
+
+        <form class="search-form d-flex" (input)="chercherArticles()">
+        <input
+          class="form-control search-input me-2"
+          type="search"
+          placeholder="Rechercher un article..."
+          aria-label="Search"
+          name="keyword"
+          [(ngModel)]="keyword"
+        >
+        <button
+          class="btn btn-outline-success search-btn"
+          type="button"
+          (click)="chercherArticles()"
+        >
+          <i class="fas fa-search"></i>
+          <span class="d-none d-sm-inline ms-1">Rechercher</span>
+        </button>
+      </form>
+
+      </div>
+
 
       <!-- Alerts -->
       <div *ngIf="successMsg" class="alert alert-success alert-dismissible fade show">
@@ -25,106 +49,87 @@
       <!-- Form -->
       <form>
         <div class="row g-3">
-          <!-- Première colonne -->
-          <div class="col-12 col-md-6">
-            <div class="mb-3">
-              <label for="refarticle" class="form-label">
-                Réf Article
-              </label>
 
-              <input type="number" class="form-control" id="refarticle"
-                     [(ngModel)]="articleDto.ref" name="refarticle" placeholder="0">
-            </div>
+          <!-- 1ʳᵉ ligne -->
+          <div class="col-md-3">
+            <label for="refarticle" class="form-label">Réf Article <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="refarticle"
+                   [(ngModel)]="articleDto.ref" name="refarticle" placeholder="0">
+          </div>
 
-            <div class="mb-3">
-              <label for="designation" class="form-label">
-
-                Désignation</label>
-              <input type="text" class="form-control" id="designation" [(ngModel)]="articleDto.designation" name="designation" placeholder="Nom de l'article">
-            </div>
-
-            <div class="mb-3">
-              <label for="choix" class="form-label">Choix</label>
-              <input list="choixList" class="form-control" id="choix" name="choix" [(ngModel)]="articleDto.choix" placeholder="-- Sélectionnez ou saisissez un choix --">
-              <datalist id="choixList">
-                <option *ngFor="let ch of choix" [value]="ch"></option>
-              </datalist>
-            </div>
-
-            <div class="mb-3">
-              <label for="famille" class="form-label">Famille</label>
-              <input list="familleList" class="form-control" id="famille" name="famille" [(ngModel)]="articleDto.famille" placeholder="-- Sélectionnez ou saisissez une famille --">
-              <datalist id="familleList">
-                <option *ngFor="let fa of familles" [value]="fa"></option>
-              </datalist>
-            </div>
-
-            <div class="mb-3">
-              <label for="stock" class="form-label">Stock</label>
-              <input type="number" class="form-control" id="stock" [(ngModel)]="articleDto.stock" name="stock" placeholder="0.00">
+          <div class="col-md-3">
+            <label for="prixachat" class="form-label">Prix d'achat <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="prixachat" [(ngModel)]="articleDto.prixAchat" name="prixachat" placeholder="0.00">
+              <span class="input-group-text">DH</span>
             </div>
           </div>
 
-          <!-- Deuxième colonne -->
-          <div class="col-12 col-md-6">
-            <div class="mb-3">
-              <label for="prix" class="form-label">Prix de Vente</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="prix" [(ngModel)]="articleDto.prix" name="prix" placeholder="0.00">
-                <span class="input-group-text">DH</span>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="prixmin" class="form-label">Prix Minimum</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="prixmin" [(ngModel)]="articleDto.prixMin" name="prixmin" placeholder="0.00">
-                <span class="input-group-text">DH</span>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="prixachat" class="form-label">Prix d'achat</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="prixachat" [(ngModel)]="articleDto.prixAchat" name="prixachat" placeholder="0.00">
-                <span class="input-group-text">DH</span>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="tauxtva" class="form-label">TVA</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="tauxtva" [(ngModel)]="articleDto.tauxTva" name="tauxtva" placeholder="0.00">
-                <span class="input-group-text">%</span>
-              </div>
+          <div class="col-md-3">
+            <label for="prix" class="form-label">Prix de Vente <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="prix" [(ngModel)]="articleDto.prix" name="prix" placeholder="0.00">
+              <span class="input-group-text">DH</span>
             </div>
           </div>
 
-          <!-- Note (largeur totale) -->
-          <div class="col-12">
+          <div class="col-md-3">
+            <label for="prixmin" class="form-label">Prix Minimum</label>
+            <div class="input-group">
+              <input type="number" class="form-control" id="prixmin" [(ngModel)]="articleDto.prixMin" name="prixmin" placeholder="0.00">
+              <span class="input-group-text">DH</span>
+            </div>
+          </div>
+
+          <!-- 2ᵉ ligne -->
+          <div class="col-md-4">
+            <label for="designation" class="form-label">Désignation <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="designation" [(ngModel)]="articleDto.designation" name="designation" placeholder="Nom de l'article">
+          </div>
+
+          <div class="col-md-4">
+            <label for="choix" class="form-label">Choix <span class="text-danger">*</span></label>
+            <input list="choixList" class="form-control" id="choix" name="choix" [(ngModel)]="articleDto.choix" placeholder="-- Sélectionnez ou saisissez un choix --">
+            <datalist id="choixList">
+              <option *ngFor="let ch of choix" [value]="ch"></option>
+            </datalist>
+          </div>
+
+          <div class="col-md-4">
+            <label for="famille" class="form-label">Famille <span class="text-danger">*</span></label>
+            <input list="familleList" class="form-control" id="famille" name="famille" [(ngModel)]="articleDto.famille" placeholder="-- Sélectionnez ou saisissez une famille --">
+            <datalist id="familleList">
+              <option *ngFor="let fa of familles" [value]="fa"></option>
+            </datalist>
+          </div>
+
+          <!-- 3ᵉ ligne -->
+          <div class="col-md-2">
+            <label for="stock" class="form-label">Stock <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" id="stock" [(ngModel)]="articleDto.stock" name="stock" placeholder="0.00">
+          </div>
+
+          <div class="col-md-10">
             <label for="note" class="form-label">Note</label>
-            <textarea class="form-control" id="note" [(ngModel)]="articleDto.note" name="note" placeholder="Ajouter une note" rows="3" style="resize: none;"></textarea>
+            <textarea class="form-control h-25" id="note" [(ngModel)]="articleDto.note" name="note" placeholder="Ajouter une note" rows="2" style="resize: none;"></textarea>
           </div>
 
           <!-- Boutons -->
-          <div class="col-12">
-            <div class="action-buttons d-flex flex-column flex-sm-row justify-content-end gap-2">
-              <button type="button" class="btn btn-danger btn-responsive" (click)="cancel()">
-                <i class="fas fa-ban me-1"></i>
-                <span class="btn-text">Annuler</span>
-              </button>
-              <button type="button" class="btn btn-primary btn-responsive" (click)="enregistrerArticle()">
-                <i class="fas fa-save me-1"></i>
-                <span class="btn-text">Enregistrer</span>
-              </button>
-              <button type="button" class="btn btn-secondary btn-responsive" (click)="modifierArticle()">
-                <i class="fas fa-edit me-1"></i>
-                <span class="btn-text">Modifier</span>
-              </button>
-            </div>
+          <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-danger" (click)="cancel()">
+              <i class="fas fa-ban me-1"></i> Vider
+            </button>
+            <button type="button" class="btn btn-primary" (click)="enregistrerArticle()">
+              <i class="fas fa-save me-1"></i> Ajouter
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="modifierArticle()">
+              <i class="fas fa-edit me-1"></i> Modifier
+            </button>
           </div>
+
         </div>
       </form>
+
 
     </div>
 
@@ -133,24 +138,7 @@
       <div class="section-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
         <h4 class="section-title mb-0">Liste des articles</h4>
         <div class="search-container">
-          <form class="search-form d-flex" (input)="chercherArticles()">
-            <input
-              class="form-control search-input me-2"
-              type="search"
-              placeholder="Rechercher un article..."
-              aria-label="Search"
-              name="keyword"
-              [(ngModel)]="keyword"
-            >
-            <button
-              class="btn btn-outline-success search-btn"
-              type="button"
-              (click)="chercherArticles()"
-            >
-              <i class="fas fa-search"></i>
-              <span class="d-none d-sm-inline ms-1">Rechercher</span>
-            </button>
-          </form>
+
           <p class="search-results text-center mt-2 mb-0">Résultats: {{resultNum}}</p>
         </div>
       </div>
@@ -163,9 +151,9 @@
             <th class="text-nowrap">Réf</th>
             <th style="width:100%">Désignation</th> <!-- s'étire -->
             <th class="text-nowrap d-none d-md-table-cell">Choix</th>
-            <th class="text-nowrap">Prix</th>
+            <th class="text-nowrap">Prix Vente</th>
+            <th class="text-nowrap d-none d-lg-table-cell">Prix Achat</th>
             <th class="text-nowrap d-none d-lg-table-cell">Prix Min</th>
-            <th class="text-nowrap d-none d-lg-table-cell">Prix Vente</th>
             <th class="text-nowrap d-none d-sm-table-cell">Stock</th>
             <th class="text-nowrap">Actions</th>
           </tr>
@@ -175,9 +163,9 @@
             <td class="text-nowrap">{{ art.ref }}</td>
             <td class="text-truncate" style="max-width: 150px;" [title]="art.designation">{{art.designation}}</td>
             <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" [title]="art.choix">{{art.choix}}</td>
-            <td class="text-nowrap">{{art.prix}}</td>
-            <td class="d-none d-lg-table-cell text-nowrap">{{art.prixAchat}}</td>
-            <td class="d-none d-lg-table-cell text-nowrap">{{art.prixMin}}</td>
+            <td class="text-nowrap">{{art.prix}} DH</td>
+            <td class="d-none d-lg-table-cell text-nowrap">{{art.prixAchat}} DH</td>
+            <td class="d-none d-lg-table-cell text-nowrap">{{art.prixMin}} DH</td>
             <td class="d-none d-sm-table-cell text-nowrap">{{art.stock}}</td>
             <td>
               <button class="btn btn-sm " data-bs-toggle="modal" data-bs-target="#deleteModal" (click)="supprimerArticle(art.cod ?? 0)">

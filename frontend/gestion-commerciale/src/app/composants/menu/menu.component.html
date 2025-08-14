@@ -33,7 +33,22 @@
   <!-- Contenu du menu -->
   <div class="menu-content">
     <div class="menu-brand">
-      <h4 class="brand-title">Gestion Commerciale</h4>
+      <div class="  ">
+        <div *ngIf="mesInfos$ | async as mesInfos" class="company-info d-flex align-items-center">
+          <img
+            [src]="mesInfos.blogo"
+            alt="Logo"
+            class="rounded-circle me-2 me-md-3 logo-img"
+          />
+          <span
+            class="fw-semibold text-dark company-name d-none d-sm-inline"
+            (mouseenter)="hover = true"
+            (mouseleave)="hover = false"
+            [style.color]="hover ? '#007bff' : '#212529'">
+          {{ mesInfos.nomSociete }}
+        </span>
+        </div>
+      </div>
     </div>
 
     <nav class="menu-navigation">

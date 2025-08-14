@@ -22,6 +22,7 @@ import { StoreModule } from '@ngrx/store';
 import { mesInfosReducer } from 'src/store/mes-infos/mesInfos.reducers';
 import { EffectsModule } from '@ngrx/effects';
 import { MesInfosEffects } from 'src/store/mes-infos/mesInfos.effects';
+import { PageDettesComponent } from './pages/page-dettes/page-dettes.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { MesInfosEffects } from 'src/store/mes-infos/mesInfos.effects';
     DetailArticleComponent,
     PaginationComponent,
     EntrepriseProfileComponent,
-    PageCaisseJourComponent
+    PageCaisseJourComponent,
+    PageDettesComponent
   ],
   imports: [
     BrowserModule,

@@ -5,6 +5,7 @@ api.module.ts
 api/api.ts
 api/articles.service.ts
 api/caisseJourController.service.ts
+api/dettesController.service.ts
 api/mesInfos.service.ts
 api/tiers.service.ts
 api/userController.service.ts
@@ -15,6 +16,8 @@ index.ts
 model/articleDto.ts
 model/bonSortieDto.ts
 model/caisseJourDto.ts
+model/dettesDto.ts
+model/dettesResponseDto.ts
 model/mesInfoxDto.ts
 model/models.ts
 model/pageResponse.ts

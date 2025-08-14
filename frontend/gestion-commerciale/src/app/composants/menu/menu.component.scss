@@ -75,9 +75,38 @@
   font-weight: 600;
   color: #495057;
 }
+/* Logo Styles */
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 2px solid #007bff;
+  transition: transform 0.3s ease;
+}
+
+.logo-img:hover {
+  transform: scale(1.05);
+}
+.company-info {
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* Company Name */
+.company-name {
+  cursor: default;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
 
 /* ===== MENU CONTENT ===== */
 .menu-content {
+  display: flex;
+  flex-direction: column;
+
   padding: 1rem 0;
   height: 100%;
   overflow-y: auto;

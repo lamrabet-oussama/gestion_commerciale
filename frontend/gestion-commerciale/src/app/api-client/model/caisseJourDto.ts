@@ -16,6 +16,7 @@ export interface CaisseJourDto {
     totalMontant?: number;
     totalEspece?: number;
     totalCheque?: number;
+    totalCredit?: number;
     nomUser?: string;
 }
 

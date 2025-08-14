@@ -18,6 +18,10 @@ export class ArticleService {
     return this.http.get<PageResponse>(`${this.apiUrl}`, { params });
   }
 
+  getTotalElements(){
+    return this.articleService.getTotalElements();
+  }
+
   supprimerArticle(cod:number){
     return this.articleService._delete(cod);
   }

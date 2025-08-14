@@ -5,6 +5,7 @@ import {PageArticleComponent} from "./pages/page-article/page-article.component"
 import {PageTiersComponent} from "./pages/page-tiers/page-tiers.component";
 import { EntrepriseProfileComponent } from './pages/entreprise-profile/entreprise-profile/entreprise-profile.component';
 import { PageCaisseJourComponent } from './pages/page-caisse-jour/page-caisse-jour.component';
+import {PageDettesComponent} from "./pages/page-dettes/page-dettes.component";
 
 const routes: Routes = [
   {
@@ -26,6 +27,10 @@ const routes: Routes = [
       {
         path: 'page-caisse-jour',
         component:PageCaisseJourComponent
+      },
+      {
+        path: 'dettes',
+        component:PageDettesComponent
       }
     ],
   },

@@ -53,13 +53,13 @@ errorMsgValidation: string[] = [];
       this.errorMsgValidation.push("Le nom de personne est obligatoire.");
       valide = false;
     }
-  
+
     if (!tierDto.qualite || tierDto.qualite.trim() === '') {
       this.errorMsgValidation.push('La qualité de personne est obligatoire.');
       valide = false;
     }
-    
-    
+
+
     if (
       !this.tierDto.ville ||
       this.tierDto.ville.trim() === ''
@@ -71,7 +71,8 @@ errorMsgValidation: string[] = [];
       this.errorMsgValidation.push('Le GSM est obligatoire.');
       valide = false;
     }
-    
+
+    this.notification.error("Veuillez remplir les champs obligatoires",'Erreur')
 
     return valide;
   }
@@ -80,15 +81,16 @@ errorMsgValidation: string[] = [];
   creerTier() {
     if(this.validerArticle(this.tierDto)){
 
-    
+
     this.tierService.creerTier(this.tierDto).subscribe({
       next: () => {
         this.handleSuccess('Tier créé avec succès');
         this.listerTiers();
         this.cancel();
       },
-      error: (err) =>
-        this.handleError(err, "Erreur lors de l'enregistrement du tier"),
+      error: (err) =>{
+        this.notification.error(err?.error?.message,'Erreur')
+        this.handleError(err, "Erreur lors de l'enregistrement du tier")}
     });
   }}
 
@@ -133,9 +135,10 @@ errorMsgValidation: string[] = [];
           this.page = res.currentPage ?? 0;
         }
       },
-      error: (err) =>
-        this.handleError(err, 'Erreur lors du chargement des tiers'),
-    });
+      error: (err) =>{
+        console.log(err);
+        this.handleError(err, 'Erreur lors du chargement des tiers')
+    }});
   }
 
   onPageChange(page: number) {
@@ -188,7 +191,7 @@ errorMsgValidation: string[] = [];
   }
 
   private handleError(err: any, message: string) {
-    this.notification.error(err.error?.errors, 'Erreur');
+    this.notification.error(err.error?.message, 'Erreur');
   }
 
   private handleSuccess(message: string) {

@@ -77,6 +77,8 @@ export class PageArticleComponent implements OnInit {
 
     // Chargement des articles avec gestion d'erreur
     this.getAllArticles(this.currentPage);
+    this.getTotal();
+    this.articleDto.stock=0;
   }
 
   private resetMessages() {
@@ -85,6 +87,13 @@ export class PageArticleComponent implements OnInit {
     this.successMsg = '';
   }
 
+  getTotal(){
+    this.articleService.getTotalElements().subscribe({
+      next:(value)=>{
+        this.articleDto.ref=value+1;
+      }
+    })
+  }
   getAllArticles(page: number): void {
     console.log(`Chargement des articles - Page: ${page}, PageSize: ${this.pageSize}`);
 
@@ -95,7 +104,7 @@ export class PageArticleComponent implements OnInit {
         // Vérification de la structure de la réponse
         if (data && data.content) {
           this.articles = data.content;
-          this.articleDto.ref=(data.content.length+1);
+          this.articleDto.ref=(data.content.length+2);
           this.resultNum=data.totalElements ?? 0;
           this.currentPage = data.currentPage ?? page;
           this.totalPages = data.totalPages ?? 0;
@@ -129,15 +138,12 @@ gatArticle(code:number){
     this.errorMsg = []; // Reset des erreurs avant validation
     let valide = true;
 
-   
+
     if (!this.articleDto.ref || this.articleDto.ref <= 0) {
       this.errorMsg.push("La référence de l'article est obligatoire.");
       valide = false;
     }
-    if (!this.articleDto.tauxTva || this.articleDto.tauxTva <= 0) {
-      this.errorMsg.push("Le taux TVA de l'article est obligatoire.");
-      valide = false;
-    }
+
     if (this.articleDto.stock!=null && this.articleDto.stock < 0) {
       this.errorMsg.push("Le stock de l'article est obligatoire.");
       valide = false;
@@ -212,6 +218,7 @@ gatArticle(code:number){
         this.getAllArticles(this.currentPage); // Recharger la liste
       },
       error: (error) => {
+        this.notification.error(error?.error?.message)
         console.error('Erreur lors de la création:', error);
         this.errorMsg = error?.error?.errors || ['Erreur lors de la création de l\'article'];
         this.message = error?.error?.message || '';
