@@ -42,7 +42,7 @@ public class Article {
     private String reference;
 
     @Column(name = "Stock", precision = 12, scale = 2)
-    private BigDecimal stock;
+    private BigDecimal stock=BigDecimal.ZERO;
 
     @Column(name = "SurfUni", precision = 12, scale = 2)
     private BigDecimal surfaceUnitaire;
@@ -75,7 +75,7 @@ public class Article {
     private BigDecimal achatHt;
 
     @Column(name = "Taux_TVA", precision = 4, scale = 2)
-    private BigDecimal tauxTva=BigDecimal.ZERO;
+    private BigDecimal tauxTva= new BigDecimal(20);
 
     @Column(name = "Marge_Fact", precision = 6, scale = 2)
     private BigDecimal margeFact;

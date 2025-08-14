@@ -2,6 +2,7 @@ package com.moonsystem.gestion_commerciale.dto;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.moonsystem.gestion_commerciale.model.Tier;
 import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import com.moonsystem.gestion_commerciale.model.enums.VilleMaroc;
@@ -54,10 +55,15 @@ public class TierDto {
     private String fax;
     private String banq;
     private String numCompte;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal solde;
     private String note;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal plafond;
     private Integer cRemise;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal soldeFact;
 
     public static TierDto fromEntity(Tier tier) {

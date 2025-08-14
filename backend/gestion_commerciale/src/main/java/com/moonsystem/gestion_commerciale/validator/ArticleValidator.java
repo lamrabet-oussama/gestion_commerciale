@@ -48,24 +48,7 @@ public class ArticleValidator {
             errors.add("Le prix minimal de l'article doit être supérieur ou égal à zéro");
         }
 
-        if (!isUpdate) {
-            // En création : tauxTva est obligatoire
-            if (dto.getTauxTva() == null || dto.getTauxTva().compareTo(BigDecimal.ZERO) <= 0) {
-                errors.add("Le taux de TVA est obligatoire et doit être supérieur à zéro.");
-            } else if (dto.getTauxTva().compareTo(new BigDecimal("99.99")) > 0) {
-                errors.add("Le taux de TVA ne doit pas dépasser 99.99.");
-            }
 
-        } else {
-            // En mise à jour : on valide uniquement si tauxTva est renseigné
-            if (dto.getTauxTva() != null) {
-                if (dto.getTauxTva().compareTo(BigDecimal.ZERO) <= 0) {
-                    errors.add("Le taux de TVA doit être supérieur à zéro s’il est fourni.");
-                } else if (dto.getTauxTva().compareTo(new BigDecimal("99.99")) > 0) {
-                    errors.add("Le taux de TVA ne doit pas dépasser 99.99.");
-                }
-            }
-        }
 
         if (!isUpdate) {
             // En création : le stock est obligatoire et doit être > 0

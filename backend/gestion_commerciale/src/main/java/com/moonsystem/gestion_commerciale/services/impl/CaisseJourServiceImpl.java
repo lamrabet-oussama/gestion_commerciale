@@ -106,6 +106,7 @@ public class CaisseJourServiceImpl implements CaisseJourService {
                 .totalMontant(totaux.getTotalMontant())
                 .totalEspece(totaux.getTotalEspece())
                 .totalCheque(totaux.getTotalCheque())
+                .totalCredit(totaux.getTotalCredit())
                 .build();
     }
 

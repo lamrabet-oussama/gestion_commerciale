@@ -1,5 +1,6 @@
 package com.moonsystem.gestion_commerciale.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.moonsystem.gestion_commerciale.model.Article;
 import lombok.Builder;
 import lombok.Data;
@@ -14,12 +15,20 @@ public class ArticleDto {
     private Integer cod;
     private Integer ref;
     private String designation;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal prix;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal prixMin;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal prixAchat;
     private BigDecimal tauxTva;
     private String note;
     private String choix;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
     private BigDecimal stock;
 //    @NotBlank(message = "La famille est obligatoire")
     private String famille;

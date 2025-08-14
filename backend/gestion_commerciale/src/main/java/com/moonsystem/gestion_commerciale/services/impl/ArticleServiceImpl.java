@@ -1,5 +1,17 @@
 package com.moonsystem.gestion_commerciale.services.impl;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
 import com.moonsystem.gestion_commerciale.dto.ArticleDto;
 import com.moonsystem.gestion_commerciale.exception.EntityNotFoundException;
 import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
@@ -10,20 +22,9 @@ import com.moonsystem.gestion_commerciale.repository.ArticleRepository;
 import com.moonsystem.gestion_commerciale.services.ArticleService;
 import com.moonsystem.gestion_commerciale.utils.PageResponse;
 import com.moonsystem.gestion_commerciale.validator.ArticleValidator;
+
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,6 +37,10 @@ public class ArticleServiceImpl implements ArticleService {
         this.articleRepository = articleRepository;
     }
 
+    @Override
+    public Integer getTotalElements() {
+        return this.articleRepository.countAll();
+    }
 
     // Méthode privée centrale pour récupérer un article actif ou lancer une exception
     private Article getActiveArticleEntityByCod(Integer cod) {
@@ -46,8 +51,8 @@ public class ArticleServiceImpl implements ArticleService {
 
         Article article = articleRepository.findByCod(cod)
                 .orElseThrow(() -> new EntityNotFoundException(
-                        "Aucun article avec le code " + cod + " n'a été trouvé"
-                ));
+                "Aucun article avec le code " + cod + " n'a été trouvé"
+        ));
 
         if (Boolean.FALSE.equals(article.getActif())) {
             throw new InvalidOperationException(
@@ -57,9 +62,11 @@ public class ArticleServiceImpl implements ArticleService {
         }
         return article;
     }
-    public void checkUnicityDesignationAndChoix(ArticleDto dto) {
-        if (dto.getCod() != null) {
-            // update : on doit vérifier que l'article existe
+
+    public void checkUnicityDesignationAndChoix(ArticleDto dto, boolean isUpdate) {
+
+        if (isUpdate) {
+            // On doit vérifier que l'article existe
             Article existe = getActiveArticleEntityByCod(dto.getCod());
             if (existe == null) {
                 throw new EntityNotFoundException(
@@ -69,9 +76,9 @@ public class ArticleServiceImpl implements ArticleService {
             }
         }
 
-        if(dto.getDesignation() == null || dto.getChoix() == null) {
+        if (dto.getDesignation() == null || dto.getChoix() == null) {
             throw new InvalidEntityException(
-                    "La désignation et le choix de l'article sont obligatoires pour la modification",
+                    "La désignation et le choix de l'article sont obligatoires" + (isUpdate ? " pour la modification" : " pour la création"),
                     ErrorCodes.ARTICLE_NOT_VALID,
                     List.of("Désignation et Choix sont requises")
             );
@@ -79,8 +86,9 @@ public class ArticleServiceImpl implements ArticleService {
 
         Article existing = articleRepository.findByDesignationAndChoix(dto.getDesignation(), dto.getChoix());
 
-        // Si on est en mode update (id != null), on ignore l'article courant
-        if (existing != null && (dto.getCod() == null || !existing.getCod().equals(dto.getCod()))) {
+        // Si c’est une création => refuser tout doublon
+        // Si c’est un update => refuser doublon sauf si c’est le même article
+        if (existing != null && (!isUpdate || !existing.getCod().equals(dto.getCod()))) {
             throw new InvalidEntityException(
                     "Un article avec cette désignation '" + dto.getDesignation() + "' et ce choix '" + dto.getChoix() + "' existe déjà.",
                     ErrorCodes.ARTICLE_DUPLICATED,
@@ -92,21 +100,20 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     @Transactional
     public ArticleDto save(ArticleDto dto) {
-        List<String> errors = ArticleValidator.validate(dto,false);
+        List<String> errors = ArticleValidator.validate(dto, false);
         if (!errors.isEmpty()) {
             log.error("Article non valide {}", dto);
             throw new InvalidEntityException("L'article n'est pas valide", ErrorCodes.ARTICLE_NOT_VALID, errors);
         }
 
-
         if (dto.getRef() != null && articleRepository.existsByRef(dto.getRef())) {
             log.error("Ref article déjà utilisé {}", dto.getRef());
             throw new InvalidEntityException(
                     "La référence " + dto.getRef() + " est déjà utilisé par un autre article",
-                    ErrorCodes.ARTICLE_NOT_VALID
+                    ErrorCodes.ARTICLE_NOT_VALID, errors
             );
         }
-        checkUnicityDesignationAndChoix(dto);
+        checkUnicityDesignationAndChoix(dto,false);
         return ArticleDto.fromEntity(articleRepository.save(ArticleDto.toEntity(dto)));
     }
 
@@ -125,6 +132,7 @@ public class ArticleServiceImpl implements ArticleService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
+
     @Override
     public PageResponse<ArticleDto> findAllPaginated(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -144,8 +152,6 @@ public class ArticleServiceImpl implements ArticleService {
         return response;
     }
 
-
-
     @Override
     @Transactional
     public ArticleDto update(Integer cod, ArticleDto dto) {
@@ -154,9 +160,8 @@ public class ArticleServiceImpl implements ArticleService {
             throw new InvalidEntityException("Les données de l'article sont obligatoires", ErrorCodes.ARTICLE_NOT_VALID);
         }
 
-
         Article existingArticle = getActiveArticleEntityByCod(cod);
-        if (dto.getRef()!=null && !existingArticle.getRef().equals(dto.getRef())) {
+        if (dto.getRef() != null && !existingArticle.getRef().equals(dto.getRef())) {
             throw new InvalidEntityException(
                     "La référence de l’article ne peut pas être modifiée.",
                     ErrorCodes.ARTICLE_DUPLICATED,
@@ -166,7 +171,6 @@ public class ArticleServiceImpl implements ArticleService {
 
         // Créer un DTO temporaire avec les valeurs existantes pour la validation
         ArticleDto tempDto = ArticleDto.fromEntity(existingArticle);
-
 
         if (dto.getDesignation() != null) {
             tempDto.setDesignation(dto.getDesignation());
@@ -181,7 +185,7 @@ public class ArticleServiceImpl implements ArticleService {
         if (dto.getPrixAchat() != null) {
             tempDto.setPrixAchat(dto.getPrixAchat());
         }
-        if(dto.getTauxTva() != null) {
+        if (dto.getTauxTva() != null) {
             tempDto.setTauxTva(dto.getTauxTva());
         }
         if (dto.getPrix() != null) {
@@ -191,18 +195,17 @@ public class ArticleServiceImpl implements ArticleService {
         if (dto.getFamille() != null) {
             tempDto.setFamille(dto.getFamille());
         }
-        if(dto.getNote()!=null){
+        if (dto.getNote() != null) {
             tempDto.setNote(dto.getNote());
         }
 
         // Valider le DTO complet (existant + modifications)
-        List<String> errors = ArticleValidator.validate(tempDto,true);
+        List<String> errors = ArticleValidator.validate(tempDto, true);
         if (!errors.isEmpty()) {
             log.error("Article non valide après mise à jour : {}", tempDto);
             throw new InvalidEntityException("L'article n'est pas valide", ErrorCodes.ARTICLE_NOT_VALID, errors);
         }
-        checkUnicityDesignationAndChoix(dto);
-
+        checkUnicityDesignationAndChoix(dto,true);
 
         // Mettre à jour seulement les champs fournis
         if (dto.getDesignation() != null) {
@@ -215,19 +218,19 @@ public class ArticleServiceImpl implements ArticleService {
         if (dto.getFamille() != null) {
             existingArticle.setFamille(dto.getFamille());
         }
-        if(dto.getPrixMin()!=null){
+        if (dto.getPrixMin() != null) {
             existingArticle.setPrixMin(dto.getPrixMin());
         }
-        if(dto.getPrixAchat()!=null){
+        if (dto.getPrixAchat() != null) {
             existingArticle.setPrixAchat(dto.getPrixAchat());
         }
-        if(dto.getStock()!=null){
+        if (dto.getStock() != null) {
             existingArticle.setStock(dto.getStock());
         }
-        if(dto.getChoix()!=null){
+        if (dto.getChoix() != null) {
             existingArticle.setChoix(dto.getChoix());
         }
-        if(dto.getTauxTva()!=null){
+        if (dto.getTauxTva() != null) {
             existingArticle.setTauxTva(dto.getTauxTva());
         }
         Article updatedArticle = articleRepository.save(existingArticle);
@@ -239,7 +242,6 @@ public class ArticleServiceImpl implements ArticleService {
     public boolean delete(Integer code) {
         try {
             Article article = getActiveArticleEntityByCod(code); // vérifie et récupère l'article actif
-
 
             article.setActif(false);
             articleRepository.save(article);
@@ -255,10 +257,12 @@ public class ArticleServiceImpl implements ArticleService {
     public List<String> findDistinctFamilles() {
         return articleRepository.findDistinctFamilles();
     }
+
     @Override
     public List<String> findDistinctChoix() {
         return articleRepository.findDistinctChoix();
     }
+
     @Override
     @Transactional
     public ArticleDto updateStock(Integer cod, BigDecimal newStock) {
@@ -283,13 +287,12 @@ public class ArticleServiceImpl implements ArticleService {
         return ArticleDto.fromEntity(updatedArticle);
     }
 
-
     @Override
     public List<ArticleDto> search(String keyword) {
 
-        List<Article>articles= articleRepository.searchByKeyword(keyword);
-        if(articles==null || articles.isEmpty()){
-            throw new EntityNotFoundException("Aucun Article trouvé",ErrorCodes.ARTICLE_NOT_FOUND);
+        List<Article> articles = articleRepository.searchByKeyword(keyword);
+        if (articles == null || articles.isEmpty()) {
+            throw new EntityNotFoundException("Aucun Article trouvé", ErrorCodes.ARTICLE_NOT_FOUND);
         }
         return articles.stream()
                 .map(ArticleDto::fromEntity)

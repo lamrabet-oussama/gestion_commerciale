@@ -3,6 +3,7 @@ package com.moonsystem.gestion_commerciale.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,9 +17,13 @@ public class BonSortieDto {
 
     private Integer idBon;
     private String serie;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal montant;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal espece;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal cheque;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal credit;
     private LocalDateTime datBon;
     private String nomTier;

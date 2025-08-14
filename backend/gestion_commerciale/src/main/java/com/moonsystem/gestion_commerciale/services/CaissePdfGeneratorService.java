@@ -279,7 +279,7 @@ public class CaissePdfGeneratorService {
                 caisseDto.getTotalMontant(),
                 caisseDto.getTotalEspece(),
                 caisseDto.getTotalCheque(),
-                BigDecimal.ZERO,
+                caisseDto.getTotalCredit(),
                 "", normalFont);
     }
 
@@ -288,7 +288,7 @@ public class CaissePdfGeneratorService {
         BigDecimal totalAchatMontant = BigDecimal.ZERO;
         BigDecimal totalAchatEspece = BigDecimal.ZERO;
         BigDecimal totalAchatCheque = BigDecimal.ZERO;
-
+        BigDecimal totalAchatCredit = BigDecimal.ZERO;
         if (caisseDto.getBons() != null) {
             for (BonSortieDto bon : caisseDto.getBons()) {
                 totalAchatMontant = totalAchatMontant.add(getBonMontant(bon));
@@ -298,11 +298,14 @@ public class CaissePdfGeneratorService {
                 if (bon.getCheque() != null) {
                     totalAchatCheque = totalAchatCheque.add(bon.getCheque());
                 }
+                if(bon.getCredit() != null) {
+                    totalAchatCredit = totalAchatCredit.add(bon.getCredit());
+                }
 
             }
         }
 
-        addTotalRow(table, "Total Achats:", totalAchatMontant, totalAchatEspece, totalAchatCheque, BigDecimal.ZERO, "", normalFont);
+        addTotalRow(table, "Total Achats:", totalAchatMontant, totalAchatEspece, totalAchatCheque, totalAchatCredit, "", normalFont);
     }
 
     private void addTotalCharges(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
@@ -387,6 +390,7 @@ public class CaissePdfGeneratorService {
         // Ligne 2: Total Chèque / Nouveau Solde
         addFinalTotalCell(totalGrid, "Total Chèque :", formatMontantVirgule(caisseDto.getTotalCheque()), headerFont);
         // addFinalTotalCell(totalGrid, "Nouveau Solde :", formatMontantVirgule(caisseDto.getNouveauSolde()), headerFont);
+        addFinalTotalCell(totalGrid, "Total Crédit :", formatMontantVirgule(caisseDto.getTotalCredit()), headerFont);
 
         totalGrid.setSpacingBefore(10);
         document.add(totalGrid);

@@ -1,28 +1,30 @@
 package com.moonsystem.gestion_commerciale.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+
 import java.math.BigDecimal;
 
+@Data
 public class SommeTotauxDto {
-
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalMontant;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalEspece;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCheque;
 
-    public SommeTotauxDto(BigDecimal totalMontant, BigDecimal totalEspece, BigDecimal totalCheque) {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+    private BigDecimal totalCredit;
+    public SommeTotauxDto(BigDecimal totalMontant, BigDecimal totalEspece, BigDecimal totalCheque,BigDecimal totalCredit) {
         this.totalMontant = totalMontant != null ? totalMontant : BigDecimal.ZERO;
         this.totalEspece = totalEspece != null ? totalEspece : BigDecimal.ZERO;
         this.totalCheque = totalCheque != null ? totalCheque : BigDecimal.ZERO;
+        this.totalCredit = totalCredit != null ? totalCredit : BigDecimal.ZERO;
+
     }
 
-    public BigDecimal getTotalMontant() {
-        return totalMontant;
-    }
 
-    public BigDecimal getTotalEspece() {
-        return totalEspece;
-    }
-
-    public BigDecimal getTotalCheque() {
-        return totalCheque;
-    }
 }
