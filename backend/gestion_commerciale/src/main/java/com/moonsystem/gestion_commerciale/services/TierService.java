@@ -21,8 +21,11 @@ public interface TierService {
 
     List<String> getAllTierType();
 
+    List<TierDto> findTierByQualite(String qualite);
     List<String> getAllVillesMaroc();
 
+    List<TierDto> getAllClient();
+    List<TierDto> getAllFournisseur();
     Integer numberOfTiers();
 
 }

@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -47,9 +50,7 @@ public class CaisseJourServiceImpl implements CaisseJourService {
     @Override
     public CaisseJourDto getCaisseJourDtos(
             Integer userCod,
-            LocalDateTime startDate,
-            LocalDateTime endDate
-    ) {
+            LocalDateTime startDate ) {
         // 1) Vérification utilisateur (inchangée)
         User user = null;
         if (userCod != null) {
@@ -67,42 +68,34 @@ public class CaisseJourServiceImpl implements CaisseJourService {
         if (user != null) {
             username = user.getLogin();
         }
-        // 2) Dates par défaut
-        // Si l’appelant ne fournit pas startDate, on prend maintenant()…
+
         if (startDate == null) {
             startDate = LocalDateTime.now();
         }
-        // Si l’appelant ne fournit pas endDate, on considère la fin du même jour
-        // if (endDate == null) {
-        //     endDate = startDate.toLocalDate()
-        //             .plusDays(1)
-        //             .atStartOfDay()
-        //             .minusNanos(1);
-        // }
 
-        // 3) On en déduit le LocalDate « jour »
+
         LocalDate jour = startDate.toLocalDate();
         LocalDateTime debutJour = jour.atStartOfDay();
         LocalDateTime finJour = jour.plusDays(1).atStartOfDay().minusNanos(1);
 
-        // 4) Récupération des totaux d’un seul appel agrégé
-        SommeTotauxDto totaux = bonsortiRepository.sumTotauxByDate(jour);
+        SommeTotauxDto totaux = bonsortiRepository.sumTotauxByDate(jour,user);
 
-        // 5) Récupérer tous les bons du jour via la signature correcte de findByFilters
-        //    Ici j’utilise Pageable.unpaged() pour ne pas paginer :
-        List<Bonsorti> bonsEntites = bonsortiRepository
-                .findByFilters(user, debutJour, finJour);
 
-        // 6) Transformation en DTOs individuels
-        List<BonSortieDto> bonsDtos = bonsEntites.stream()
+        List<Bonsorti> bons = bonsortiRepository.findByFilters(user, debutJour, finJour);
+        List<BonSortieDto> bonsDtos = bons.stream()
                 .map(BonSortieDto::of)
-                .collect(Collectors.toList());
+                .toList();
+        Map<String, List<BonSortieDto>> bonsGroupes = bonsDtos.stream()
+                .collect(Collectors.groupingBy(BonSortieDto::getMvt));
 
-        // 7) Construction du CaisseJourDto final
+        List<BonSortieDto> bonsAchat = bonsGroupes.getOrDefault("ACHAT", Collections.emptyList());
+        List<BonSortieDto> bonsVentes = bonsGroupes.getOrDefault("VENTE", Collections.emptyList());
+
         return CaisseJourDto.builder()
                 .date(jour)
                 .nomUser(username)
-                .bons(bonsDtos)
+                .bonsAchat(bonsAchat)
+                .bonsVente(bonsVentes)
                 .totalMontant(totaux.getTotalMontant())
                 .totalEspece(totaux.getTotalEspece())
                 .totalCheque(totaux.getTotalCheque())
@@ -111,11 +104,14 @@ public class CaisseJourServiceImpl implements CaisseJourService {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadCaissePdf(Integer userCod, LocalDateTime date) {
+    public ResponseEntity<byte[]> downloadCaissePdf(Integer userCod, LocalDateTime date) throws EntityNotFoundException {
 
         try {
+            if(date == null) {
+                date=LocalDateTime.now();
+            }
             // Récupérer les données de caisse pour la date
-            CaisseJourDto caisseDto = getCaisseJourDtos(userCod, date, null);
+            CaisseJourDto caisseDto = getCaisseJourDtos(userCod, date);
 
             if (caisseDto == null) {
                 return ResponseEntity.notFound().build();
@@ -138,11 +134,7 @@ public class CaisseJourServiceImpl implements CaisseJourService {
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
 
         } catch (DocumentException | IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new InvalidEntityException("Invalid data",ErrorCodes.BAD_CREDENTIALS,List.of("Une erreur se produit"));
         }
     }
 

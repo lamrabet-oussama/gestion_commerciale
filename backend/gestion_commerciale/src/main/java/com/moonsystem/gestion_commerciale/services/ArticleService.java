@@ -26,9 +26,10 @@ public interface ArticleService {
 
     ArticleDto updateStock(Integer cod, BigDecimal newStock);
 
-    public PageResponse<ArticleDto> findAllPaginated(int page, int size);
+     PageResponse<ArticleDto> findAllPaginated(int page, int size);
 
-    public void checkUnicityDesignationAndChoix(ArticleDto dto,boolean Update);
+     void checkUnicityDesignationAndChoix(ArticleDto dto,boolean Update);
 
-    public Integer getTotalElements();
+     Integer getTotalElements();
+     ArticleDto findByDesignAndChoix(String designation,String choix);
 }

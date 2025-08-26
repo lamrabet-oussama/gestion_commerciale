@@ -37,7 +37,9 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
      LOWER(a.designation) LIKE LOWER(CONCAT('%', :keyword, '%'))
     OR LOWER(a.choix) LIKE LOWER(CONCAT('%', :keyword, '%'))
     OR CAST(a.ref AS string) LIKE CONCAT('%', :keyword, '%')
-    OR LOWER(a.famille) LIKE LOWER(CONCAT('%', :keyword, '%')))
+    OR LOWER(a.famille) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        OR CAST(a.prix As string) LIKE CONCAT('%',:keyword,'%')
+            )
     """)
     List<Article> searchByKeyword(@Param("keyword") String keyword);
 
@@ -50,6 +52,7 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
 
     List<Article> findByChoix(String choix);
 
+     Article findByDesignationAndChoixAndActif(String designation, String choix, boolean actif);
     List<Article> findAllByOrderByDesignationAsc();
 
     List<Article> findByPrixBetween(BigDecimal min, BigDecimal max);

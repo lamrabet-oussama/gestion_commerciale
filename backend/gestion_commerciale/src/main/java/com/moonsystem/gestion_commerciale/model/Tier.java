@@ -6,15 +6,7 @@ import java.util.List;
 import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import com.moonsystem.gestion_commerciale.model.enums.VilleMaroc;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,7 +15,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "Tiers")
+@Table(name = "Tiers",
+indexes = {
+        @Index(name="idx_tier_qualite",columnList="qualite")
+}
+)
 public class Tier {
 
     @Id
@@ -75,20 +71,20 @@ public class Tier {
     @Column(name = "numcompt", length = 100)
     private String numCompte;
 
-    @Column(name = "Solde", precision = 13, scale = 2)
-    private BigDecimal solde;
+    @Column(name = "Solde", scale = 2)
+    private BigDecimal solde=BigDecimal.ZERO;
 
     @Column(name = "Note", length = 5500)
     private String note;
 
-    @Column(name = "PlaFond", precision = 12, scale = 2)
+    @Column(name = "PlaFond", scale = 2)
     private BigDecimal plafond;
 
     @Column(name = "cRemise")
     private Integer cRemise;
 
     @Column(name = "Solde_Fact", precision = 12, scale = 2)
-    private BigDecimal soldeFact;
+    private BigDecimal soldeFact=BigDecimal.ZERO;
 
     // ... autres champs ...
     @OneToMany(mappedBy = "tier")

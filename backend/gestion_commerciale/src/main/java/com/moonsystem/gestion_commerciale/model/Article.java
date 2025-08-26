@@ -2,6 +2,7 @@ package com.moonsystem.gestion_commerciale.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,11 +13,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(
         name = "Article",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"Designation", "Choix"})
+        },
+        indexes = {
+                @Index(name="idx_cod",columnList = "Cod")
         }
 )
 public class Article {
@@ -38,7 +43,7 @@ public class Article {
     @Column(name = "Choix", length = 25)
     private String choix;
 
-    @Column(name = "Référence", length = 30)
+    @Column(name = "Reference", length = 30)
     private String reference;
 
     @Column(name = "Stock", precision = 12, scale = 2)

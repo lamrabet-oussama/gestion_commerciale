@@ -1,7 +1,9 @@
 package com.moonsystem.gestion_commerciale.repository;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.moonsystem.gestion_commerciale.model.Bonsorti;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,6 +20,24 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
 
     long count();
 
+
+    List<Tier>  findByQualite(String qualite);
+
+    @Query(
+            """
+        SELECT t FROM Tier t WHERE t.qualite='CLIENT' OR t.qualite='MIXTE'
+"""
+    )
+    List<Tier> findClient();
+
+
+    @Query(
+            """
+        SELECT t FROM Tier t WHERE t.qualite='FOURNISSEUR' OR t.qualite='MIXTE'
+"""
+    )
+    List<Tier> findFournisseur();
+
     @Query("""
        SELECT t FROM Tier t
        WHERE (LOWER(t.nom) LIKE LOWER(CONCAT('%', :keyword, '%'))
@@ -32,4 +52,5 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
     boolean existsByRef(Integer ref);
 
     boolean existsByNom(String name);
+
 }

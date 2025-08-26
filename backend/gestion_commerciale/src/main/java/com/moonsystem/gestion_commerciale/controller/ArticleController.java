@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.moonsystem.gestion_commerciale.controller.api.ArticleApi;
@@ -78,5 +79,9 @@ public class ArticleController implements ArticleApi {
     @Override
     public PageResponse<ArticleDto> getArticlesPaginated(int page, int size) {
         return articleService.findAllPaginated(page, size);
+    }
+    @Override
+    public     ArticleDto getArticleByDesAndChoix(@RequestParam("designation") String designation, @RequestParam("choix") String choix){
+        return this.articleService.findByDesignAndChoix(designation,choix);
     }
 }

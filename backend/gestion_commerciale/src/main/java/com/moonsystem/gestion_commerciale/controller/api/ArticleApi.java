@@ -99,7 +99,7 @@ public interface ArticleApi {
                 description = "Liste des articles récupérée avec succès",
                 content = @Content(
                         mediaType = MediaType.APPLICATION_JSON_VALUE,
-                        schema = @Schema(implementation = ArticleDto.class)
+                        array = @ArraySchema(schema = @Schema(implementation = ArticleDto.class))
                 )
         ),
         @ApiResponse(
@@ -331,5 +331,8 @@ public interface ArticleApi {
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     Integer getTotalElements();
+
+    @GetMapping(value=APP_ROOT+"/article")
+    ArticleDto getArticleByDesAndChoix(@RequestParam String designation,@RequestParam String choix);
 
 }

@@ -71,10 +71,11 @@ public class MesInfoxServiceImp implements MesInfoxService {
         Optional<MesInfox> existingInfos = mesInfoxRepository.findById(id);
 
         if (!existingInfos.isPresent()) {
-            throw new EntityNotFoundException(
-                    "Aucune information trouvée avec l'ID : " + id,
-                    ErrorCodes.INFOX_NOT_FOUND
-            );
+//            throw new EntityNotFoundException(
+//                    "Aucune information trouvée avec l'ID : " + id,
+//                    ErrorCodes.INFOX_NOT_FOUND
+//            );
+            return null;
         }
 
         return MesInfoxDto.fromEntity(existingInfos.get());

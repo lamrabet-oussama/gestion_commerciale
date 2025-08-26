@@ -20,8 +20,8 @@ public class CaisseJourController implements CaisseJourApi {
     }
 
     @Override
-    public CaisseJourDto getCaisseJour(Integer userCod, LocalDateTime startDate, LocalDateTime endDate) {
-        return this.caisseJourService.getCaisseJourDtos(userCod, startDate, endDate);
+    public CaisseJourDto getCaisseJour(Integer userCod, LocalDateTime startDate) {
+        return this.caisseJourService.getCaisseJourDtos(userCod, startDate);
     }
 
     @Override

@@ -221,4 +221,10 @@ public interface TierApi {
             content = @Content
     )
     Integer numberOfTiers();
+
+    @GetMapping(value = APP_ROOT+"/tiers/client")
+    List<TierDto> getAllClient();
+
+    @GetMapping(value = APP_ROOT+"/tiers/fournisseur")
+    List<TierDto> getAllFournisseur();
 }

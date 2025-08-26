@@ -299,4 +299,9 @@ public class ArticleServiceImpl implements ArticleService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public ArticleDto findByDesignAndChoix(String designation,String choix){
+        return ArticleDto.fromEntity(this.articleRepository.findByDesignationAndChoix(designation,choix));
+    }
+
 }

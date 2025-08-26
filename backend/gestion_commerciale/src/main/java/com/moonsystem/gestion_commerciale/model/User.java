@@ -49,5 +49,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Bonsorti> bonsSortis;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reglement> reglements;
     // getters and setters
 }

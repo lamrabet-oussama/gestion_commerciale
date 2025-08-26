@@ -54,4 +54,14 @@ public class TierController implements TierApi {
         return tierService.numberOfTiers();
     }
 
+    @Override
+    public List<TierDto> getAllClient() {
+        return this.tierService.getAllClient();
+    }
+
+    @Override
+    public List<TierDto> getAllFournisseur() {
+        return this.tierService.getAllFournisseur();
+    }
+
 }

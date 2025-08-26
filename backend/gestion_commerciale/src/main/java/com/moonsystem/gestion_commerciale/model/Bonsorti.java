@@ -1,7 +1,9 @@
 package com.moonsystem.gestion_commerciale.model;
 
+import com.moonsystem.gestion_commerciale.model.enums.MvtType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +12,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "Bonsorti")
+@Table(name = "Bonsorti"
+
+
+        ,indexes = {
+        @Index(name="idx_datbon",columnList = "datBon"),
+        @Index(name="idx_bs_tier",columnList = "tier"),
+        @Index(name="idx_bs_credit",columnList = "credit")
+})
 public class Bonsorti {
 
     @Id
@@ -21,11 +31,15 @@ public class Bonsorti {
     @Column(name = "id_bon")
     private Integer idBon;
 
-    @Column(name = "Serie", unique = true)
-    private String serie;
 
+    @Column(name = "Serie" , unique = true)
+    private String serie;
+    @Enumerated(EnumType.STRING)
     @Column(name = "Mvt")
-    private String mvt;
+    private MvtType mvt;
+
+
+
 
     @ManyToOne
     @JoinColumn(name = "tier", nullable = false)
@@ -76,7 +90,7 @@ public class Bonsorti {
     @Column(name = "M_TVA", precision = 12, scale = 2)
     private BigDecimal mTva;
 
-    @Column(name = "Réglements", length = 40)
+    @Column(name = "Reglements", length = 40)
     private String reglements;
 
     @ManyToOne
@@ -86,7 +100,7 @@ public class Bonsorti {
     @Column(name = "Date_Opp", length = 15)
     private String dateOpp;
 
-    @Column(name = "Marché", length = 100)
+    @Column(name = "Marche", length = 100)
     private String marche;
 
     @Column(name = "Transport", length = 100)
@@ -99,7 +113,7 @@ public class Bonsorti {
     private Boolean valid;
 
     // Relation inverse
-    @OneToMany(mappedBy = "bonSorti")
+    @OneToMany(mappedBy = "bonSorti",cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Flux> fluxes;
 
 }

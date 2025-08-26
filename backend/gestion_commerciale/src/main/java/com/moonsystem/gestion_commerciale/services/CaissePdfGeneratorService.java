@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 
+import com.moonsystem.gestion_commerciale.dto.ReglementDto;
 import org.springframework.stereotype.Service;
 
 import com.lowagie.text.Chunk;
@@ -51,11 +52,21 @@ public class CaissePdfGeneratorService {
 
     @PostConstruct
     public void init() {
-        MesInfoxDto dto = mesInfoxService.findById(1);
-        this.nomEntreprise = dto.getNomSociete();
+        try {
+            MesInfoxDto dto = mesInfoxService.findById(1);
+            this.nomEntreprise = dto != null ? dto.getNomSociete() : "Ma Société";
+        } catch (Exception e) {
+            // Fallback en cas d'erreur
+            this.nomEntreprise = "Ma Société";
+        }
     }
 
     public byte[] generateCaissePdf(CaisseJourDto caisseDto) throws DocumentException, IOException {
+        // Validation des données d'entrée
+        if (caisseDto == null) {
+            throw new IllegalArgumentException("CaisseJourDto ne peut pas être null");
+        }
+
         Document document = new Document(PageSize.A4, 20, 20, 20, 20);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, baos);
@@ -75,7 +86,7 @@ public class CaissePdfGeneratorService {
         // Tableau principal avec toutes les sections
         addCompleteMainTable(document, caisseDto, headerFont, normalFont, smallFont, sectionFont);
 
-        // Totaux finaux avec 4 colonnes comme l'image
+        // Totaux finaux avec 3 colonnes comme spécifié
         addFinalTotalsGrid(document, caisseDto, headerFont);
 
         document.close();
@@ -98,8 +109,9 @@ public class CaissePdfGeneratorService {
 
         Paragraph leftPara = new Paragraph();
         leftPara.add(new Chunk("Caisse du : ", headerFont));
-        leftPara.add(new Chunk(caisseDto.getDate().format(DATE_FORMATTER), titleFont));
-        leftPara.setAlignment(Element.ALIGN_CENTER); // ✅ Centrer texte
+        String dateStr = caisseDto.getDate() != null ? caisseDto.getDate().format(DATE_FORMATTER) : "";
+        leftPara.add(new Chunk(dateStr, titleFont));
+        leftPara.setAlignment(Element.ALIGN_CENTER);
         leftCell.addElement(leftPara);
 
         // === Cellule centrale ===
@@ -118,7 +130,8 @@ public class CaissePdfGeneratorService {
         rightCell.setHorizontalAlignment(Element.ALIGN_CENTER);
         rightCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
 
-        Paragraph rightPara = new Paragraph(nomEntreprise + ": " + caisseDto.getNomUser(), titleFont);
+        String nomUser = caisseDto.getNomUser() != null ? caisseDto.getNomUser() : "";
+        Paragraph rightPara = new Paragraph(nomEntreprise + ": " + nomUser, titleFont);
         rightPara.setAlignment(Element.ALIGN_CENTER);
         rightCell.addElement(rightPara);
 
@@ -142,21 +155,200 @@ public class CaissePdfGeneratorService {
         addMainTableHeaders(mainTable, headerFont);
 
         // Section 1: Vente Du Jour
-        addSectionHeader(mainTable, "Vente Du Jour", sectionFont);
-        addVentesData(mainTable, caisseDto, normalFont, smallFont);
-        addTotalVentes(mainTable, caisseDto, normalFont);
+        if (hasBonsVente(caisseDto)) {
+            addSectionHeader(mainTable, "Vente Du Jour", sectionFont);
+            addBonsVenteData(mainTable, caisseDto, normalFont, smallFont);
+            addTotalBonsVente(mainTable, caisseDto, normalFont);
+        }
 
-        // Section 2: Liste Des Achats
-//        addSectionHeader(mainTable, "Liste Des Achats", sectionFont);
-//        //addAchatsData(mainTable, caisseDto, normalFont, smallFont);
-//        addTotalAchats(mainTable, caisseDto, normalFont);
-//
-//        // Section 3: Charges Divers
-//        addSectionHeader(mainTable, "Charges Divers", sectionFont);
-//        //addChargesData(mainTable, caisseDto, normalFont, smallFont);
-//        addTotalCharges(mainTable, caisseDto, normalFont);
+        // Section 2: Règlements de Crédits
+        if (hasReglements(caisseDto)) {
+            addSectionHeader(mainTable, "Règlements de Crédits", sectionFont);
+            addReglementsData(mainTable, caisseDto, normalFont, smallFont);
+            addTotalReglements(mainTable, caisseDto, normalFont);
+        }
+
+        // Section 3: Liste Des Achats
+        if (hasBonsAchat(caisseDto)) {
+            addSectionHeader(mainTable, "Liste Des Achats", sectionFont);
+            addBonsAchatData(mainTable, caisseDto, normalFont, smallFont);
+            addTotalBonsAchat(mainTable, caisseDto, normalFont);
+        }
+
         mainTable.setSpacingAfter(10);
         document.add(mainTable);
+    }
+
+    private boolean hasBonsVente(CaisseJourDto caisseDto) {
+        return caisseDto.getBonsVente() != null && !caisseDto.getBonsVente().isEmpty();
+    }
+
+    private boolean hasBonsAchat(CaisseJourDto caisseDto) {
+        return caisseDto.getBonsAchat() != null && !caisseDto.getBonsAchat().isEmpty();
+    }
+
+    private boolean hasReglements(CaisseJourDto caisseDto) {
+        return caisseDto.getReglements() != null && !caisseDto.getReglements().isEmpty();
+    }
+
+    private void addBonsVenteData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
+        if (caisseDto.getBonsVente() != null && !caisseDto.getBonsVente().isEmpty()) {
+            for (BonSortieDto bon : caisseDto.getBonsVente()) {
+                addDataRow(table, getBonNumero(bon), getBonMontant(bon),
+                        getBonEspece(bon), getBonCheque(bon), getBonCredit(bon),
+                        getClientName(bon), normalFont, smallFont);
+            }
+        }
+    }
+
+    private void addBonsAchatData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
+        if (caisseDto.getBonsAchat() != null && !caisseDto.getBonsAchat().isEmpty()) {
+            for (BonSortieDto bon : caisseDto.getBonsAchat()) {
+                addDataRow(table, getBonNumero(bon), getBonMontant(bon),
+                        getBonEspece(bon), getBonCheque(bon), getBonCredit(bon),
+                        getClientName(bon), normalFont, smallFont);
+            }
+        }
+    }
+
+    private void addReglementsData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
+        if (caisseDto.getReglements() != null && !caisseDto.getReglements().isEmpty()) {
+            for (ReglementDto reglement : caisseDto.getReglements()) {
+                addDataRow(table,
+                        getReglementNumero(reglement).toString(),
+                        getReglementMontant(reglement),
+                        getReglementEspece(reglement),
+                        getReglementCheque(reglement),
+                        BigDecimal.ZERO, // Les règlements n'ont généralement pas de crédit
+                        getReglementDetails(reglement),
+                        normalFont,
+                        smallFont);
+            }
+        }
+    }
+
+    private void addTotalBonsVente(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
+        BigDecimal totalVenteMontant = BigDecimal.ZERO;
+        BigDecimal totalVenteEspece = BigDecimal.ZERO;
+        BigDecimal totalVenteCheque = BigDecimal.ZERO;
+        BigDecimal totalVenteCredit = BigDecimal.ZERO;
+
+        if (caisseDto.getBonsVente() != null) {
+            for (BonSortieDto bon : caisseDto.getBonsVente()) {
+                totalVenteMontant = totalVenteMontant.add(getBonMontant(bon));
+                totalVenteEspece = totalVenteEspece.add(getBonEspece(bon));
+                totalVenteCheque = totalVenteCheque.add(getBonCheque(bon));
+                totalVenteCredit = totalVenteCredit.add(getBonCredit(bon));
+            }
+        }
+
+        addTotalRow(table, "Total Vte:",
+                totalVenteMontant,
+                totalVenteEspece,
+                totalVenteCheque,
+                totalVenteCredit,
+                "", normalFont);
+    }
+
+    private void addTotalBonsAchat(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
+        BigDecimal totalAchatMontant = BigDecimal.ZERO;
+        BigDecimal totalAchatEspece = BigDecimal.ZERO;
+        BigDecimal totalAchatCheque = BigDecimal.ZERO;
+        BigDecimal totalAchatCredit = BigDecimal.ZERO;
+
+        if (caisseDto.getBonsAchat() != null) {
+            for (BonSortieDto bon : caisseDto.getBonsAchat()) {
+                totalAchatMontant = totalAchatMontant.add(getBonMontant(bon));
+                totalAchatEspece = totalAchatEspece.add(getBonEspece(bon));
+                totalAchatCheque = totalAchatCheque.add(getBonCheque(bon));
+                totalAchatCredit = totalAchatCredit.add(getBonCredit(bon));
+            }
+        }
+
+        addTotalRow(table, "Total Achats:",
+                totalAchatMontant,
+                totalAchatEspece,
+                totalAchatCheque,
+                totalAchatCredit,
+                "", normalFont);
+    }
+
+    private void addTotalReglements(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
+        BigDecimal totalReglementMontant = BigDecimal.ZERO;
+        BigDecimal totalReglementEspece = BigDecimal.ZERO;
+        BigDecimal totalReglementCheque = BigDecimal.ZERO;
+
+        if (caisseDto.getReglements() != null) {
+            for (ReglementDto reglement : caisseDto.getReglements()) {
+                totalReglementMontant = totalReglementMontant.add(getReglementMontant(reglement));
+                totalReglementEspece = totalReglementEspece.add(getReglementEspece(reglement));
+                totalReglementCheque = totalReglementCheque.add(getReglementCheque(reglement));
+            }
+        }
+
+        addTotalRow(table, "TOTAL Règlements:",
+                totalReglementMontant,
+                totalReglementEspece,
+                totalReglementCheque,
+                BigDecimal.ZERO,
+                "", normalFont);
+    }
+
+    // === Méthodes utilitaires pour BonSortieDto ===
+    private String getBonNumero(BonSortieDto bon) {
+        return bon != null && bon.getSerie() != null ? bon.getSerie() : "";
+    }
+
+    private BigDecimal getBonMontant(BonSortieDto bon) {
+        return bon != null && bon.getMontant() != null ? bon.getMontant() : BigDecimal.ZERO;
+    }
+
+    private BigDecimal getBonEspece(BonSortieDto bon) {
+        return bon != null && bon.getEspece() != null ? bon.getEspece() : BigDecimal.ZERO;
+    }
+
+    private BigDecimal getBonCheque(BonSortieDto bon) {
+        return bon != null && bon.getCheque() != null ? bon.getCheque() : BigDecimal.ZERO;
+    }
+
+    private BigDecimal getBonCredit(BonSortieDto bon) {
+        return bon != null && bon.getCredit() != null ? bon.getCredit() : BigDecimal.ZERO;
+    }
+
+    private String getClientName(BonSortieDto bon) {
+        return bon != null && bon.getNomTier() != null ? bon.getNomTier() : "";
+    }
+
+    // === Méthodes utilitaires pour ReglementDto ===
+    private Integer getReglementNumero(ReglementDto reglement) {
+        return reglement != null && reglement.getId() != null ? reglement.getId() : 0;
+    }
+
+    private BigDecimal getReglementMontant(ReglementDto reglement) {
+        if (reglement == null) return BigDecimal.ZERO;
+
+        // Calculer le montant total du règlement
+        BigDecimal montantTotal = BigDecimal.ZERO;
+        if (reglement.getEspece() != null) {
+            montantTotal = montantTotal.add(reglement.getEspece());
+        }
+        if (reglement.getCheque() != null) {
+            montantTotal = montantTotal.add(reglement.getCheque());
+        }
+
+        return montantTotal;
+    }
+
+    private BigDecimal getReglementEspece(ReglementDto reglement) {
+        return reglement != null && reglement.getEspece() != null ? reglement.getEspece() : BigDecimal.ZERO;
+    }
+
+    private BigDecimal getReglementCheque(ReglementDto reglement) {
+        return reglement != null && reglement.getCheque() != null ? reglement.getCheque() : BigDecimal.ZERO;
+    }
+
+    private String getReglementDetails(ReglementDto reglement) {
+        return reglement != null && reglement.getDetailsCheque() != null ? reglement.getDetailsCheque() : "";
     }
 
     private void addMainTableHeaders(PdfPTable table, Font headerFont) {
@@ -186,54 +378,9 @@ public class CaissePdfGeneratorService {
         table.addCell(sectionCell);
     }
 
-    private void addVentesData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
-        if (caisseDto.getBons() != null && !caisseDto.getBons().isEmpty()) {
-            for (BonSortieDto bon : caisseDto.getBons()) {
-                addDataRow(table, getBonNumero(bon), getBonMontant(bon),
-                        bon.getEspece(), bon.getCheque(), bon.getCredit(),
-                        getClientName(bon), normalFont, smallFont);
-
-            }
-        }
-    }
-
-//    private void addAchatsData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
-//        if (caisseDto.getBons() != null && !caisseDto.getBons().isEmpty()) {
-//            for (BonSortieDto bon : caisseDto.getBons()) {
-//                if ("ACHAT".equals(bon.getType())) {
-//                    addDataRow(table, getBonNumero(bon), getBonMontant(bon),
-//                            bon.getEspece(), bon.getCheque(), bon.getCredit(),
-//                            getClientName(bon), normalFont, smallFont);
-//                }
-//            }
-//        }
-//    }
-//    private void addChargesData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
-//        if (caisseDto.getCharges() != null && !caisseDto.getCharges().isEmpty()) {
-//            for (Object charge : caisseDto.getCharges()) {
-//                // Adapter selon votre DTO de charges
-//                addDataRow(table, "CHARGE", new BigDecimal("15.00"),
-//                        new BigDecimal("15.00"), null, null,
-//                        "LIVRAISON CAMERA IMOU", normalFont, smallFont);
-//
-//                addDataRow(table, "CHARGE", new BigDecimal("-1000.00"),
-//                        new BigDecimal("-1000.00"), null, null,
-//                        "HICHAM", normalFont, smallFont);
-//            }
-//        } else {
-//            // Données d'exemple si pas de charges
-//            addDataRow(table, "", new BigDecimal("15.00"),
-//                    new BigDecimal("15.00"), null, null,
-//                    "LIVRAISON CAMERA IMOU", normalFont, smallFont);
-//
-//            addDataRow(table, "", new BigDecimal("-1000.00"),
-//                    new BigDecimal("-1000.00"), null, null,
-//                    "HICHAM", normalFont, smallFont);
-//        }
-//    }
     private void addDataRow(PdfPTable table, String serie, BigDecimal montant,
-            BigDecimal espece, BigDecimal cheque, BigDecimal credit,
-            String details, Font normalFont, Font smallFont) {
+                            BigDecimal espece, BigDecimal cheque, BigDecimal credit,
+                            String details, Font normalFont, Font smallFont) {
 
         // Série
         PdfPCell cellSerie = createDataCell(serie, normalFont);
@@ -274,47 +421,8 @@ public class CaissePdfGeneratorService {
         return cell;
     }
 
-    private void addTotalVentes(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
-        addTotalRow(table, "Total Vte:",
-                caisseDto.getTotalMontant(),
-                caisseDto.getTotalEspece(),
-                caisseDto.getTotalCheque(),
-                caisseDto.getTotalCredit(),
-                "", normalFont);
-    }
-
-    private void addTotalAchats(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
-        // Calculer les totaux des achats depuis les bons
-        BigDecimal totalAchatMontant = BigDecimal.ZERO;
-        BigDecimal totalAchatEspece = BigDecimal.ZERO;
-        BigDecimal totalAchatCheque = BigDecimal.ZERO;
-        BigDecimal totalAchatCredit = BigDecimal.ZERO;
-        if (caisseDto.getBons() != null) {
-            for (BonSortieDto bon : caisseDto.getBons()) {
-                totalAchatMontant = totalAchatMontant.add(getBonMontant(bon));
-                if (bon.getEspece() != null) {
-                    totalAchatEspece = totalAchatEspece.add(bon.getEspece());
-                }
-                if (bon.getCheque() != null) {
-                    totalAchatCheque = totalAchatCheque.add(bon.getCheque());
-                }
-                if(bon.getCredit() != null) {
-                    totalAchatCredit = totalAchatCredit.add(bon.getCredit());
-                }
-
-            }
-        }
-
-        addTotalRow(table, "Total Achats:", totalAchatMontant, totalAchatEspece, totalAchatCheque, totalAchatCredit, "", normalFont);
-    }
-
-    private void addTotalCharges(PdfPTable table, CaisseJourDto caisseDto, Font normalFont) {
-        BigDecimal totalCharges = new BigDecimal("-985.00"); // Exemple selon l'image
-        addTotalRow(table, "TOTAL des Charges:", totalCharges, totalCharges, BigDecimal.ZERO, BigDecimal.ZERO, "", normalFont);
-    }
-
     private void addTotalRow(PdfPTable table, String label, BigDecimal montant, BigDecimal espece,
-            BigDecimal cheque, BigDecimal credit, String details, Font font) {
+                             BigDecimal cheque, BigDecimal credit, String details, Font font) {
 
         // Label
         PdfPCell cellLabel = new PdfPCell(new Phrase(label, font));
@@ -378,19 +486,20 @@ public class CaissePdfGeneratorService {
     private void addFinalTotalsGrid(Document document, CaisseJourDto caisseDto, Font headerFont)
             throws DocumentException {
 
-        // Grille finale avec 4 colonnes comme dans l'image
-        PdfPTable totalGrid = new PdfPTable(4);
+        // Utiliser directement les totaux calculés du DTO
+        BigDecimal totalEspeceFinal = safeGetBigDecimal(caisseDto.getTotalEspece());
+        BigDecimal totalChequeFinal = safeGetBigDecimal(caisseDto.getTotalCheque());
+        BigDecimal totalCreditFinal = safeGetBigDecimal(caisseDto.getTotalCredit());
+
+        // Grille finale avec 6 colonnes (3 paires label/valeur)
+        PdfPTable totalGrid = new PdfPTable(6);
         totalGrid.setWidthPercentage(100);
-        totalGrid.setWidths(new float[]{25f, 25f, 25f, 25f});
+        totalGrid.setWidths(new float[]{16.67f, 16.67f, 16.67f, 16.67f, 16.67f, 16.67f});
 
-        // Ligne 1: Total Espèce / Ancienne Solde
-        addFinalTotalCell(totalGrid, "Total Espèce :", formatMontantVirgule(caisseDto.getTotalEspece()), headerFont);
-        //addFinalTotalCell(totalGrid, "Ancienne Solde :", formatMontantVirgule(caisseDto.getAncienneSolde()), headerFont);
-
-        // Ligne 2: Total Chèque / Nouveau Solde
-        addFinalTotalCell(totalGrid, "Total Chèque :", formatMontantVirgule(caisseDto.getTotalCheque()), headerFont);
-        // addFinalTotalCell(totalGrid, "Nouveau Solde :", formatMontantVirgule(caisseDto.getNouveauSolde()), headerFont);
-        addFinalTotalCell(totalGrid, "Total Crédit :", formatMontantVirgule(caisseDto.getTotalCredit()), headerFont);
+        // Ligne : Total Espèce / Total Chèque / Total Crédit
+        addFinalTotalCell(totalGrid, "Total Espèce :", formatMontantVirgule(totalEspeceFinal), headerFont);
+        addFinalTotalCell(totalGrid, "Total Chèque :", formatMontantVirgule(totalChequeFinal), headerFont);
+        addFinalTotalCell(totalGrid, "Total Crédit :", formatMontantVirgule(totalCreditFinal), headerFont);
 
         totalGrid.setSpacingBefore(10);
         document.add(totalGrid);
@@ -417,17 +526,9 @@ public class CaissePdfGeneratorService {
         table.addCell(valueCell);
     }
 
-    // Méthodes utilitaires
-    private String getClientName(BonSortieDto bon) {
-        return bon.getNomTier() != null ? bon.getNomTier() : "";
-    }
-
-    private String getBonNumero(BonSortieDto bon) {
-        return bon.getSerie() != null ? bon.getSerie() : "";
-    }
-
-    private BigDecimal getBonMontant(BonSortieDto bon) {
-        return bon.getMontant() != null ? bon.getMontant() : BigDecimal.ZERO;
+    // === Méthodes utilitaires de formatage ===
+    private BigDecimal safeGetBigDecimal(BigDecimal value) {
+        return value != null ? value : BigDecimal.ZERO;
     }
 
     private String formatMontant(BigDecimal montant) {
@@ -452,5 +553,4 @@ public class CaissePdfGeneratorService {
             fos.write(pdfBytes);
         }
     }
-
 }

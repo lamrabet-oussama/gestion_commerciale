@@ -2,6 +2,7 @@ package com.moonsystem.gestion_commerciale.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -17,7 +18,8 @@ import lombok.NoArgsConstructor;
 public class CaisseJourDto {
 
     private LocalDate date;               // jour considéré
-    private List<BonSortieDto> bons;
+    private List<BonSortieDto> bonsAchat;
+    private List<BonSortieDto> bonsVente;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
 // tous les bons du jour
     private BigDecimal totalMontant;
@@ -31,4 +33,5 @@ public class CaisseJourDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCredit;
     private String nomUser;
+    private List<ReglementDto> reglements;
 }

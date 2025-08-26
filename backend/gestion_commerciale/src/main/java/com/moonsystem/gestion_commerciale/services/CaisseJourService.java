@@ -13,8 +13,7 @@ public interface CaisseJourService {
 
     CaisseJourDto getCaisseJourDtos(
             Integer userCod,
-            LocalDateTime startDate,
-            LocalDateTime endDate
+            LocalDateTime startDate
     );
 
     ResponseEntity<byte[]> downloadCaissePdf(Integer userCod, LocalDateTime date);

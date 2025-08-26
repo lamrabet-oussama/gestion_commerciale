@@ -30,14 +30,12 @@ public interface CaisseJourApi {
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     @GetMapping(value = APP_ROOT + "/caisse-jour", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CaisseJourDto getCaisseJour(
+     CaisseJourDto getCaisseJour(
             @Parameter(description = "Code utilisateur (optionnel)") @RequestParam(required = false) Integer userCod,
             @Parameter(description = "Date de début (format ISO 8601, ex: 2025-08-07T00:00:00)")
             @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @Parameter(description = "Date de fin (format ISO 8601, ex: 2025-08-07T23:59:59)")
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
+             LocalDateTime startDate
+
     );
 
     @Operation(
@@ -52,7 +50,7 @@ public interface CaisseJourApi {
         @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
     })
     @GetMapping(value = APP_ROOT + "/caisse-jour/download", produces = "application/pdf")
-    public ResponseEntity<byte[]> downloadCaisseJourPdf(
+     ResponseEntity<byte[]> downloadCaisseJourPdf(
             @Parameter(description = "Code utilisateur (optionnel)")
             @RequestParam(required = false) Integer userCod,
             @Parameter(description = "Date de début (format ISO 8601, ex: 2025-08-07T00:00:00)")

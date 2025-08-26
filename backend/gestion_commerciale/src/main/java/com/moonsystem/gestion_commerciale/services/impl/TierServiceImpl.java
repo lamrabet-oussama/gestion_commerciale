@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
@@ -150,5 +151,23 @@ public class TierServiceImpl implements TierService {
     @Override
     public Integer numberOfTiers() {
         return (int) tierRepository.count();
+    }
+
+    @Override
+    public List<TierDto> findTierByQualite(String qualite) {
+        return this.tierRepository.findByQualite(qualite).stream()
+                .map(TierDto::fromEntity).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TierDto> getAllClient(){
+        return this.tierRepository.findClient().stream()
+                .map(TierDto::fromEntity).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TierDto> getAllFournisseur(){
+        return this.tierRepository.findFournisseur().stream()
+                .map(TierDto::fromEntity).collect(Collectors.toList());
     }
 }

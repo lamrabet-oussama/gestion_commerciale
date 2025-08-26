@@ -33,6 +33,8 @@ public class ArticleDto {
 //    @NotBlank(message = "La famille est obligatoire")
     private String famille;
 
+   private BigDecimal quantite;
+    private Integer idTier;
     // Convertir un Article (Entity) en ArticleDto avec gestion des valeurs null
     public static ArticleDto fromEntity(Article article) {
         if (article == null) {
