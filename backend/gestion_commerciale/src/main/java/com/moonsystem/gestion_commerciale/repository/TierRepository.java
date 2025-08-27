@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.moonsystem.gestion_commerciale.model.Bonsorti;
+import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,7 +22,7 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
     long count();
 
 
-    List<Tier>  findByQualite(String qualite);
+    List<Tier>  findByQualite(TypeTier qualite);
 
     @Query(
             """

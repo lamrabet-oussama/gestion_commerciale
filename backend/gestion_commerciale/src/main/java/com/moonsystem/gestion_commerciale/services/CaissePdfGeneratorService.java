@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 
 import com.moonsystem.gestion_commerciale.dto.ReglementDto;
+import com.moonsystem.gestion_commerciale.model.Reglement;
 import org.springframework.stereotype.Service;
 
 import com.lowagie.text.Chunk;
@@ -36,6 +37,10 @@ public class CaissePdfGeneratorService {
 
     private final MesInfoxService mesInfoxService;
 
+    // Variables pour calculer les totaux globaux
+    private BigDecimal totalEspeceGlobal = BigDecimal.ZERO;
+    private BigDecimal totalChequeGlobal = BigDecimal.ZERO;
+
     public CaissePdfGeneratorService(MesInfoxService mesInfoxSrv) {
         this.mesInfoxService = mesInfoxSrv;
     }
@@ -49,6 +54,7 @@ public class CaissePdfGeneratorService {
     private static final Color BLACK = new Color(0, 0, 0);                  // Noir
     private static final Color LIGHT_GRAY = new Color(240, 240, 240);       // Gris clair totaux
     private static final Color BORDER_BLACK = new Color(0, 0, 0);           // Bordures noires
+    private static final Color FOOTER_BLUE = new Color(173, 216, 230);      // Bleu clair pour le footer
 
     @PostConstruct
     public void init() {
@@ -67,6 +73,10 @@ public class CaissePdfGeneratorService {
             throw new IllegalArgumentException("CaisseJourDto ne peut pas être null");
         }
 
+        // Réinitialiser les totaux globaux à chaque génération
+        totalEspeceGlobal = BigDecimal.ZERO;
+        totalChequeGlobal = BigDecimal.ZERO;
+
         Document document = new Document(PageSize.A4, 20, 20, 20, 20);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer = PdfWriter.getInstance(document, baos);
@@ -79,15 +89,16 @@ public class CaissePdfGeneratorService {
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9, BLACK);
         Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8, BLACK);
         Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(128, 0, 0)); // Rouge foncé pour sections
+        Font footerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BLACK);
 
         // En-tête exacte de l'image
         addExactHeader(document, caisseDto, titleFont, headerFont);
 
-        // Tableau principal avec toutes les sections
+        // Tableau principal avec toutes les sections dans l'ordre modifié
         addCompleteMainTable(document, caisseDto, headerFont, normalFont, smallFont, sectionFont);
 
-        // Totaux finaux avec 3 colonnes comme spécifié
-        addFinalTotalsGrid(document, caisseDto, headerFont);
+        // Footer avec totaux finaux
+        addFooterTotals(document, footerFont);
 
         document.close();
         return baos.toByteArray();
@@ -154,25 +165,25 @@ public class CaissePdfGeneratorService {
         // En-têtes du tableau
         addMainTableHeaders(mainTable, headerFont);
 
-        // Section 1: Vente Du Jour
+        // ORDRE MODIFIÉ : 1. Vente Du Jour (d'abord)
         if (hasBonsVente(caisseDto)) {
             addSectionHeader(mainTable, "Vente Du Jour", sectionFont);
             addBonsVenteData(mainTable, caisseDto, normalFont, smallFont);
             addTotalBonsVente(mainTable, caisseDto, normalFont);
         }
 
-        // Section 2: Règlements de Crédits
-        if (hasReglements(caisseDto)) {
-            addSectionHeader(mainTable, "Règlements de Crédits", sectionFont);
-            addReglementsData(mainTable, caisseDto, normalFont, smallFont);
-            addTotalReglements(mainTable, caisseDto, normalFont);
-        }
-
-        // Section 3: Liste Des Achats
+        // 2. Liste Des Achats (ensuite)
         if (hasBonsAchat(caisseDto)) {
             addSectionHeader(mainTable, "Liste Des Achats", sectionFont);
             addBonsAchatData(mainTable, caisseDto, normalFont, smallFont);
             addTotalBonsAchat(mainTable, caisseDto, normalFont);
+        }
+
+        // 3. Règlements de Crédits (en dernier)
+        if (hasReglements(caisseDto)) {
+            addSectionHeader(mainTable, "Règlements de Crédits", sectionFont);
+            addReglementsData(mainTable, caisseDto, normalFont, smallFont);
+            addTotalReglements(mainTable, caisseDto, normalFont);
         }
 
         mainTable.setSpacingAfter(10);
@@ -213,9 +224,9 @@ public class CaissePdfGeneratorService {
 
     private void addReglementsData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
         if (caisseDto.getReglements() != null && !caisseDto.getReglements().isEmpty()) {
-            for (ReglementDto reglement : caisseDto.getReglements()) {
+            for (Reglement reglement : caisseDto.getReglements()) {
                 addDataRow(table,
-                        getReglementNumero(reglement).toString(),
+                        getReglementNumeroFormate(reglement), // MODIFIÉ : utilise le format "Reg N°XX"
                         getReglementMontant(reglement),
                         getReglementEspece(reglement),
                         getReglementCheque(reglement),
@@ -241,6 +252,10 @@ public class CaissePdfGeneratorService {
                 totalVenteCredit = totalVenteCredit.add(getBonCredit(bon));
             }
         }
+
+        // Ajouter aux totaux globaux
+        totalEspeceGlobal = totalEspeceGlobal.add(totalVenteEspece);
+        totalChequeGlobal = totalChequeGlobal.add(totalVenteCheque);
 
         addTotalRow(table, "Total Vte:",
                 totalVenteMontant,
@@ -279,12 +294,16 @@ public class CaissePdfGeneratorService {
         BigDecimal totalReglementCheque = BigDecimal.ZERO;
 
         if (caisseDto.getReglements() != null) {
-            for (ReglementDto reglement : caisseDto.getReglements()) {
+            for (Reglement reglement : caisseDto.getReglements()) {
                 totalReglementMontant = totalReglementMontant.add(getReglementMontant(reglement));
                 totalReglementEspece = totalReglementEspece.add(getReglementEspece(reglement));
                 totalReglementCheque = totalReglementCheque.add(getReglementCheque(reglement));
             }
         }
+
+        // Ajouter aux totaux globaux
+        totalEspeceGlobal = totalEspeceGlobal.add(totalReglementEspece);
+        totalChequeGlobal = totalChequeGlobal.add(totalReglementCheque);
 
         addTotalRow(table, "TOTAL Règlements:",
                 totalReglementMontant,
@@ -292,6 +311,64 @@ public class CaissePdfGeneratorService {
                 totalReglementCheque,
                 BigDecimal.ZERO,
                 "", normalFont);
+    }
+
+    /**
+     * Ajoute un footer avec les totaux globaux d'espèces et de chèques
+     */
+    private void addFooterTotals(Document document, Font footerFont) throws DocumentException {
+        // Espacement avant le footer
+        document.add(new Paragraph(" "));
+
+        // Créer un tableau pour le footer avec 2 colonnes
+        PdfPTable footerTable = new PdfPTable(2);
+        footerTable.setWidthPercentage(60); // Largeur réduite pour centrer
+        footerTable.setHorizontalAlignment(Element.ALIGN_CENTER);
+        footerTable.setWidths(new float[]{50f, 50f});
+        footerTable.setSpacingBefore(10);
+
+        // Cellule Total Espèces
+        PdfPCell cellTotalEspece = new PdfPCell(new Phrase("Total Espèces: " + formatMontantVirgule(totalEspeceGlobal), footerFont));
+        cellTotalEspece.setBackgroundColor(FOOTER_BLUE);
+        cellTotalEspece.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellTotalEspece.setPadding(8);
+        cellTotalEspece.setBorder(Rectangle.BOX);
+        cellTotalEspece.setBorderWidth(2);
+        cellTotalEspece.setBorderColor(BLACK);
+
+        // Cellule Total Chèques
+        PdfPCell cellTotalCheque = new PdfPCell(new Phrase("Total Chèques: " + formatMontantVirgule(totalChequeGlobal), footerFont));
+        cellTotalCheque.setBackgroundColor(FOOTER_BLUE);
+        cellTotalCheque.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cellTotalCheque.setPadding(8);
+        cellTotalCheque.setBorder(Rectangle.BOX);
+        cellTotalCheque.setBorderWidth(2);
+        cellTotalCheque.setBorderColor(BLACK);
+
+        footerTable.addCell(cellTotalEspece);
+        footerTable.addCell(cellTotalCheque);
+
+        document.add(footerTable);
+
+        // Ligne de total général
+        BigDecimal totalGeneral = totalEspeceGlobal.add(totalChequeGlobal);
+        if (totalGeneral.compareTo(BigDecimal.ZERO) > 0) {
+            PdfPTable totalGeneralTable = new PdfPTable(1);
+            totalGeneralTable.setWidthPercentage(40);
+            totalGeneralTable.setHorizontalAlignment(Element.ALIGN_CENTER);
+            totalGeneralTable.setSpacingBefore(5);
+
+            PdfPCell cellTotalGeneral = new PdfPCell(new Phrase("TOTAL GÉNÉRAL: " + formatMontantVirgule(totalGeneral), footerFont));
+            cellTotalGeneral.setBackgroundColor(new Color(255, 255, 200)); // Jaune clair
+            cellTotalGeneral.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cellTotalGeneral.setPadding(8);
+            cellTotalGeneral.setBorder(Rectangle.BOX);
+            cellTotalGeneral.setBorderWidth(2);
+            cellTotalGeneral.setBorderColor(BLACK);
+
+            totalGeneralTable.addCell(cellTotalGeneral);
+            document.add(totalGeneralTable);
+        }
     }
 
     // === Méthodes utilitaires pour BonSortieDto ===
@@ -319,36 +396,50 @@ public class CaissePdfGeneratorService {
         return bon != null && bon.getNomTier() != null ? bon.getNomTier() : "";
     }
 
-    // === Méthodes utilitaires pour ReglementDto ===
-    private Integer getReglementNumero(ReglementDto reglement) {
-        return reglement != null && reglement.getId() != null ? reglement.getId() : 0;
+    // === Méthodes utilitaires pour Reglement ===
+    private Integer getReglementNumero(Reglement reglement) {
+        return reglement != null && reglement.getIdRegl() != null ? reglement.getIdRegl() : 0;
     }
 
-    private BigDecimal getReglementMontant(ReglementDto reglement) {
+    // NOUVELLE MÉTHODE : formatage du numéro de règlement
+    private String getReglementNumeroFormate(Reglement reglement) {
+        if (reglement == null || reglement.getIdRegl() == null) {
+            return "Reg N°0";
+        }
+        return "Reg N°" + reglement.getIdRegl();
+    }
+
+    private BigDecimal getReglementMontant(Reglement reglement) {
         if (reglement == null) return BigDecimal.ZERO;
 
-        // Calculer le montant total du règlement
-        BigDecimal montantTotal = BigDecimal.ZERO;
-        if (reglement.getEspece() != null) {
-            montantTotal = montantTotal.add(reglement.getEspece());
-        }
-        if (reglement.getCheque() != null) {
-            montantTotal = montantTotal.add(reglement.getCheque());
+        // Si l'attribut reglement est null, prendre la somme de espèce et chèque
+        if (reglement.getTotal() == null) {
+            BigDecimal montantTotal = BigDecimal.ZERO;
+
+            if (reglement.getEspece() != null) {
+                montantTotal = montantTotal.add(reglement.getEspece());
+            }
+            if (reglement.getCheque() != null) {
+                montantTotal = montantTotal.add(reglement.getCheque());
+            }
+
+            return montantTotal;
         }
 
-        return montantTotal;
+        // Si l'attribut reglement existe, l'utiliser
+        return reglement.getTotal();
     }
 
-    private BigDecimal getReglementEspece(ReglementDto reglement) {
+    private BigDecimal getReglementEspece(Reglement reglement) {
         return reglement != null && reglement.getEspece() != null ? reglement.getEspece() : BigDecimal.ZERO;
     }
 
-    private BigDecimal getReglementCheque(ReglementDto reglement) {
+    private BigDecimal getReglementCheque(Reglement reglement) {
         return reglement != null && reglement.getCheque() != null ? reglement.getCheque() : BigDecimal.ZERO;
     }
 
-    private String getReglementDetails(ReglementDto reglement) {
-        return reglement != null && reglement.getDetailsCheque() != null ? reglement.getDetailsCheque() : "";
+    private String getReglementDetails(Reglement reglement) {
+        return reglement != null && reglement.getDet_cheque() != null ? reglement.getDet_cheque() : "";
     }
 
     private void addMainTableHeaders(PdfPTable table, Font headerFont) {
@@ -483,49 +574,6 @@ public class CaissePdfGeneratorService {
         table.addCell(cellDetails);
     }
 
-    private void addFinalTotalsGrid(Document document, CaisseJourDto caisseDto, Font headerFont)
-            throws DocumentException {
-
-        // Utiliser directement les totaux calculés du DTO
-        BigDecimal totalEspeceFinal = safeGetBigDecimal(caisseDto.getTotalEspece());
-        BigDecimal totalChequeFinal = safeGetBigDecimal(caisseDto.getTotalCheque());
-        BigDecimal totalCreditFinal = safeGetBigDecimal(caisseDto.getTotalCredit());
-
-        // Grille finale avec 6 colonnes (3 paires label/valeur)
-        PdfPTable totalGrid = new PdfPTable(6);
-        totalGrid.setWidthPercentage(100);
-        totalGrid.setWidths(new float[]{16.67f, 16.67f, 16.67f, 16.67f, 16.67f, 16.67f});
-
-        // Ligne : Total Espèce / Total Chèque / Total Crédit
-        addFinalTotalCell(totalGrid, "Total Espèce :", formatMontantVirgule(totalEspeceFinal), headerFont);
-        addFinalTotalCell(totalGrid, "Total Chèque :", formatMontantVirgule(totalChequeFinal), headerFont);
-        addFinalTotalCell(totalGrid, "Total Crédit :", formatMontantVirgule(totalCreditFinal), headerFont);
-
-        totalGrid.setSpacingBefore(10);
-        document.add(totalGrid);
-    }
-
-    private void addFinalTotalCell(PdfPTable table, String label, String value, Font font) {
-        // Label
-        PdfPCell labelCell = new PdfPCell(new Phrase(label, font));
-        labelCell.setBackgroundColor(LIGHT_GRAY);
-        labelCell.setPadding(8);
-        labelCell.setBorder(Rectangle.BOX);
-        labelCell.setBorderWidth(1);
-        labelCell.setBorderColor(BLACK);
-        table.addCell(labelCell);
-
-        // Value
-        PdfPCell valueCell = new PdfPCell(new Phrase(value, font));
-        valueCell.setBackgroundColor(LIGHT_GRAY);
-        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        valueCell.setPadding(8);
-        valueCell.setBorder(Rectangle.BOX);
-        valueCell.setBorderWidth(1);
-        valueCell.setBorderColor(BLACK);
-        table.addCell(valueCell);
-    }
-
     // === Méthodes utilitaires de formatage ===
     private BigDecimal safeGetBigDecimal(BigDecimal value) {
         return value != null ? value : BigDecimal.ZERO;
@@ -540,7 +588,7 @@ public class CaissePdfGeneratorService {
 
     private String formatMontantVirgule(BigDecimal montant) {
         if (montant == null) {
-            return "0,00";
+            return "0,00 DH";
         }
         return String.format("%.2f", montant.doubleValue()).replace(".", ",");
     }

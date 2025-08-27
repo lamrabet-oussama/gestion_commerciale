@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.moonsystem.gestion_commerciale.model.Reglement;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,5 +34,5 @@ public class CaisseJourDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCredit;
     private String nomUser;
-    private List<ReglementDto> reglements;
+    private List<Reglement> reglements;
 }

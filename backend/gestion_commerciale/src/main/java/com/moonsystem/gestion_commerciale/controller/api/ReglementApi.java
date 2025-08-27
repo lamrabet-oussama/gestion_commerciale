@@ -2,8 +2,13 @@ package com.moonsystem.gestion_commerciale.controller.api;
 
 import com.moonsystem.gestion_commerciale.dto.ReglementDto;
 import com.moonsystem.gestion_commerciale.dto.ReglementResponseDto;
+import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.moonsystem.gestion_commerciale.utils.Constants.APP_ROOT;
@@ -26,7 +31,15 @@ public interface ReglementApi {
     ReglementDto updateReglement(@RequestBody ReglementDto dto);
 
     @Operation(summary = "Supprimer un règlement", description = "Supprime un règlement par son identifiant.")
-    @DeleteMapping(value = APP_ROOT + "/reglements/delete/{id}")
+    @DeleteMapping(value = APP_ROOT + "/reglement/delete/{id}")
     void deleteReglement(@PathVariable("id") Integer id);
+    @GetMapping(value = APP_ROOT + "/reglements/download", produces = "application/pdf")
+    ResponseEntity<byte[]> downloadReglementPdf(
+            @Parameter(description = "Code utilisateur (optionnel)")
+            @RequestParam(required = false) Integer userCod,
+            @Parameter(description = "Id Tier")
+            @RequestParam
+             Integer tierId
+    );
 }
 

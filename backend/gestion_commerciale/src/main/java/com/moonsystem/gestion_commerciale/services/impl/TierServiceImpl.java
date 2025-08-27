@@ -154,7 +154,7 @@ public class TierServiceImpl implements TierService {
     }
 
     @Override
-    public List<TierDto> findTierByQualite(String qualite) {
+    public List<TierDto> findTierByQualite(TypeTier qualite) {
         return this.tierRepository.findByQualite(qualite).stream()
                 .map(TierDto::fromEntity).collect(Collectors.toList());
     }

@@ -52,16 +52,16 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
 
     @Query("""
     SELECT r FROM Reglement r
-    WHERE (:idtier IS NULL OR r.tier.id = :idtier)
-    AND (:iduser IS NULL OR r.user.cod= :iduser)
+    WHERE (:tier IS NULL OR r.tier = :tier)
+    AND (:user IS NULL OR r.user= :user)
       
     ORDER BY r.datRegl DESC
     
 """)
 
     List<Reglement> findByTierAndUser(
-            @Param("idtier") Integer idTier,
-            @Param("iduser") Integer idUser
+            @Param("tier") Tier tier,
+            @Param("user") User user
 
             );
 
@@ -74,4 +74,15 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     List<Reglement> findReglementByTierId(@Param("tierId") Integer tierId);
 
     Optional<Reglement> findReglementByIdRegl(Integer id);
+
+    @Query("""
+    SELECT r FROM Reglement r
+    WHERE (:user IS NULL OR r.user = :user)
+      AND (:dateDebut IS NULL OR r.datRegl >= :dateDebut)
+      AND (:dateFin IS NULL OR r.datRegl <= :dateFin)
+      
+    ORDER BY r.datRegl DESC
+    
+""")
+    List<Reglement> findByDate(LocalDateTime dateDebut, LocalDateTime dateFin,User user);
 }

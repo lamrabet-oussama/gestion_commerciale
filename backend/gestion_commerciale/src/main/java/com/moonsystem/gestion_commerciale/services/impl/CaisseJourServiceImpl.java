@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
+import com.moonsystem.gestion_commerciale.model.Reglement;
+import com.moonsystem.gestion_commerciale.repository.ReglementRepository;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,18 +35,19 @@ import com.moonsystem.gestion_commerciale.services.CaissePdfGeneratorService;
 @Service
 public class CaisseJourServiceImpl implements CaisseJourService {
 
+    private final ReglementRepository reglementRepository;
     private MesInfoxServiceImp mesInfoxServiceImp;
 
     private BonsortiRepository bonsortiRepository;
     private UserRepository userRepository;
     private CaissePdfGeneratorService pdfGeneratorService;
 
-    public CaisseJourServiceImpl(BonsortiRepository bonsortiRepository, UserRepository userRepository, CaissePdfGeneratorService pdfGeneratorService, MesInfoxServiceImp mesInfoxServiceImp) {
+    public CaisseJourServiceImpl(BonsortiRepository bonsortiRepository, UserRepository userRepository, CaissePdfGeneratorService pdfGeneratorService, MesInfoxServiceImp mesInfoxServiceImp, ReglementRepository reglementRepository) {
         this.bonsortiRepository = bonsortiRepository;
         this.userRepository = userRepository;
         this.pdfGeneratorService = pdfGeneratorService;
         this.mesInfoxServiceImp = mesInfoxServiceImp;
-
+        this.reglementRepository = reglementRepository;
     }
 
     @Override
@@ -91,11 +94,13 @@ public class CaisseJourServiceImpl implements CaisseJourService {
         List<BonSortieDto> bonsAchat = bonsGroupes.getOrDefault("ACHAT", Collections.emptyList());
         List<BonSortieDto> bonsVentes = bonsGroupes.getOrDefault("VENTE", Collections.emptyList());
 
+        List<Reglement> reglements=reglementRepository.findByDate(debutJour,finJour,null);
         return CaisseJourDto.builder()
                 .date(jour)
                 .nomUser(username)
                 .bonsAchat(bonsAchat)
                 .bonsVente(bonsVentes)
+                .reglements(reglements)
                 .totalMontant(totaux.getTotalMontant())
                 .totalEspece(totaux.getTotalEspece())
                 .totalCheque(totaux.getTotalCheque())

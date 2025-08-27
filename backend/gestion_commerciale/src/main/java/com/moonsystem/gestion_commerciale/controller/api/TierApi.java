@@ -222,9 +222,35 @@ public interface TierApi {
     )
     Integer numberOfTiers();
 
-    @GetMapping(value = APP_ROOT+"/tiers/client")
+
+    @GetMapping(value = APP_ROOT + "/tiers/client")
+    @Operation(
+            summary = "Récupérer tous les clients",
+            description = "Retourne la liste de tous les tiers ayant le rôle CLIENT."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Liste des clients récupérée avec succès",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = TierDto.class))
+            )
+    )
     List<TierDto> getAllClient();
 
-    @GetMapping(value = APP_ROOT+"/tiers/fournisseur")
+    @GetMapping(value = APP_ROOT + "/tiers/fournisseur")
+    @Operation(
+            summary = "Récupérer tous les fournisseurs",
+            description = "Retourne la liste de tous les tiers ayant le rôle FOURNISSEUR."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Liste des fournisseurs récupérée avec succès",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = TierDto.class))
+            )
+    )
     List<TierDto> getAllFournisseur();
+
 }

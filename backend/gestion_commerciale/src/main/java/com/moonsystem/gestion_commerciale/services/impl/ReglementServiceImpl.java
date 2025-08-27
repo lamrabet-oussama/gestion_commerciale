@@ -4,6 +4,7 @@ import com.moonsystem.gestion_commerciale.dto.ReglementDto;
 import com.moonsystem.gestion_commerciale.dto.ReglementResponseDto;
 import com.moonsystem.gestion_commerciale.exception.EntityNotFoundException;
 import com.moonsystem.gestion_commerciale.exception.ErrorCodes;
+import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
 import com.moonsystem.gestion_commerciale.exception.InvalidOperationException;
 import com.moonsystem.gestion_commerciale.model.Bonsorti;
 import com.moonsystem.gestion_commerciale.model.Reglement;
@@ -14,14 +15,18 @@ import com.moonsystem.gestion_commerciale.repository.BonsortiRepository;
 import com.moonsystem.gestion_commerciale.repository.ReglementRepository;
 import com.moonsystem.gestion_commerciale.repository.TierRepository;
 import com.moonsystem.gestion_commerciale.repository.UserRepository;
+import com.moonsystem.gestion_commerciale.services.ReglementGeneratePdf;
 import com.moonsystem.gestion_commerciale.services.ReglementService;
 import com.moonsystem.gestion_commerciale.utils.BeanCopyUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +38,7 @@ public class ReglementServiceImpl implements ReglementService {
     private final BonsortiRepository bonsortiRepository;
     private final UserRepository userRepository;
     private final TierRepository tierRepository;
-
+    private final ReglementGeneratePdf pdfGenerator;
 
     @Transactional
     @Override
@@ -54,78 +59,94 @@ public class ReglementServiceImpl implements ReglementService {
                         ErrorCodes.TIER_NOT_FOUND
                 ));
 
-        if (dto.getCheque() != null && dto.getCheque().compareTo(BigDecimal.ZERO) > 0 && dto.getDetailsCheque() == null) {
+        // 3) Validations des chèques
+        if (dto.getCheque() != null && dto.getCheque().compareTo(BigDecimal.ZERO) > 0 &&
+                (dto.getDetailsCheque() == null || dto.getDetailsCheque().trim().isEmpty())) {
             throw new InvalidOperationException(
                     "Détails de chèque sont obligatoires",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Détails Chèque")
             );
         }
-        if ((dto.getDetailsCheque() != null && !dto.getDetailsCheque().isEmpty())
-                && dto.getCheque() == null) {
+        if ((dto.getDetailsCheque() != null && !dto.getDetailsCheque().trim().isEmpty())
+                && (dto.getCheque() == null || dto.getCheque().compareTo(BigDecimal.ZERO) <= 0)) {
             throw new InvalidOperationException(
-                    "Montant Chèque n'est pas défini",
+                    "Montant Chèque n'est pas défini ou invalide",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Montant Chèque n'est pas défini")
-            );        }
-        // 4) Sécuriser les BigDecimal
-        BigDecimal totalCredit = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
-        BigDecimal espece = dto.getEspece() == null ? BigDecimal.ZERO : dto.getEspece();
-        BigDecimal cheque = dto.getCheque()==null  ? BigDecimal.ZERO: dto.getCheque();
-        BigDecimal reglement = espece.add(cheque);
-
-        // 5) Vérification du solde
-        if (totalCredit.compareTo(BigDecimal.ZERO) == 0) {
-            throw new InvalidOperationException(
-                    "Le solde est déjà 0",
-                    ErrorCodes.BAD_CREDENTIALS,
-                    List.of("Solde à 0")
             );
         }
 
-        // 6) Ajuster le signe du règlement en fonction de la nature du solde
-        if (totalCredit.compareTo(BigDecimal.ZERO) > 0) {
-            // Le client doit de l'argent → règlement diminue la dette
-            reglement = reglement.multiply(BigDecimal.valueOf(-1));
+        // 4) Sécuriser les BigDecimal
+        BigDecimal currentSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
+        BigDecimal espece = dto.getEspece() == null ? BigDecimal.ZERO : dto.getEspece();
+        BigDecimal cheque = dto.getCheque() == null ? BigDecimal.ZERO : dto.getCheque();
+        BigDecimal totalReglement = espece.add(cheque);
+
+        // Vérifier que le règlement n'est pas nul
+        if (totalReglement.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidOperationException(
+                    "Le montant du règlement doit être supérieur à zéro",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Montant règlement")
+            );
         }
-        // Si le solde est négatif (fournisseur doit de l'argent), règlement augmente le solde
 
-        // 7) Nouveau solde
-        BigDecimal newSolde = totalCredit.add(reglement);
+        // 5) Calculer le nouveau solde AVANT d'ajuster le signe du règlement
+        BigDecimal newSolde;
+        if (currentSolde.compareTo(BigDecimal.ZERO) >= 0) {
+            // Solde positif ou nul (client doit de l'argent) → règlement diminue la dette
+            newSolde = currentSolde.subtract(totalReglement);
+        } else {
+            // Solde négatif (fournisseur doit de l'argent) → règlement augmente le solde
+            newSolde = currentSolde.add(totalReglement);
+        }
 
-        // 8) Création de l'entité Reglement avec etat = true
+        // 6) Ajuster le signe du règlement en fonction du solde ORIGINAL pour l'enregistrement
+        BigDecimal reglementToSave, especeToSave, chequeToSave;
+        if (currentSolde.compareTo(BigDecimal.ZERO) < 0) {
+            // Solde négatif → enregistrer en négatif
+            reglementToSave = totalReglement.multiply(BigDecimal.valueOf(-1));
+            especeToSave = espece.multiply(BigDecimal.valueOf(-1));
+            chequeToSave = cheque.multiply(BigDecimal.valueOf(-1));
+        } else {
+            // Solde positif ou nul → enregistrer en positif
+            reglementToSave = totalReglement;
+            especeToSave = espece;
+            chequeToSave = cheque;
+        }
+
+        // 7) Création de l'entité Reglement
         Reglement reg = Reglement.builder()
-                .espece(espece)
-                .cheque(cheque)
-                .total(reglement)
+                .espece(especeToSave)
+                .cheque(chequeToSave)
+                .total(reglementToSave)
                 .det_cheque(dto.getDetailsCheque())
                 .datRegl(dto.getDatRegl() == null ? LocalDateTime.now() : dto.getDatRegl())
                 .tier(tier)
                 .user(user)
                 .build();
 
-        // 9) Mise à jour du tier
+        // 8) Mise à jour du tier
         tier.setSolde(newSolde);
 
-        // 10) Persistance
+        // 9) Persistance
         tierRepository.saveAndFlush(tier);
         Reglement savedReg = reglementRepository.save(reg);
 
         return ReglementDto.toDto(savedReg);
     }
 
-
     @Transactional
     public void deleteReglement(Integer regId) {
-
-        Reglement reg= reglementRepository.findReglementByIdRegl(regId).orElseThrow(
-
-                ()-> new EntityNotFoundException(
+        // 1) Récupérer le règlement
+        Reglement reg = reglementRepository.findReglementByIdRegl(regId)
+                .orElseThrow(() -> new EntityNotFoundException(
                         "Reglement non trouvé",
                         List.of("Reglement not found"),
                         ErrorCodes.REGL_NOT_FOUND
-                )
-        );
+                ));
+
         // 2) Vérifier le tier
         Tier tier = tierRepository.findById(reg.getTier().getId())
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -134,31 +155,26 @@ public class ReglementServiceImpl implements ReglementService {
                         ErrorCodes.TIER_NOT_FOUND
                 ));
 
+        // 3) Récupérer les valeurs du règlement
+        BigDecimal currentSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
+        BigDecimal reglementEspece = reg.getEspece() == null ? BigDecimal.ZERO : reg.getEspece();
+        BigDecimal reglementCheque = reg.getCheque() == null ? BigDecimal.ZERO : reg.getCheque();
+        BigDecimal totalReglement = reglementEspece.add(reglementCheque);
 
-
-
-        // 4) Sécuriser les BigDecimal
-        BigDecimal totalCredit = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
-        BigDecimal espece = reg.getEspece() == null ? BigDecimal.ZERO : reg.getEspece();
-        BigDecimal cheque = reg.getCheque() == null ? BigDecimal.ZERO : reg.getCheque();
-        BigDecimal reglement = espece.add(cheque);
-
-
-
-        // 7) Nouveau solde
-        if (totalCredit.compareTo(BigDecimal.ZERO) > 0) {
-            // Si lors de l'ajout on avait mis le règlement en négatif
-            reglement = reglement.multiply(BigDecimal.valueOf(-1));
+        // 4) Calculer le nouveau solde en annulant l'effet du règlement
+        BigDecimal newSolde;
+        if (totalReglement.compareTo(BigDecimal.ZERO) > 0) {
+            // Règlement positif → on l'avait soustrait du solde → on le rajoute
+            newSolde = currentSolde.add(totalReglement);
+        } else {
+            // Règlement négatif → on l'avait ajouté au solde → on le soustrait
+            newSolde = currentSolde.subtract(totalReglement.abs());
         }
-        BigDecimal newSolde = totalCredit.subtract(reglement);
+
+        // 5) Suppression et mise à jour
         reglementRepository.delete(reg);
-
-        // 9) Mise à jour du tier
         tier.setSolde(newSolde);
-
-        // 10) Persistance
         tierRepository.saveAndFlush(tier);
-
     }
 
     @Transactional
@@ -179,64 +195,82 @@ public class ReglementServiceImpl implements ReglementService {
                         ErrorCodes.TIER_NOT_FOUND
                 ));
 
-        if (reglementDto.getCheque() != null && reglementDto.getCheque().compareTo(BigDecimal.ZERO) > 0 && reglementDto.getDetailsCheque() == null) {
+        // 3) Validations des chèques
+        if (reglementDto.getCheque() != null && reglementDto.getCheque().compareTo(BigDecimal.ZERO) > 0 &&
+                (reglementDto.getDetailsCheque() == null || reglementDto.getDetailsCheque().trim().isEmpty())) {
             throw new InvalidOperationException(
                     "Détails de chèque sont obligatoires",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Détails Chèque")
             );
         }
-        if ((reglementDto.getDetailsCheque() != null && !reglementDto.getDetailsCheque().isEmpty())
-                && reglementDto.getCheque() == null) {
+        if ((reglementDto.getDetailsCheque() != null && !reglementDto.getDetailsCheque().trim().isEmpty())
+                && (reglementDto.getCheque() == null || reglementDto.getCheque().compareTo(BigDecimal.ZERO) <= 0)) {
             throw new InvalidOperationException(
-                    "Montant Chèque n'est pas défini",
+                    "Montant Chèque n'est pas défini ou invalide",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Montant Chèque n'est pas défini")
-            );        }
-        // 5) ÉTAPE 1 : Annuler l'impact de l'ancien règlement
+            );
+        }
+
+        // 4) ÉTAPE 1 : Annuler l'impact de l'ancien règlement
         BigDecimal currentSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
         BigDecimal oldEspece = existingRegl.getEspece() == null ? BigDecimal.ZERO : existingRegl.getEspece();
         BigDecimal oldCheque = existingRegl.getCheque() == null ? BigDecimal.ZERO : existingRegl.getCheque();
-        BigDecimal oldReglement = oldEspece.add(oldCheque);
+        BigDecimal oldTotal = oldEspece.add(oldCheque);
 
-        // Annuler l'ancien règlement (logique inverse de ajouterReglement)
+        // Annuler l'ancien règlement
         BigDecimal soldeApresAnnulation;
-        if (currentSolde.subtract(oldReglement).compareTo(BigDecimal.ZERO) >= 0) {
-            // Le solde original était positif, on avait mis le règlement en négatif
-            soldeApresAnnulation = currentSolde.add(oldReglement);
+        if (oldTotal.compareTo(BigDecimal.ZERO) > 0) {
+            // Ancien règlement positif → on l'avait soustrait → on le rajoute
+            soldeApresAnnulation = currentSolde.add(oldTotal);
         } else {
-            // Le solde original était négatif, le règlement était positif
-            soldeApresAnnulation = currentSolde.subtract(oldReglement);
+            // Ancien règlement négatif → on l'avait ajouté → on le soustrait
+            soldeApresAnnulation = currentSolde.subtract(oldTotal.abs());
         }
 
-        // 6) ÉTAPE 2 : Appliquer le nouveau règlement
+        // 5) ÉTAPE 2 : Valider et calculer le nouveau règlement
         BigDecimal newEspece = reglementDto.getEspece() == null ? BigDecimal.ZERO : reglementDto.getEspece();
         BigDecimal newCheque = reglementDto.getCheque() == null ? BigDecimal.ZERO : reglementDto.getCheque();
-        BigDecimal newReglement = newEspece.add(newCheque);
+        BigDecimal newTotal = newEspece.add(newCheque);
 
         // Vérifier que le nouveau règlement n'est pas nul
-        if (newReglement.compareTo(BigDecimal.ZERO) == 0) {
+        if (newTotal.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidOperationException(
-                    "Le montant du règlement ne peut pas être nul",
+                    "Le montant du règlement doit être supérieur à zéro",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Montant règlement")
             );
         }
 
-        // Appliquer la logique de ajouterReglement pour le nouveau montant
+        // 6) Calculer le nouveau solde final
         BigDecimal finalSolde;
-        if (soldeApresAnnulation.compareTo(BigDecimal.ZERO) > 0) {
-            // Le client doit de l'argent → règlement diminue la dette
-            finalSolde = soldeApresAnnulation.add(newReglement.multiply(BigDecimal.valueOf(-1)));
+        if (soldeApresAnnulation.compareTo(BigDecimal.ZERO) >= 0) {
+            // Solde positif ou nul → règlement diminue la dette
+            finalSolde = soldeApresAnnulation.subtract(newTotal);
         } else {
-            // Fournisseur doit de l'argent → règlement augmente le solde
-            finalSolde = soldeApresAnnulation.add(newReglement);
+            // Solde négatif → règlement augmente le solde
+            finalSolde = soldeApresAnnulation.add(newTotal);
         }
 
-        // 7) Mettre à jour l'entité Reglement
-        existingRegl.setEspece(newEspece);
-        existingRegl.setCheque(newCheque);
-        existingRegl.setTotal(newReglement);
+        // 7) Ajuster le signe du règlement pour l'enregistrement
+        BigDecimal especeToSave, chequeToSave, totalToSave;
+        if (soldeApresAnnulation.compareTo(BigDecimal.ZERO) < 0) {
+            // Solde négatif → enregistrer en négatif
+            especeToSave = newEspece.multiply(BigDecimal.valueOf(-1));
+            chequeToSave = newCheque.multiply(BigDecimal.valueOf(-1));
+            totalToSave = newTotal.multiply(BigDecimal.valueOf(-1));
+        } else {
+            // Solde positif ou nul → enregistrer en positif
+            especeToSave = newEspece;
+            chequeToSave = newCheque;
+            totalToSave = newTotal;
+        }
+
+        // 8) Mettre à jour l'entité Reglement
+        existingRegl.setEspece(especeToSave);
+        existingRegl.setCheque(chequeToSave);
+        existingRegl.setTotal(totalToSave);
         existingRegl.setDet_cheque(reglementDto.getDetailsCheque());
 
         // Mettre à jour la date si fournie
@@ -244,39 +278,117 @@ public class ReglementServiceImpl implements ReglementService {
             existingRegl.setDatRegl(reglementDto.getDatRegl());
         }
 
-        // 8) Mise à jour du tier avec le nouveau solde
+        // 9) Mise à jour du tier avec le nouveau solde
         tier.setSolde(finalSolde);
 
-        // 9) Persistance
+        // 10) Persistance
         tierRepository.saveAndFlush(tier);
         Reglement savedRegl = reglementRepository.save(existingRegl);
 
         return ReglementDto.toDto(savedRegl);
     }
 
-    public ReglementResponseDto listerReglements(Integer userId, Integer tierId){
+    public ReglementResponseDto listerReglements(Integer userId, Integer tierId) {
 
-      List<ReglementDto> reglements=  this.reglementRepository.findByTierAndUser(tierId,userId).stream()
-                .map(ReglementDto::toDto).toList();
-        BigDecimal totalEspece=BigDecimal.ZERO;
-        BigDecimal totalCheque=BigDecimal.ZERO;
-      reglements.forEach(
-              reg->{
-                  totalEspece.add(reg.getEspece());
-                  totalCheque.add(reg.getCheque());
-              }
-      );
+        // 1) Vérifier l'utilisateur
+        User user = userRepository.findByCod(userId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Utilisateur non trouvé",
+                        List.of("User not found"),
+                        ErrorCodes.USER_NOT_FOUND
+                ));
 
-      return ReglementResponseDto.builder()
-              .reglements(reglements)
-              .totalEspece(totalEspece)
-              .totalCheque(totalCheque)
-              .build();
+        // 2) Vérifier le tier
+        Tier tier = tierRepository.findById(tierId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Tier non trouvé",
+                        List.of("Tier not found"),
+                        ErrorCodes.TIER_NOT_FOUND
+                ));
+        List<ReglementDto> reglements = this.reglementRepository.findByTierAndUser(tier, user)
+                .stream()
+                .map(ReglementDto::toDto)
+                .toList();
+
+        BigDecimal totalEspece = BigDecimal.ZERO;
+        BigDecimal totalCheque = BigDecimal.ZERO;
+
+        for (ReglementDto reg : reglements) {
+            BigDecimal espece = reg.getEspece() == null ? BigDecimal.ZERO : reg.getEspece();
+            BigDecimal cheque = reg.getCheque() == null ? BigDecimal.ZERO : reg.getCheque();
+            totalEspece = totalEspece.add(espece);
+            totalCheque = totalCheque.add(cheque);
+        }
+
+        return ReglementResponseDto.builder()
+                .reglements(reglements)
+                .totalEspece(totalEspece)
+                .totalCheque(totalCheque)
+                .build();
     }
 
+    @Override
+    public ResponseEntity<byte[]> downloadRegPdf(Integer userCod, Integer tierId) {
+        try {
+            User user = null;
+            // 1) Vérifier l'utilisateur
+            if(userCod != null) {
+                user = userRepository.findByCod(userCod)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                "Utilisateur non trouvé",
+                                List.of("User not found"),
+                                ErrorCodes.USER_NOT_FOUND
+                        ));
+            }
+
+            // 2) Vérifier le tier
+            Tier tier = tierRepository.findById(tierId)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Tier non trouvé",
+                            List.of("Tier not found"),
+                            ErrorCodes.TIER_NOT_FOUND
+                    ));
+
+            // 3) Récupérer les règlements
+            List<Reglement> reglements = this.reglementRepository.findByTierAndUser(tier, user);
 
 
+            // 5) Nettoyer les données nulles dans les règlements
+            reglements.forEach(reglement -> {
+                if (reglement.getEspece() == null) {
+                    reglement.setEspece(BigDecimal.ZERO);
+                }
+                if (reglement.getCheque() == null) {
+                    reglement.setCheque(BigDecimal.ZERO);
+                }
+                if (reglement.getTotal() == null) {
+                    // Calculer le total si il est null
+                    reglement.setTotal(reglement.getEspece().add(reglement.getCheque()));
+                }
+            });
 
+            // 6) Générer le PDF
+            byte[] pdfBytes = pdfGenerator.generatePdf(reglements);
 
+            // 7) Créer un nom de fichier
+            String fileName = "reglements_" + tier.getNom().replaceAll("[^a-zA-Z0-9]", "_") + "_" +
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".pdf";
 
-}
+            // 8) Configurer les headers HTTP
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(ContentDisposition.inline().filename(fileName).build());
+            headers.setContentLength(pdfBytes.length);
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (EntityNotFoundException e) {
+            throw e; // Relancer les exceptions métier
+        } catch (Exception e) {
+            throw new InvalidEntityException(
+                    "Erreur lors de la génération du PDF",
+                    ErrorCodes.INTERNAL_ERROR,
+                    List.of("Une erreur est survenue : " + e.getMessage())
+            );
+        }
+    }}

@@ -3,6 +3,7 @@ package com.moonsystem.gestion_commerciale.services;
 import java.util.List;
 
 import com.moonsystem.gestion_commerciale.dto.TierDto;
+import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import com.moonsystem.gestion_commerciale.utils.PageResponse;
 
 public interface TierService {
@@ -21,7 +22,7 @@ public interface TierService {
 
     List<String> getAllTierType();
 
-    List<TierDto> findTierByQualite(String qualite);
+    List<TierDto> findTierByQualite(TypeTier qualite);
     List<String> getAllVillesMaroc();
 
     List<TierDto> getAllClient();
