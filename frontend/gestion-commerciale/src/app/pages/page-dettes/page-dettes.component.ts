@@ -14,7 +14,7 @@ export class PageDettesComponent implements OnInit{
   totalChiffre:number=0;
   totalCredits:number=0;
   tauxMoyenne:number=0;
-  selectedMvt:string="VENTE";
+  selectedQualite:string="CLIENT";
   selectedYear:number;
   maxYear:number;
 
@@ -29,7 +29,7 @@ export class PageDettesComponent implements OnInit{
 
   getDettes(){
     // Plus besoin de formatage - on passe directement l'année
-    return this.dettesService.getDettes(this.selectedYear, this.selectedMvt).subscribe({
+    return this.dettesService.getDettes(this.selectedYear, this.selectedQualite).subscribe({
       next:results=>{
         this.dettesDto=results.dettes ?? [];
         this.totalCredits=results.totalCredits ?? 0;
@@ -38,7 +38,7 @@ export class PageDettesComponent implements OnInit{
         this.notificationService.success("Succès","Succès");
       },
       error:error=>{
-        this.notificationService.error(error?.error?.errors,"Erreur");
+        this.notificationService.error(error?.error?.message,"Erreur");
       }
     })
   }
@@ -48,8 +48,8 @@ export class PageDettesComponent implements OnInit{
     this.getDettes();
   }
 
-  onMvtSelected(mvt: string): void {
-    this.selectedMvt = mvt;
+  onQualiteSelected(mvt: string): void {
+    this.selectedQualite = mvt;
     this.getDettes();
   }
 }

@@ -1,0 +1,396 @@
+ <div class="page-container">
+  <!-- Header avec recherche -->
+  <div class="card-responsive p-3 p-md-4">
+    <div class="d-flex justify-content-center align-items-center gap-4 mb-4">
+      <h4 class="text-center text-primary mb-0">
+        <i class="fas fa-receipt me-2"></i>Bon d'Achat
+        <span *ngIf="selectedAchatSerie">
+                   N° {{selectedAchatSerie}} créé par {{username}}
+
+        </span>
+      </h4>
+    </div>
+
+    <!-- Alert de succès -->
+
+    <!-- Informations Client et Date -->
+    <form class="p-2 rounded w-sm bg-white">
+      <div class="section-header">
+        <h5 class="section-title text-white">
+          <i class="fas fa-user me-2"></i>Informations Client & Date
+        </h5>
+      </div>
+
+      <div class="row g-3 align-items-end">
+
+        <!-- Date de Vente -->
+        <div class="col-md-6 mb-3">
+          <label for="date_vente" class="form-label">Date de Vente <span class="required">*</span></label>
+          <input
+            type="date"
+            [(ngModel)]="selectedDate"
+            class="form-control"
+            name="dateInput"
+            id="dateInput"
+            [max]="maxDate"
+          />
+        </div>
+
+        <!-- Série -->
+        <div class="col-md-6 mb-3">
+          <label for="serie" class="form-label">Série</label>
+
+          <!-- Bouton toggle -->
+          <button type="button" class="btn btn-sm btn-outline-primary mb-2 m-lg-1"
+                  (click)="toggleSerie()">
+            {{ isSerieDisabled ? 'Activer la sélection' : 'Désactiver la sélection' }}
+          </button>
+
+          <!-- Champ select -->
+          <select
+            class="form-select"
+            id="serie"
+            name="serie"
+            [(ngModel)]="selectedAchatSerie"
+            (ngModelChange)="getBonAchat()"
+            [disabled]="isSerieDisabled"
+          >
+            <option [ngValue]="''" [selected]="true">-- Non Sélectionné --</option>
+            <option *ngFor="let s of allSeris" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Client -->
+        <div class="col-md-6 mb-3">
+          <label for="client" class="form-label">Client <span class="required">*</span></label>
+          <select
+            class="form-select"
+            id="client"
+            name="client"
+            [(ngModel)]="selectedFournisseurId"
+            (ngModelChange)="getTierSolde($event)"
+          >
+            <option [ngValue]="-1" [selected]="true">-- Sélectionnez un client --</option>
+            <option *ngFor="let f of fournisseurs$ | async" [ngValue]="f.id">
+              {{ f.nom }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Solde Client -->
+        <div class="col-md-6 mb-3">
+          <label for="solde" class="form-label">Solde</label>
+          <p class="form-control mb-0 text-danger border-danger btn-outline-danger">{{ soldeClient }}</p>
+        </div>
+
+        <!-- Bouton Supprimer -->
+        <div class="col-12 d-flex justify-content-end">
+          <button type="button" class="btn btn-danger" (click)="supprimer()">
+            <i class="fas fa-eye me-1"></i> Supprimer
+          </button>
+        </div>
+
+      </div>
+
+
+    </form>
+
+    <!-- Informations Article -->
+
+
+    <form class="p-3 rounded w-sm bg-white mt-4">
+
+      <!-- En-tête -->
+      <div class="section-header mb-3">
+        <h5 class="section-title text-white">
+          <i class="fas fa-box me-2"></i> Informations Article
+        </h5>
+      </div>
+
+      <!-- Première ligne -->
+      <div class="row g-3 align-items-end">
+
+
+
+        <!-- Designation prend tout l'espace disponible -->
+        <div class="col mb-3">
+          <label for="des" class="form-label">Designation <span class="required">*</span></label>
+          <select
+            class="form-select"
+            id="des"
+            name="des"
+            [(ngModel)]="selectedDesignation"
+            (ngModelChange)="onDesignationChange($event)"
+          >
+            <option value="" [selected]="true">-- Sélectionnez une designation --</option>
+            <option *ngFor="let des of designations" [value]="des">
+              {{ des }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Choix -->
+        <div class="col-auto mb-3">
+          <label for="choix" class="form-label">Choix <span class="required">*</span></label>
+          <select
+            class="form-select"
+            id="choix"
+            name="choix"
+            [(ngModel)]="selectedChoix"
+            (ngModelChange)="onChoixChange($event)"
+          >
+            <option value="" [selected]="true">-- Sélectionnez un choix --</option>
+            <option *ngFor="let ch of choix" [value]="ch">
+              {{ ch }}
+            </option>
+          </select>
+        </div>
+        <!-- Réf Article -->
+        <div class="col-auto mb-3">
+          <label for="refarticle" class="form-label">Réf Article <span class="required">*</span></label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.ref ?? 0 }}</p>
+        </div>
+
+        <!-- Stock -->
+        <div class="col-auto mb-3">
+          <label for="stockarticle" class="form-label">Stock <span class="required">*</span></label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.stock ?? 0 }}</p>
+        </div>
+
+        <!-- Quantité -->
+        <div class="col-auto mb-3">
+          <label for="quantite" class="form-label">Quantité <span class="required">*</span></label>
+          <input
+            type="number"
+            class="form-control"
+            id="quantite"
+            min="0"
+            name="quantite"
+            [(ngModel)]="articleAddBonDto.quantite"
+            placeholder="0"
+          />
+        </div>
+
+        <!-- Prix Vente -->
+        <div class="col-auto mb-3">
+          <label for="prixvente" class="form-label">Prix Vente <span class="required">*</span></label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prix ?? 0 }}</p>
+        </div>
+
+        <!-- Prix Achat -->
+        <div class="col-auto mb-3">
+          <label for="prixachat" class="form-label">Prix Achat <span class="required">*</span></label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prixAchat ?? 0 }}</p>
+        </div>
+
+        <!-- Prix Min -->
+        <div class="col-auto mb-3">
+          <label for="prixmin" class="form-label">Prix Min <span class="required">*</span></label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prixMin ?? 0 }}</p>
+        </div>
+
+      </div>
+
+      <!-- Bouton Ajouter -->
+      <div class="row mt-3">
+        <div class="col-12 d-flex flex-column flex-sm-row justify-content-end gap-2">
+          <button
+            type="button"
+            class="btn btn-primary btn-responsive"
+            (click)="ajouterListe()"
+          >
+            <i class="fas fa-plus me-1"></i> Ajouter à la liste
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+
+  </div>
+
+  <!-- Section Paiement -->
+  <div class="payment-section">
+    <div class="section-header">
+      <h5 class="section-title text-white">
+        <i class="fas fa-credit-card me-2"></i>Informations de Paiement
+      </h5>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="payment-card">
+          <h6><i class="fas fa-money-check me-2"></i>Paiement par Chèque</h6>
+          <div class="row g-2">
+            <div class="col-12">
+              <label for="cheque" class="form-label">Montant Chèque</label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="cheque" name="cheque" [(ngModel)]="cheque" (ngModelChange)="recalculateTotal()" placeholder="0.00" step="1">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="detailscheque" class="form-label">Détails du Chèque</label>
+              <textarea class="form-control" id="detailscheque" name="detailscheque"
+                        placeholder="N° chèque, banque, date..." rows="2" style="resize: none;"
+                        [(ngModel)]="detailsCheque"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="payment-card">
+          <h6><i class="fas fa-money-bill-wave me-2"></i>Paiement Espèces</h6>
+          <div class="row g-2">
+            <div class="col-12">
+              <label for="espece" class="form-label">Montant Espèces</label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="espece" name="espece" placeholder="0.00" [(ngModel)]="espece" (ngModelChange)="recalculateTotal()" step="1">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="remisetotal" class="form-label">Remise sur bon </label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="remisetotal" name="remisetotal"
+                       placeholder="0.00" [(ngModel)]="remiseTotal"
+                       (ngModelChange)="onRemiseTotalChange($event)" step="1">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="remiseglobale" class="form-label">Remise Globale </label>
+              <div class="input-group">
+                <input type="number"
+                       class="form-control"
+                       [(ngModel)]="remiseGlobale"
+                       disabled
+                       placeholder="0.00">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="totalvente" class="form-label">Total de la Vente</label>
+              <div class="input-group">
+                <p class="form-control mb-0 disabled-color text-gray">{{ totalVenteAvecRemise }}</p>
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="totalvente" class="form-label">Total Brute</label>
+              <div class="input-group">
+                <p class="form-control mb-0 disabled-color text-gray">{{ totalVenteBrute }}</p>
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+
+            <!-- Solde Client -->
+            <div class="col-12">
+              <label for="solde" class="form-label">Solde</label>
+              <p class="form-control mb-0 text-danger border-danger btn-outline-danger">{{ soldeClient }}</p>
+            </div>
+            <div class="col-12">
+              <label for="credit" class="form-label">Crédit</label>
+              <div class="input-group">
+                <p class="form-control mb-0 disabled-color text-gray">{{ credit }}</p>
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Boutons d'action -->
+    <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-danger btn-responsive" (click)="vider()" >
+        <i class="fas fa-ban me-1"></i> Vider
+      </button>
+
+
+    </div>
+  </div>
+
+  <!-- Liste des articles -->
+  <div class="articles-section mt-4 mt-md-5">
+    <div class="section-header  d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+      <h4 class="section-title mb-0 text-white">Liste des articles</h4>
+      <div class="search-container">
+
+        <p class="section-title mb-0 text-whites text-center mt-2 mb-0">Résultats: {{articlesAddToBon.length}}</p>
+      </div>
+    </div>
+    <div class="articles-section mt-4 mt-md-5">
+
+      <!-- Table responsive wrapper -->
+      <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+        <table class="table table-bordered table-hover text-center mb-0">
+          <thead class="table-dark sticky-top">
+          <tr>
+            <th class="text-nowrap" style="width: 80px;">Réf</th>
+            <th style="width: auto;">Désignation</th> <!-- prend tout l'espace libre -->
+            <th class="text-nowrap d-none d-md-table-cell" style="width: auto">Choix</th>
+            <th class="text-nowrap" style="width: 120px;">Prix Vente</th>
+            <th class="text-nowrap d-none d-sm-table-cell" style="width: 90px;">Qté</th>
+            <th class="text-nowrap d-none d-sm-table-cell" style="width: 120px;">Remise Uni</th>
+            <th class="text-nowrap d-none d-sm-table-cell" style="width: 120px;"> Total Uni</th>
+            <th class="text-nowrap" style="width: 80px;">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="cursor" *ngFor="let art of articlesAddToBon">
+            <td class="text-nowrap">{{ art.ref }}</td>
+            <td class="text-truncate" style="max-width: 200px;" [title]="art.designation">{{ art.designation }}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" [title]="art.choix">{{ art.choix }}</td>
+            <td class="text-nowrap">{{ art.prix }} DH</td>
+            <td>
+              <input type="number"
+                     class="form-control form-control-sm text-center border-none"
+                     min="0"
+                     [(ngModel)]="art.quantite"
+                     (ngModelChange)="recalculateTotal()"
+                     placeholder="0">
+            </td>
+            <td>
+              <input type="number"
+                     class="form-control form-control-sm text-center border-none"
+                     min="0"
+                     [(ngModel)]="art.remisUni"
+                     (ngModelChange)="recalculateTotal()"
+                     placeholder="0">
+            </td>
+            <td class="text-nowrap">{{ (art.prix ?? 0)*(art.quantite ?? 1) }} DH</td>
+
+            <td>
+              <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" (click)="supprimerArticle(art.cod ?? 0)">
+                <fa-icon [icon]="faX" style="color: #ff6666;"></fa-icon>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Pagination -->
+  </div>
+   <div>
+     <div *ngIf="articlesAddToBon.length!=0" class="flex-row gap-4 w-100 text-end">
+       <button type="button" class="btn btn-secondary mt-4 btn-responsive" (click)="createBonAchat()">
+         <i class="fas fa-eye me-1"></i> Valider
+       </button>
+
+     </div>
+
+     <div class="print-section text-center">
+       <button type="button" class="btn btn-primary btn-responsive" (click)="downloadBonAchatPdf()">
+         <i class="fas fa-print me-2"></i>
+         <span class="btn-text">Imprimer</span>
+       </button>
+     </div>
+   </div>
+</div>

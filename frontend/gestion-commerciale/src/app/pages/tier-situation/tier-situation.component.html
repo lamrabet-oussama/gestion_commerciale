@@ -1,0 +1,120 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="card-responsive p-3 p-md-4">
+    <div class="d-flex justify-content-center align-items-center gap-4 mb-4">
+      <h4 class="text-center text-primary mb-0">
+        <i class="fas fa-receipt me-2"></i>Situation Client
+      </h4>
+    </div>
+
+    <!-- Formulaire Client & Date -->
+    <form class="p-2 rounded w-sm bg-white">
+      <div class="section-header">
+        <h5 class="section-title text-white">
+          <i class="fas fa-user me-2"></i>Informations Client & Date
+        </h5>
+      </div>
+
+      <div class="row g-3 align-items-end">
+        <!-- Année -->
+        <div class="col-md-6 mb-3">
+          <label for="year" class="form-label">Année</label>
+          <input
+            type="number"
+            [(ngModel)]="selectedYear"
+            (ngModelChange)="getTierSituation()"
+            class="form-control"
+            name="year"
+            id="year"
+            [max]="maxYear"
+          />
+        </div>
+
+        <!-- Tier -->
+        <div class="col-md-6 mb-3">
+          <label for="tier" class="form-label">Tier <span class="required">*</span></label>
+          <select
+            class="form-select"
+            id="tier"
+            name="tier"
+            [(ngModel)]="selectedTierId"
+            (ngModelChange)="onSelectTierIdChange($event)"
+          >
+            <option *ngFor="let t of tiers" [ngValue]="t.id">
+              {{ t.nom }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Solde -->
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Solde</label>
+          <p class="form-control mb-0 text-danger border-danger btn-outline-danger">
+            {{ soldeTier }}
+          </p>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Liste des Articles -->
+  <div class="articles-section mt-4 mt-md-5">
+    <div class="section-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+      <h4 class="section-title mb-0 text-white">Liste</h4>
+      <p class="section-title mb-0 text-white text-center mt-2">
+        Résultats:
+        {{ (tierStatistiques.bonsorties?.length ?? 0) + (tierStatistiques.reglements?.length ?? 0) }}
+      </p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+      <table class="table table-bordered table-hover text-center mb-0">
+        <thead class="table-dark sticky-top">
+        <tr>
+          <th>Date</th>
+          <th>Bon/Reg</th>
+          <th class="d-none d-md-table-cell w-25">Montant Espèce</th>
+          <th class="d-none d-md-table-cell w-25" >Montant Chèque</th>
+          <th class="d-none d-sm-table-cell">Détails Chèque</th>
+          <th class="d-none d-sm-table-cell w-25">Montant Crédit</th>
+          <th class="d-none d-sm-table-cell">Mouvement</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Bons -->
+        <tr *ngFor="let b of tierStatistiques.bonsorties" class="cursor">
+          <td>{{ b.datBon }}</td>
+          <td>Bon {{ b.serie }}</td>
+          <td class="d-none d-md-table-cell">{{ b.espece }} DH</td>
+          <td>{{ b.cheque }} DH</td>
+          <td>{{ b.detCheque }}</td>
+          <td>{{ b.credit }} DH</td>
+          <td>{{ b.mvt }}</td>
+        </tr>
+
+        <!-- Règlements -->
+        <tr  *ngFor="let r of tierStatistiques.reglements" class="cursor bg-label-secondary">
+          <td>{{ r.datRegl }}</td>
+          <td>Règ N°{{ r.id }}</td>
+          <td class="d-none d-md-table-cell">{{ r.espece }} DH</td>
+          <td>{{ r.cheque }} DH</td>
+          <td>{{ r.detailsCheque }} </td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr class="p-3 fw-bold">
+          <td>Total</td>
+          <td>Crédit: {{ tierStatistiques.totalCredit }} DH</td>
+          <td>Débit: {{ tierStatistiques.totalDebit }} DH</td>
+          <td>Reste à Payer: {{ tierStatistiques.resteAPayer }}</td>
+          <td>Pourcentage: {{ tierStatistiques.percentageDebitCredit }}%</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Totaux -->
+
+  </div>
+</div>

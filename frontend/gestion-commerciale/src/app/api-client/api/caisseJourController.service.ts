@@ -86,22 +86,19 @@ export class CaisseJourControllerService extends BaseService {
      * Retourne les détails de la caisse pour un utilisateur donné et une période donnée.
      * @param userCod Code utilisateur (optionnel)
      * @param startDate Date de début (format ISO 8601, ex: 2025-08-07T00:00:00)
-     * @param endDate Date de fin (format ISO 8601, ex: 2025-08-07T23:59:59)
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getCaisseJour(userCod?: number, startDate?: string, endDate?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<CaisseJourDto>;
-    public getCaisseJour(userCod?: number, startDate?: string, endDate?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<CaisseJourDto>>;
-    public getCaisseJour(userCod?: number, startDate?: string, endDate?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<CaisseJourDto>>;
-    public getCaisseJour(userCod?: number, startDate?: string, endDate?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
+    public getCaisseJour(userCod?: number, startDate?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<CaisseJourDto>;
+    public getCaisseJour(userCod?: number, startDate?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpResponse<CaisseJourDto>>;
+    public getCaisseJour(userCod?: number, startDate?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<HttpEvent<CaisseJourDto>>;
+    public getCaisseJour(userCod?: number, startDate?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext}): Observable<any> {
 
         let localVarQueryParameters = new HttpParams({encoder: this.encoder});
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>userCod, 'userCod');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>startDate, 'startDate');
-        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
-          <any>endDate, 'endDate');
 
         let localVarHeaders = this.defaultHeaders;
 

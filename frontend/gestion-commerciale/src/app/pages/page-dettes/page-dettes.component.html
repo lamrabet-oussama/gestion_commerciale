@@ -31,13 +31,13 @@
           <label for="mvt" class="form-label fw-semibold">Type</label>
           <select
             class="form-select"
-            [(ngModel)]="selectedMvt"
+            [(ngModel)]="selectedQualite"
             id="mvt"
             name="mvt"
-            (ngModelChange)="onMvtSelected($event)"
+            (ngModelChange)="onQualiteSelected($event)"
           >
-            <option [value]="'VENTE'" selected>Créances</option>
-            <option [value]="'ACHAT'">Dettes</option>
+            <option [value]="'CLIENT'" selected>Créances</option>
+            <option [value]="'FOURNISSEUR'">Dettes</option>
           </select>
         </div>
       </form>

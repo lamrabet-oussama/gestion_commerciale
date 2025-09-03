@@ -51,6 +51,36 @@ export class MenuComponent implements OnInit{
       icon: '',
       url: '/dettes',
     },
+    {
+      id: '7',
+      title: 'Flux',
+      icon: '',
+      url: '/flux',
+    },
+    {
+      id: '8',
+      title: 'Bon Vente',
+      icon: '',
+      url: '/bon-vente',
+    },
+    {
+      id: '9',
+      title: 'Bon Achat',
+      icon: '',
+      url: '/bon-achat',
+    },
+    {
+      id: '10',
+      title: 'Réglement de Crédit',
+      icon: '',
+      url: '/reglement',
+    },
+    {
+      id: '11',
+      title: 'Situation Tier',
+      icon: '',
+      url: '/situation-tier',
+    },
   ];
   mesInfos$: Observable<MesInfoxDto | null>;
 

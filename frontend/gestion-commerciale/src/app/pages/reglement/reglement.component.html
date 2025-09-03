@@ -1,0 +1,274 @@
+<div class="page-container">
+  <!-- Header avec recherche -->
+  <div class="card-responsive p-3 p-md-4">
+    <div class="d-flex justify-content-center align-items-center gap-4 mb-4">
+      <h4 class="text-center text-primary mb-0">
+        <i class="fas fa-receipt me-2"></i>Réglement
+        <span *ngIf="reglementResponse.reglements?.length==1">
+                   N° {{regNumber}} créé par {{username}}
+
+        </span>
+      </h4>
+    </div>
+
+    <!-- Alert de succès -->
+
+    <!-- Informations Client et Date -->
+    <form class="p-2 rounded w-sm bg-white">
+      <div class="section-header">
+        <h5 class="section-title text-white">
+          <i class="fas fa-user me-2"></i>Informations Client & Date
+        </h5>
+      </div>
+
+      <div class="row g-3 align-items-end">
+
+        <!-- Date de Vente -->
+        <div class="col-md-6 mb-3">
+          <div class="d-flex gap-3 mb-3">
+            <div>
+              <input type="radio" id="searchByDate" name="searchMode" value="date" [(ngModel)]="searchMode" (click)="listerReglements()" />
+              <label for="searchByDate">Par Date</label>
+            </div>
+            <div>
+              <input type="radio" id="searchByYear" name="searchMode" value="year" [(ngModel)]="searchMode" (click)="listerReglements()" />
+              <label for="searchByYear">Par Année</label>
+            </div>
+          </div>
+
+          <!-- Champ Date -->
+          <div *ngIf="searchMode === 'date'" class="col-md-6 mb-3">
+            <label for="date_vente" class="form-label">Date de Vente</label>
+            <input
+              type="date"
+              [(ngModel)]="selectedDate"
+              (ngModelChange)="onDateChange()"
+              class="form-control"
+              name="dateInput"
+              id="dateInput"
+              [max]="maxDate"
+            />
+          </div>
+
+          <!-- Champ Année -->
+          <div *ngIf="searchMode === 'year'" class="col-md-6 mb-3">
+            <label for="yearInput" class="form-label">Année</label>
+            <input
+              type="number"
+              [(ngModel)]="selectedYear"
+              (ngModelChange)="onYearChange()"
+              class="form-control"
+              name="yearInput"
+              id="yearInput"
+              [max]="maxYear"
+            />
+          </div>
+
+        </div>
+
+
+
+        <!-- Client -->
+        <div class="col-md-6 mb-3">
+          <label for="tier" class="form-label">Tier <span class="required">*</span></label>
+          <select
+            class="form-select"
+            id="tier"
+            name="tier"
+            [(ngModel)]="selectedTierId"
+            (ngModelChange)="onSelectTierIdChange($event)"
+          >
+            <option *ngFor="let t of tiers" [ngValue]="t.id">
+              {{ t.nom }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Solde Client -->
+        <div class="col-md-6 mb-3">
+          <label for="solde" class="form-label">Solde</label>
+          <p class="form-control mb-0 text-danger border-danger btn-outline-danger">{{ soldeTier }}</p>
+        </div>
+
+        <!-- Bouton Supprimer -->
+        <!--<div class="col-12 d-flex justify-content-end">
+          <button type="button" class="btn btn-danger" (click)="supprimer()">
+            <i class="fas fa-eye me-1"></i> Supprimer
+          </button>
+        </div>-->
+
+      </div>
+
+
+    </form>
+
+
+
+
+  </div>
+
+  <!-- Section Paiement -->
+  <div class="payment-section">
+    <div class="section-header">
+      <h5 class="section-title text-white">
+        <i class="fas fa-credit-card me-2"></i>Informations de Paiement
+      </h5>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="payment-card">
+          <h6><i class="fas fa-money-check me-2"></i>Paiement par Chèque</h6>
+          <div class="row g-2">
+            <div class="col-12">
+              <label for="cheque" class="form-label">Montant Chèque</label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="cheque" name="cheque" [(ngModel)]="cheque"  placeholder="0.00" step="1">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="detailscheque" class="form-label">Détails du Chèque</label>
+              <textarea class="form-control" id="detailscheque" name="detailscheque"
+                        placeholder="N° chèque, banque, date..." rows="2" style="resize: none;"
+                        [(ngModel)]="deteailsCheque"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <div class="col-md-6">
+        <div class="payment-card">
+          <div class="card-body">
+            <h6 class="fw-bold text-primary mb-3">
+              <i class="fas fa-money-bill-wave me-2 text-success"></i>
+              Paiement Espèces
+            </h6>
+            <div class="mb-3">
+              <label for="espece" class="form-label">Montant Espèces</label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="espece"
+                  name="espece"
+                  placeholder="0.00"
+                  [(ngModel)]="espece"
+                  step="1"
+                />
+                <span class="input-group-text bg-light">DH</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boutons -->
+      <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+        <button
+          type="button"
+          class="btn btn-danger px-4 d-flex align-items-center"
+          (click)="modifierReglement()"
+        >
+          <i class="fas fa-edit me-2"></i> Modifier
+        </button>
+        <button
+          type="button"
+          class="btn btn-success px-4 d-flex align-items-center"
+          (click)="ajouterReglement()"
+        >
+          <i class="fas fa-plus me-2"></i> Ajouter
+        </button>
+        <button type="button" class="btn btn-success px-4 d-flex align-items-center" (click)="resetValues()" >
+          <i class="fas fa-ban me-1"></i> Vider
+        </button>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+  <!-- Liste des articles -->
+  <div class="articles-section mt-4 mt-md-5">
+    <div class="section-header  d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+      <h4 class="section-title mb-0 text-white">Liste des Réglements</h4>
+      <div class="search-container">
+
+        <p class="section-title mb-0 text-whites text-center mt-2 mb-0">Résultats: {{reglementResponse.reglements?.length ?? 0}}</p>
+      </div>
+    </div>
+    <div class="articles-section mt-4 mt-md-5">
+
+      <!-- Table responsive wrapper -->
+      <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+        <table class="table table-bordered table-hover text-center mb-0">
+          <thead class="table-dark sticky-top">
+          <tr>
+            <th class="text-nowrap" style="width: 80px;">Date Rég</th>
+            <th style="width: auto;">Nom</th> <!-- prend tout l'espace libre -->
+            <th class="text-nowrap d-none d-md-table-cell" style="width: auto">Espèce</th>
+            <th class="text-nowrap" style="width: 120px;">Chèque</th>
+            <th class="text-nowrap d-none d-sm-table-cell" style="width: 90px;">Details Chèque</th>
+            <th class="text-nowrap d-none d-sm-table-cell" style="width: 90px;">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="cursor" *ngFor="let reg of reglementResponse.reglements" (click)="getReglement(reg.id ?? -1)">
+            <td class="text-nowrap">{{ reg.datRegl }}</td>
+            <td class="text-truncate" style="max-width: 200px;" >{{ reg.nomTier }}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;">{{ reg.espece }} DH</td>
+            <td class="text-nowrap">{{ reg.cheque }} DH</td>
+            <td class="text-nowrap">{{ reg.detailsCheque }} DH</td>
+            <td class="text-nowrap">
+              <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" (click)="annulerReglement(reg.id ?? -1)">
+                <fa-icon [icon]="faX" style="color: #ff6666;"></fa-icon>
+              </button>
+            </td>
+
+          </tr>
+          </tbody>
+
+          <tr class="p-3" *ngIf="(reglementResponse.reglements ?? []).length > 0">
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: 80px;">Total:</th>
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: auto;"></th> <!-- prend tout l'espace libre -->
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: auto">{{reglementResponse.totalEspece}} DH</th>
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: 120px;">{{reglementResponse.totalCheque}} DH</th>
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: 90px;"></th>
+            <th class="d-none d-md-table-cell text-truncate fw-bold" style="width: 90px;" ></th>
+          </tr>
+        </table>
+      </div>
+      <div>
+
+        <div class="print-section text-center mt-4">
+          <button type="button" class="btn btn-primary btn-responsive" (click)="downloadReglementPdf()">
+            <i class="fas fa-print me-2"></i>
+            <span class="btn-text">Imprimer</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <!--<div>
+    <div *ngIf="articlesAddToBon.length!=0" class="flex-row gap-4 w-100 text-end">
+      <button type="button" class="btn btn-secondary mt-4 btn-responsive" (click)="createBonAchat()">
+        <i class="fas fa-eye me-1"></i> Valider
+      </button>
+
+    </div>
+
+    <div class="print-section text-center">
+      <button type="button" class="btn btn-primary btn-responsive" (click)="downloadBonAchatPdf()">
+        <i class="fas fa-print me-2"></i>
+        <span class="btn-text">Imprimer</span>
+      </button>
+    </div>
+  </div>-->
+</div>
+
+

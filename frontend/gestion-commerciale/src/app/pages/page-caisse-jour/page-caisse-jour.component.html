@@ -54,7 +54,7 @@
     <!-- Liste des bons -->
     <div class="bons-section mt-4 mt-md-5">
       <div class="section-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
-        <h4 class="section-title mb-0">Liste des Bons</h4>
+        <h4 class="section-title mb-0">Caisse Journalière</h4>
       </div>
 
       <!-- Table responsive wrapper -->
@@ -70,8 +70,11 @@
             <th class="text-nowrap" style="width: 20%;">Détails</th>
           </tr>
           </thead>
+          <tr class="separator-row">
+            <td colspan="6" class="border-top border-2 border-secondary fw-bold text-lg-center">Vente du jour</td>
+          </tr>
           <tbody>
-          <tr class="pointer" *ngFor="let bon of caisseJourDto.bons"   >
+          <tr class="pointer" *ngFor="let bon of caisseJourDto.bonsVente"   >
             <td class="text-nowrap">{{ bon.serie }}</td>
             <td class="text-truncate" style="max-width: 150px;">{{bon.montant}}</td>
             <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{bon.espece}}</td>
@@ -80,13 +83,40 @@
             <td class="text-nowrap">{{bon.nomTier}}</td>
 
           </tr>
+
+          <tr class="separator-row">
+            <td colspan="6" class="border-top border-2 border-secondary fw-bold text-lg-center">Achat du jour</td>
+          </tr>
+          <tr class="pointer" *ngFor="let bon of caisseJourDto.bonsAchat"   >
+            <td class="text-nowrap">{{ bon.serie }}</td>
+            <td class="text-truncate" style="max-width: 150px;">{{bon.montant}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{bon.espece}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{bon.cheque}}</td>
+            <td class="text-nowrap">{{bon.credit}}</td>
+            <td class="text-nowrap">{{bon.nomTier}}</td>
+
+          </tr>
+
+          <tr class="separator-row">
+            <td colspan="6" class="border-top border-2 border-secondary fw-bold text-lg-center">Réglement du jour</td>
+          </tr>
+          <tr class="pointer"   *ngFor="let reg of caisseJourDto.reglements"   >
+            <td class="text-nowrap">Réglement</td>
+            <td class="text-truncate" style="max-width: 150px;">{{reg.reglement}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{reg.espece}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{reg.cheque}}</td>
+            <td class="text-nowrap"></td>
+            <td class="text-nowrap">{{reg.nomTier}}</td>
+
+          </tr>
+
           <tr>
             <td class="d-none d-md-table-cell text-truncate fw-bold">Total:</td>
             <td class="d-none d-md-table-cell text-truncate fw-bold">{{caisseJourDto.totalMontant}}</td>
             <td class="d-none d-md-table-cell text-truncate fw-bold">{{caisseJourDto.totalEspece}}</td>
             <td class="d-none d-md-table-cell text-truncate fw-bold">{{caisseJourDto.totalCheque}}</td>
             <td class="d-none d-md-table-cell text-truncate fw-bold">{{caisseJourDto.totalCredit}}</td>
-            <td class="d-none d-md-table-cell text-truncate fw-bold"> Tous</td>
+            <td class="d-none d-md-table-cell text-truncate fw-bold"> Total</td>
           </tr>
           </tbody>
         </table>

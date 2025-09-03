@@ -41,7 +41,7 @@ errorMsgValidation: string[] = [];
   }
 
   /**-----------Data Validation------- **/
-  validerArticle(tierDto:TierDto): boolean {
+  validerTier(tierDto:TierDto): boolean {
     this.errorMsgValidation = []; // Reset des erreurs avant validation
     let valide = true;
 
@@ -67,19 +67,18 @@ errorMsgValidation: string[] = [];
       this.errorMsgValidation.push('La ville est obligatoire.');
       valide = false;
     }
-    if (!this.tierDto.gsm || this.tierDto.gsm.trim() === '') {
-      this.errorMsgValidation.push('Le GSM est obligatoire.');
+    if (!this.tierDto.fon || this.tierDto.fon.trim() === '') {
+      this.errorMsgValidation.push('Le Téléphone est obligatoire.');
       valide = false;
     }
 
-    this.notification.error("Veuillez remplir les champs obligatoires",'Erreur')
 
     return valide;
   }
 
   /** ---------- Actions CRUD ---------- **/
   creerTier() {
-    if(this.validerArticle(this.tierDto)){
+    if(this.validerTier(this.tierDto)){
 
 
     this.tierService.creerTier(this.tierDto).subscribe({
@@ -92,7 +91,12 @@ errorMsgValidation: string[] = [];
         this.notification.error(err?.error?.message,'Erreur')
         this.handleError(err, "Erreur lors de l'enregistrement du tier")}
     });
-  }}
+  }
+  else{
+      this.notification.error("Veuillez remplir les champs obligatoires",'Erreur')
+
+    }
+  }
 
   modifierTier() {
     this.tierService.modfierTier(this.tierDto).subscribe({
@@ -131,6 +135,7 @@ errorMsgValidation: string[] = [];
       next: (res) => {
         if (res?.content) {
           this.tiers = res.content;
+          console.log("Tiers:", this.tiers);
           this.totalPages = res.totalPages ?? 0;
           this.page = res.currentPage ?? 0;
         }

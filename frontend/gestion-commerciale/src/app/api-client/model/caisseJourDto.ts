@@ -8,15 +8,18 @@
  * Do not edit the class manually.
  */
 import { BonSortieDto } from './bonSortieDto';
+import { ReglementDto } from './reglementDto';
 
 
 export interface CaisseJourDto { 
     date?: string;
-    bons?: Array<BonSortieDto>;
+    bonsAchat?: Array<BonSortieDto>;
+    bonsVente?: Array<BonSortieDto>;
     totalMontant?: number;
     totalEspece?: number;
     totalCheque?: number;
     totalCredit?: number;
     nomUser?: string;
+    reglements?: Array<ReglementDto>;
 }
 

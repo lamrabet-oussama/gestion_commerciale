@@ -21,5 +21,7 @@ export interface ArticleDto {
     choix?: string;
     stock?: number;
     famille?: string;
+    quantite?: number;
+    idTier?: number;
 }
 

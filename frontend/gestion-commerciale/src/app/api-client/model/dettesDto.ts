@@ -15,7 +15,16 @@ export interface DettesDto {
     chiffreAnnuelle?: number;
     detteFinal?: number;
     taux?: number;
-    mvt?: string;
+    qualite?: DettesDto.QualiteEnum;
     dateRegl?: string;
 }
+export namespace DettesDto {
+    export const QualiteEnum = {
+        Client: 'CLIENT',
+        Fournisseur: 'FOURNISSEUR',
+        Mixte: 'MIXTE'
+    } as const;
+    export type QualiteEnum = typeof QualiteEnum[keyof typeof QualiteEnum];
+}
+
 

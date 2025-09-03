@@ -35,4 +35,15 @@ export class TierService {
    getNumber(){
     return this.tierService.numberOfTiers();
    }
+   findAllClient(){
+    return this.tierService.getAllClient();
+   }
+
+   findAllFournisseur(){
+    return this.tierService.getAllFournisseur();
+   }
+   listerAllTiers(){
+    return this.tierService.getAllTiers();
+   }
+
 }

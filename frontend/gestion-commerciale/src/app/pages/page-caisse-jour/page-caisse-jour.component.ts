@@ -154,76 +154,11 @@ let userCode = this.selectedUser ? this.selectedUser.cod : undefined;
     });
   }
 
-  // Méthodes utilitaires pour les boutons de navigation rapide (optionnelles)
-  selectToday(): void {
-    const today = new Date();
-    this.selectedDate = this.formatDateForInput(today);
-    this.getCaisseJour();
-  }
 
-  selectYesterday(): void {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
 
-    if (this.isValidDate(this.formatDateForInput(yesterday))) {
-      this.selectedDate = this.formatDateForInput(yesterday);
-      this.getCaisseJour();
-    } else {
-      this.notificationService.error(
-        "La date d'hier n'est pas dans la plage autorisée",
-        'Date invalide'
-      );
-    }
-  }
 
-  selectPreviousDay(): void {
-    if (!this.selectedDate) return;
 
-    const currentDate = new Date(this.selectedDate);
-    currentDate.setDate(currentDate.getDate() - 1);
 
-    if (this.isValidDate(this.formatDateForInput(currentDate))) {
-      this.selectedDate = this.formatDateForInput(currentDate);
-      this.getCaisseJour();
-    } else {
-      this.notificationService.error(
-        'Impossible de naviguer plus loin dans le passé',
-        'Limite atteinte'
-      );
-    }
-  }
-
-  selectNextDay(): void {
-    if (!this.selectedDate) return;
-
-    const currentDate = new Date(this.selectedDate);
-    currentDate.setDate(currentDate.getDate() + 1);
-
-    if (this.isValidDate(this.formatDateForInput(currentDate))) {
-      this.selectedDate = this.formatDateForInput(currentDate);
-      this.getCaisseJour();
-    } else {
-      this.notificationService.error(
-        'Impossible de naviguer dans le futur',
-        'Limite atteinte'
-      );
-    }
-  }
-
-  // Méthode pour vérifier si c'est aujourd'hui (pour styling conditionnel)
-  isToday(): boolean {
-    const today = new Date();
-    return this.selectedDate === this.formatDateForInput(today);
-  }
-
-  // Méthode pour obtenir le nom du jour en français
-  getDayName(): string {
-    if (!this.selectedDate) return '';
-
-    const date = new Date(this.selectedDate);
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
-    return date.toLocaleDateString('fr-FR', options);
-  }
 
   downloadCaisseJourPdf() {
     this.caisseJourService

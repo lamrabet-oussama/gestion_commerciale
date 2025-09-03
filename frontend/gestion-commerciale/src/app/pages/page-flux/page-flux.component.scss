@@ -1,0 +1,115 @@
+/* Container */
+.inventory-container {
+  max-width: 100%;
+  padding: 1rem;
+}
+
+/* Input Année */
+.year-input {
+  width: 150px;
+}
+
+/* Tables */
+.table-card {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.table-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+}
+
+.table-wrapper {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Table personnalisée */
+.custom-table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.custom-table th {
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.custom-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+tr.selected {
+  background-color: #cce5ff;
+}
+
+/* Hover */
+tr.pointer:hover {
+  background-color: #e6f2ff;
+  cursor: pointer;
+}
+
+/* Badges */
+.quantity-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  color: #000;
+}
+
+.quantity-badge.warning {
+  background: #f8f9fa;
+  border-color: #666;
+  font-weight: 600;
+}
+
+/* Scrollbar */
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 3px;
+}
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #000;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* hauteur totale de la page */
+}
+
+.header {
+  height: 60px; /* exemple */
+}
+
+.mouvement-table {
+  flex: 1; /* prend tout l’espace restant */
+  overflow-y: auto; /* scroll si le contenu dépasse */
+}

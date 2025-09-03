@@ -16,8 +16,10 @@ export interface BonSortieDto {
     espece?: number;
     cheque?: number;
     credit?: number;
+    detCheque?: string;
     datBon?: string;
     nomTier?: string;
     nomUser?: string;
+    mvt: string;
 }
 

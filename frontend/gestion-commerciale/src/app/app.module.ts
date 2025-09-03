@@ -23,6 +23,19 @@ import { mesInfosReducer } from 'src/store/mes-infos/mesInfos.reducers';
 import { EffectsModule } from '@ngrx/effects';
 import { MesInfosEffects } from 'src/store/mes-infos/mesInfos.effects';
 import { PageDettesComponent } from './pages/page-dettes/page-dettes.component';
+import { PageFluxComponent } from './pages/page-flux/page-flux.component';
+import {mesArticlesReducers} from "../store/mes-articles/mesArticles.reducers";
+import {MesArticlesEffects} from "../store/mes-articles/mesArticles.effects";
+import { BonVenteComponent } from './pages/bon-vente/bon-vente.component';
+import { BonAchatComponent } from './pages/bon-achat/bon-achat/bon-achat.component';
+import {allUsersReducers} from "../store/all-users/allUsers.reducers";
+import {AllUsersEffects} from "../store/all-users/allUsers.effects";
+import {ClientsEffects} from "../store/clients/clients.effects";
+import {clientsReducers} from "../store/clients/clients.reducers";
+import {fournisseursReducers} from "../store/fournisseurs/fournisseurs.reducers";
+import {FournisseursEffects} from "../store/fournisseurs/fournisseurs.effects";
+import { ReglementComponent } from './pages/reglement/reglement.component';
+import { TierSituationComponent } from './pages/tier-situation/tier-situation.component';
 
 @NgModule({
   declarations: [
@@ -36,7 +49,12 @@ import { PageDettesComponent } from './pages/page-dettes/page-dettes.component';
     PaginationComponent,
     EntrepriseProfileComponent,
     PageCaisseJourComponent,
-    PageDettesComponent
+    PageDettesComponent,
+    PageFluxComponent,
+    BonVenteComponent,
+    BonAchatComponent,
+    ReglementComponent,
+    TierSituationComponent
   ],
   imports: [
     BrowserModule,
@@ -44,8 +62,8 @@ import { PageDettesComponent } from './pages/page-dettes/page-dettes.component';
     FormsModule,
     HttpClientModule,
     FontAwesomeModule,
-    StoreModule.forRoot({mesInfos:mesInfosReducer}),
-    EffectsModule.forRoot([MesInfosEffects]),
+    StoreModule.forRoot({mesInfos:mesInfosReducer,mesArticles:mesArticlesReducers,allUsers:allUsersReducers,clients:clientsReducers,fournisseurs:fournisseursReducers}),
+    EffectsModule.forRoot([MesInfosEffects,MesArticlesEffects,AllUsersEffects,ClientsEffects,FournisseursEffects]),
     ApiModule.forRoot(() => new Configuration({
       basePath: 'http://localhost:8080'
     })),

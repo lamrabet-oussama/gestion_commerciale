@@ -28,6 +28,21 @@
       <i class="bx bx-x"></i>
     </button>
     <h5 class="menu-title">Menu</h5>
+    <div *ngIf="mesInfos$ | async as mesInfos" class="company-info d-flex align-items-center">
+      <img
+        [src]="mesInfos.blogo"
+        alt="Logo"
+        class="rounded-circle me-2 me-md-3 logo-img"
+      />
+      <span
+        class="fw-semibold text-dark company-name d-none d-sm-inline"
+        (mouseenter)="hover = true"
+        (mouseleave)="hover = false"
+        [style.color]="hover ? '#007bff' : '#212529'">
+          {{ mesInfos.nomSociete }}
+        </span>
+    </div>
+
   </div>
 
   <!-- Contenu du menu -->

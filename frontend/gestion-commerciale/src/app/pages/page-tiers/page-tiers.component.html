@@ -68,7 +68,7 @@
           </div>
 
           <div class="col-auto">
-            <label for="telephone" class="form-label">Téléphone</label>
+            <label for="telephone" class="form-label">Téléphone<span class="text-danger">*</span></label>
             <input type="tel" class="form-control" id="telephone" name="telephone" [(ngModel)]="tierDto.fon" placeholder="XXXXXXXXXX">
           </div>
         </div>
@@ -88,7 +88,7 @@
           </div>
 
           <div class="col-auto">
-            <label for="gsm" class="form-label">GSM<span class="text-danger">*</span></label>
+            <label for="gsm" class="form-label">GSM</label>
             <input type="tel" class="form-control" [(ngModel)]="tierDto.gsm" id="gsm" name="gsm" placeholder="XXXXXXXXXX">
           </div>
         </div>
@@ -148,6 +148,7 @@
             <th style="width:60%">Nom</th> <!-- s'étire -->
             <th class="text-nowrap d-none d-md-table-cell" style="width: 20%;">GSM</th>
             <th class="text-nowrap d-none d-md-table-cell" style="width: 20%;">Téléphone</th>
+            <th class="text-nowrap d-none d-md-table-cell" style="width: 30%;">Qualité</th>
             <th class="text-nowrap">Solde</th>
             <th class="text-nowrap">Actions</th>
           </tr>
@@ -158,6 +159,7 @@
             <td class="text-truncate" style="max-width: 150px;">{{t.nom}}</td>
             <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{t.gsm}}</td>
             <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" >{{t.fon}}</td>
+            <td class="d-none d-md-table-cell text-truncate" style="" >{{t.qualite}}</td>
             <td class="text-nowrap">{{t.solde}}</td>
             <td>
               <button class="btn btn-sm " (click)="deleteTier(t.id || 0)" data-bs-toggle="modal" data-bs-target="#deleteModal" >
