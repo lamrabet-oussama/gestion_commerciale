@@ -22,12 +22,16 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,11 +49,13 @@ public class ReglementServiceImpl implements ReglementService {
     public ReglementDto ajouterReglement(ReglementDto dto) {
         // 1) Vérifier l'utilisateur
         User user = userRepository.findByCod(dto.getIdUser())
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Utilisateur non trouvé",
-                        List.of("User not found"),
-                        ErrorCodes.USER_NOT_FOUND
-                ));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Utilisateur non trouvé",
+                            List.of("User not found"),
+                            ErrorCodes.USER_NOT_FOUND
+                    ));
+
+
 
         // 2) Vérifier le tier
         Tier tier = tierRepository.findById(dto.getIdTier())
@@ -60,20 +66,19 @@ public class ReglementServiceImpl implements ReglementService {
                 ));
 
         // 3) Validations des chèques
-        if (dto.getCheque() != null && dto.getCheque().compareTo(BigDecimal.ZERO) > 0 &&
-                (dto.getDetailsCheque() == null || dto.getDetailsCheque().trim().isEmpty())) {
+        if ((dto.getDetailsCheque() != null && !dto.getDetailsCheque().isEmpty()&& dto.getCheque()==null) ) {
+            throw new InvalidOperationException(
+                    "Montant Chèque n'est pas défini",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Montant Chèque n'est pas défini")
+            );
+        }
+        if (dto.getCheque() != null && dto.getCheque().signum() > 0
+                && !StringUtils.hasText(dto.getDetailsCheque())) {
             throw new InvalidOperationException(
                     "Détails de chèque sont obligatoires",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Détails Chèque")
-            );
-        }
-        if ((dto.getDetailsCheque() != null && !dto.getDetailsCheque().trim().isEmpty())
-                && (dto.getCheque() == null || dto.getCheque().compareTo(BigDecimal.ZERO) <= 0)) {
-            throw new InvalidOperationException(
-                    "Montant Chèque n'est pas défini ou invalide",
-                    ErrorCodes.BAD_CREDENTIALS,
-                    List.of("Montant Chèque n'est pas défini")
             );
         }
 
@@ -186,7 +191,17 @@ public class ReglementServiceImpl implements ReglementService {
                         List.of("Reglement non trouvé"),
                         ErrorCodes.REGL_NOT_FOUND
                 ));
-
+        User user;
+        if (reglementDto.getIdUser() != null) {
+            user = userRepository.findByCod(reglementDto.getIdUser())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Utilisateur non trouvé",
+                            List.of("User not found"),
+                            ErrorCodes.USER_NOT_FOUND
+                    ));
+        } else {
+            user = existingRegl.getUser();
+        }
         // 2) Vérifier le tier
         Tier tier = tierRepository.findById(existingRegl.getTier().getId())
                 .orElseThrow(() -> new EntityNotFoundException(
@@ -194,24 +209,24 @@ public class ReglementServiceImpl implements ReglementService {
                         List.of("Tier not found"),
                         ErrorCodes.TIER_NOT_FOUND
                 ));
-
-        // 3) Validations des chèques
-        if (reglementDto.getCheque() != null && reglementDto.getCheque().compareTo(BigDecimal.ZERO) > 0 &&
-                (reglementDto.getDetailsCheque() == null || reglementDto.getDetailsCheque().trim().isEmpty())) {
+        if ((reglementDto.getDetailsCheque() != null && !reglementDto.getDetailsCheque().isEmpty()&& reglementDto.getCheque()==null) ) {
+            throw new InvalidOperationException(
+                    "Montant Chèque n'est pas défini",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Montant Chèque n'est pas défini")
+            );
+        }
+        if (reglementDto.getCheque() != null && reglementDto.getCheque().signum() > 0
+                && !StringUtils.hasText(reglementDto.getDetailsCheque())) {
             throw new InvalidOperationException(
                     "Détails de chèque sont obligatoires",
                     ErrorCodes.BAD_CREDENTIALS,
                     List.of("Détails Chèque")
             );
         }
-        if ((reglementDto.getDetailsCheque() != null && !reglementDto.getDetailsCheque().trim().isEmpty())
-                && (reglementDto.getCheque() == null || reglementDto.getCheque().compareTo(BigDecimal.ZERO) <= 0)) {
-            throw new InvalidOperationException(
-                    "Montant Chèque n'est pas défini ou invalide",
-                    ErrorCodes.BAD_CREDENTIALS,
-                    List.of("Montant Chèque n'est pas défini")
-            );
-        }
+
+
+
 
         // 4) ÉTAPE 1 : Annuler l'impact de l'ancien règlement
         BigDecimal currentSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
@@ -269,6 +284,7 @@ public class ReglementServiceImpl implements ReglementService {
 
         // 8) Mettre à jour l'entité Reglement
         existingRegl.setEspece(especeToSave);
+        existingRegl.setUser(user);
         existingRegl.setCheque(chequeToSave);
         existingRegl.setTotal(totalToSave);
         existingRegl.setDet_cheque(reglementDto.getDetailsCheque());
@@ -288,15 +304,19 @@ public class ReglementServiceImpl implements ReglementService {
         return ReglementDto.toDto(savedRegl);
     }
 
-    public ReglementResponseDto listerReglements(Integer userId, Integer tierId) {
+    public ReglementResponseDto listerReglements(Integer userId, Integer tierId,LocalDateTime date,Integer year) {
 
         // 1) Vérifier l'utilisateur
-        User user = userRepository.findByCod(userId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Utilisateur non trouvé",
-                        List.of("User not found"),
-                        ErrorCodes.USER_NOT_FOUND
-                ));
+        User user=null;
+        if(userId!=null){
+            user = userRepository.findByCod(userId)
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Utilisateur non trouvé",
+                            List.of("User not found"),
+                            ErrorCodes.USER_NOT_FOUND
+                    ));
+        }
+
 
         // 2) Vérifier le tier
         Tier tier = tierRepository.findById(tierId)
@@ -305,10 +325,32 @@ public class ReglementServiceImpl implements ReglementService {
                         List.of("Tier not found"),
                         ErrorCodes.TIER_NOT_FOUND
                 ));
-        List<ReglementDto> reglements = this.reglementRepository.findByTierAndUser(tier, user)
-                .stream()
-                .map(ReglementDto::toDto)
-                .toList();
+
+        List<ReglementDto> reglements;
+
+        if (year != null) {
+            // recherche par année
+            reglements = this.reglementRepository.findByTierAndUserAndYearReglements(tier, user, year)
+                    .stream()
+                    .map(ReglementDto::toDto)
+                    .toList();
+        } else {
+            // recherche par date (si non précisée -> today)
+            if (date == null) {
+                date = LocalDateTime.now();
+            }
+
+            LocalDateTime start = date.toLocalDate().atStartOfDay();
+            LocalDateTime end = date.toLocalDate().atTime(LocalTime.MAX);
+
+            reglements = this.reglementRepository.findByTierAndUserAndDateReglements(tier, user, start, end)
+                    .stream()
+                    .map(ReglementDto::toDto)
+                    .toList();
+        }
+
+
+
 
         BigDecimal totalEspece = BigDecimal.ZERO;
         BigDecimal totalCheque = BigDecimal.ZERO;
@@ -328,7 +370,7 @@ public class ReglementServiceImpl implements ReglementService {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadRegPdf(Integer userCod, Integer tierId) {
+    public ResponseEntity<byte[]> downloadRegPdf(Integer userCod, Integer tierId,LocalDateTime date,Integer year) {
         try {
             User user = null;
             // 1) Vérifier l'utilisateur
@@ -349,8 +391,24 @@ public class ReglementServiceImpl implements ReglementService {
                             ErrorCodes.TIER_NOT_FOUND
                     ));
 
-            // 3) Récupérer les règlements
-            List<Reglement> reglements = this.reglementRepository.findByTierAndUser(tier, user);
+
+            List<Reglement> reglements;
+
+            if (year != null) {
+                // recherche par année
+                reglements = this.reglementRepository.findByTierAndUserAndYearReglements(tier, user, year);
+            } else {
+                // recherche par date (si non précisée -> today)
+                if (date == null) {
+                    date = LocalDateTime.now();
+                }
+
+                LocalDateTime start = date.toLocalDate().atStartOfDay();
+                LocalDateTime end = date.toLocalDate().atTime(LocalTime.MAX);
+
+                reglements = this.reglementRepository.findByTierAndUserAndDateReglements(tier, user, start, end);
+            }
+
 
 
             // 5) Nettoyer les données nulles dans les règlements
@@ -391,4 +449,20 @@ public class ReglementServiceImpl implements ReglementService {
                     List.of("Une erreur est survenue : " + e.getMessage())
             );
         }
-    }}
+    }
+
+    @Override
+    public ReglementDto getReglementById(Integer reglementId){
+        Reglement reglement = reglementRepository.findById(reglementId).orElseThrow(
+                ()-> new EntityNotFoundException(
+                        "Réglement non trouvé",
+                        List.of("Reg not found"),
+                        ErrorCodes.USER_NOT_FOUND)
+        );
+
+        return ReglementDto.toDto(reglement);
+
+
+    }
+
+}

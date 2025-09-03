@@ -53,25 +53,41 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
     @Query("""
     SELECT r FROM Reglement r
     WHERE (:tier IS NULL OR r.tier = :tier)
-    AND (:user IS NULL OR r.user= :user)
-      
+      AND (:user IS NULL OR r.user = :user)
+      AND  r.datRegl BETWEEN :start AND :end
     ORDER BY r.datRegl DESC
-    
 """)
-
-    List<Reglement> findByTierAndUser(
+    List<Reglement> findByTierAndUserAndDateReglements(
             @Param("tier") Tier tier,
-            @Param("user") User user
+            @Param("user") User user,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 
-            );
+    @Query("""
+    SELECT r FROM Reglement r
+    WHERE (:tier IS NULL OR r.tier = :tier)
+      AND (:user IS NULL OR r.user = :user)
+      AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)
+    ORDER BY r.datRegl DESC
+  """)
+    List<Reglement> findByTierAndUserAndYearReglements(
+            @Param("tier") Tier tier,
+            @Param("user") User user,
+            @Param("year") Integer year
+    );
 
-    @Query("SELECT COALESCE(SUM(r.espece+ r.cheque), 0) FROM Reglement r WHERE r.tier.id =:tierId")
-    BigDecimal getTotalEspeceChequeByTier(@Param("tierId") Integer tierId);
+    @Query("SELECT COALESCE(SUM(r.espece+ r.cheque), 0) FROM Reglement r WHERE r.tier.id =:tierId AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)")
+    BigDecimal getTotalEspeceChequeByTierAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
 
     @Query("""
     SELECT r FROM Reglement r WHERE r.tier.id = :tierId
 """)
     List<Reglement> findReglementByTierId(@Param("tierId") Integer tierId);
+
+    @Query("""
+    SELECT r FROM Reglement r WHERE r.tier.id = :tierId AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)
+""")
+    List<Reglement> findReglementByTierIdAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
 
     Optional<Reglement> findReglementByIdRegl(Integer id);
 

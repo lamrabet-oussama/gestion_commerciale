@@ -21,14 +21,11 @@ public class TierStatistiqueCreditDto {
    // private String qualiteTier;
     private List<BonSortieDto> bonsorties;
     private List<ReglementDto> reglements;
-    @JsonFormat(shape =  JsonFormat.Shape.STRING,pattern = "0.00")
     private BigDecimal totalCredit;
 
-    @JsonFormat(shape =  JsonFormat.Shape.STRING,pattern = "0.00")
     private BigDecimal totalDebit;
-
-    @JsonFormat(shape =  JsonFormat.Shape.STRING,pattern = "0.00")
-    BigDecimal percentageDebitCredit;
+private BigDecimal resteAPayer;
+   private  BigDecimal percentageDebitCredit;
 
 
 }

@@ -5,9 +5,11 @@ import com.moonsystem.gestion_commerciale.dto.BonAchatVenteDto;
 import com.moonsystem.gestion_commerciale.dto.BonSortieDto;
 import com.moonsystem.gestion_commerciale.model.enums.MvtType;
 import com.moonsystem.gestion_commerciale.services.BonAchatVenteService;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -24,11 +26,22 @@ public class BonAchatVenteController implements BonAchatVenteApi {
 
             BonAchatVenteDto dto
     ) {
-        return bonAchatVenteService.createBon(dto, MvtType.ACHAT);
+        BonAchatVenteDto result;
+
+            // create
+            result = bonAchatVenteService.createBon(dto, MvtType.ACHAT);
+
+        return result;
 
 
     }
 
+    @Override
+    public BonAchatVenteDto updateBonAchat(
+            BonAchatVenteDto dto, String serie
+    ){
+        return this.bonAchatVenteService.updateBon(serie,dto, MvtType.ACHAT);
+    }
 
     @Override
     public BonAchatVenteDto getBonAchat(Integer userId, String serie){
@@ -51,11 +64,20 @@ public class BonAchatVenteController implements BonAchatVenteApi {
 
             BonAchatVenteDto dto
     ) {
-        return bonAchatVenteService.createBon(dto, MvtType.VENTE);
+        BonAchatVenteDto result;
 
+            // create
+            result = bonAchatVenteService.createBon(dto, MvtType.VENTE);
+
+        return result;
 
     }
-
+    @Override
+   public BonAchatVenteDto updateBonVente(
+            BonAchatVenteDto dto, String serie
+    ){
+        return this.bonAchatVenteService.updateBon(serie,dto, MvtType.VENTE);
+    }
 
     @Override
     public ResponseEntity<byte[]> downloadBonVente(Integer userCod, String serie) {

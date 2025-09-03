@@ -46,6 +46,7 @@ public class BonSortieDto {
                 .montant(entity.getMontant())
                 .espece(entity.getEspece())
                 .cheque(entity.getCheque())
+                .detCheque(entity.getDetCheq())
                 .credit(entity.getCredit())
                 .datBon(entity.getDatBon())
                 .mvt(entity.getMvt().name())

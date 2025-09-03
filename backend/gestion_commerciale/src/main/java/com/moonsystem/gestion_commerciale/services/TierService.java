@@ -28,5 +28,6 @@ public interface TierService {
     List<TierDto> getAllClient();
     List<TierDto> getAllFournisseur();
     Integer numberOfTiers();
+    List<TierDto> findAllTiers();
 
 }

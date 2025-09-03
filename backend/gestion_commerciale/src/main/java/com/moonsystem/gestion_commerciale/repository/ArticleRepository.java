@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNullApi;
 import org.springframework.stereotype.Repository;
 
 import com.moonsystem.gestion_commerciale.model.Article;
@@ -19,6 +20,8 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
     @Query("SELECT CAST(COUNT(a) AS integer) FROM Article a")
     Integer countAll();
 
+
+
     Optional<Article> findByCod(Integer cod);
 
     Optional<Article> findByRef(Integer ref);
@@ -27,8 +30,14 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
 
     boolean existsByCod(Integer cod);
 
-    @Query("SELECT DISTINCT a.famille FROM Article a")
+    @Query("SELECT DISTINCT a.famille FROM Article a WHERE a.actif=true")
     List<String> findDistinctFamilles();
+
+    @Query("SELECT DISTINCT a.designation FROM Article a WHERE a.actif=true")
+    List<String> findDistinctDesignation();
+
+    @Query("SELECT a.choix FROM Article a WHERE a.designation= :designation AND a.actif=true")
+    List<String> findChoixByDesignation(String designation);
 
     @Query("""
     SELECT a FROM Article a
@@ -92,6 +101,13 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
 
     Page<Article> findByActifTrue(Pageable pageable);
 
+    @Query("""
+SELECT a FROM Article a 
+WHERE LOWER(a.designation) = LOWER(:designation) 
+AND LOWER(a.choix) = LOWER(:choix) 
+AND a.actif = true
+""")
     Article findByDesignationAndChoix(String designation, String choix);
+
 
 }

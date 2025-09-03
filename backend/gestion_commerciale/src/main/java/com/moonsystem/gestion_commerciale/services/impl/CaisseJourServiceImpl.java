@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.moonsystem.gestion_commerciale.dto.ReglementDto;
 import com.moonsystem.gestion_commerciale.exception.InvalidEntityException;
 import com.moonsystem.gestion_commerciale.model.Reglement;
 import com.moonsystem.gestion_commerciale.repository.ReglementRepository;
@@ -94,7 +95,14 @@ public class CaisseJourServiceImpl implements CaisseJourService {
         List<BonSortieDto> bonsAchat = bonsGroupes.getOrDefault("ACHAT", Collections.emptyList());
         List<BonSortieDto> bonsVentes = bonsGroupes.getOrDefault("VENTE", Collections.emptyList());
 
-        List<Reglement> reglements=reglementRepository.findByDate(debutJour,finJour,null);
+        List<ReglementDto> reglements=reglementRepository.findByDate(debutJour,finJour,null).stream().map(reg->{
+                    ReglementDto dto=ReglementDto.toDto(reg);
+            totaux.setTotalEspece(totaux.getTotalEspece().add(reg.getEspece()));
+            totaux.setTotalCheque(totaux.getTotalCheque().add(reg.getCheque()));
+            totaux.setTotalMontant(totaux.getTotalMontant().add(reg.getTotal()));
+            return dto;
+                }
+        ).toList();
         return CaisseJourDto.builder()
                 .date(jour)
                 .nomUser(username)

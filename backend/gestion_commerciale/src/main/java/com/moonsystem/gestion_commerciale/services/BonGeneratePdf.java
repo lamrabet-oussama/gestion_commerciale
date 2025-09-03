@@ -46,24 +46,25 @@ public class BonGeneratePdf {
 
     @PostConstruct
     public void init() {
-        MesInfoxDto dto = new MesInfoxDto(
-                1,
-                "Ma Société",
-                "Commerce",
-                "123 Rue Exemple",
-                "Pied de page",
-                "SER123",
-                "logo.png",
-                "codeF",
-                "Banque Nom",
-                "B123",
-                "Activité B",
-                "Adresse B",
-                "logoB.png",
-                "codeB",
-                "Note 1",
-                "Note 2"
-        );//this.mesInfoxService.findById(1);
+//        MesInfoxDto dto = new MesInfoxDto(
+//                1,
+//                "Ma Société",
+//                "Commerce",
+//                "123 Rue Exemple",
+//                "Pied de page",
+//                "SER123",
+//                "logo.png",
+//                "codeF",
+//                "Banque Nom",
+//                "B123",
+//                "Activité B",
+//                "Adresse B",
+//                "logoB.png",
+//                "codeB",
+//                "Note 1",
+//                "Note 2"
+//        );
+        MesInfoxDto dto=this.mesInfoxService.findById(1);
         this.nomEntreprise = dto.getNomSociete();
         this.logo = dto.getBLogo();
         // Adaptez ces champs selon votre DTO MesInfoxDto
@@ -264,14 +265,17 @@ public class BonGeneratePdf {
     }
 
     private void addItemsTable(Document document, Font headerFont, Font normalFont, BonAchatVenteDto bon) throws DocumentException {
-        PdfPTable itemsTable = new PdfPTable(4);
+        // Modification: passage de 4 à 5 colonnes pour inclure la remise unitaire
+        PdfPTable itemsTable = new PdfPTable(5);
         itemsTable.setWidthPercentage(100);
-        itemsTable.setWidths(new float[]{1f, 4f, 1.5f, 1.5f});
+        // Ajustement des largeurs des colonnes
+        itemsTable.setWidths(new float[]{1f, 4f, 1.5f, 1.2f, 1.5f});
 
         // En-têtes du tableau
         addTableHeader(itemsTable, "Qté", headerFont);
         addTableHeader(itemsTable, "Désignation", headerFont);
         addTableHeader(itemsTable, "Prix unit", headerFont);
+        addTableHeader(itemsTable, "Remise", headerFont); // Nouvelle colonne
         addTableHeader(itemsTable, "Total", headerFont);
 
         // Lignes des articles
@@ -281,14 +285,20 @@ public class BonGeneratePdf {
             totalHT = totalHT.add(totalLine);
 
             addTableCell(itemsTable, article.getQuantite().toString(), normalFont, Element.ALIGN_CENTER);
-            addTableCell(itemsTable, article.getDesignation(), normalFont, Element.ALIGN_LEFT);
+            addTableCell(itemsTable, article.getDesignation()+" ("+article.getChoix()+")", normalFont, Element.ALIGN_LEFT);
             addTableCell(itemsTable, String.format("%.2f", article.getPrix())+" DH", normalFont, Element.ALIGN_RIGHT);
+
+            // Nouvelle cellule pour la remise unitaire
+            String remiseText = article.getRemisUni() != null ?
+                    String.format("%.2f", article.getRemisUni()) + " DH" :
+                    "0.00 DH";
+            addTableCell(itemsTable, remiseText, normalFont, Element.ALIGN_RIGHT);
+
             addTableCell(itemsTable, String.format("%.2f", totalLine)+" DH", normalFont, Element.ALIGN_RIGHT);
         }
 
         document.add(itemsTable);
     }
-
     private void addTotalsAndPayment(Document document, Font normalFont, BonAchatVenteDto bon) throws DocumentException {
         document.add(new Paragraph(" "));
 
@@ -311,7 +321,7 @@ public class BonGeneratePdf {
 
         // Remise si applicable
         if (bon.getRemis() != null && bon.getRemis().compareTo(BigDecimal.ZERO) > 0) {
-            addTotalRow(rightTable, "Remise " , String.format("%.2f", bon.getRemis()), normalFont);
+            addTotalRow(rightTable, "Remise Globale " , String.format("%.2f", bon.getRemis()), normalFont);
         }
 
         // Net à payer

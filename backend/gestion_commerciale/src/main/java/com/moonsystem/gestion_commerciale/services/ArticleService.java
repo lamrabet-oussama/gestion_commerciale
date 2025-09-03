@@ -3,6 +3,7 @@ package com.moonsystem.gestion_commerciale.services;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.moonsystem.gestion_commerciale.dto.ArticleAddBonDto;
 import com.moonsystem.gestion_commerciale.dto.ArticleDto;
 import com.moonsystem.gestion_commerciale.utils.PageResponse;
 
@@ -31,5 +32,7 @@ public interface ArticleService {
      void checkUnicityDesignationAndChoix(ArticleDto dto,boolean Update);
 
      Integer getTotalElements();
-     ArticleDto findByDesignAndChoix(String designation,String choix);
+    ArticleAddBonDto findByDesignationAndChoix(String designation, String choix);
+     List<String> getAllDesignation();
+     List<String> getChoixByDes(String des);
 }

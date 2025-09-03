@@ -253,4 +253,20 @@ public interface TierApi {
     )
     List<TierDto> getAllFournisseur();
 
+
+    @GetMapping(value = APP_ROOT + "/tiers/all")
+    @Operation(
+            summary = "Récupérer tous les tiers",
+            description = "Retourne la liste de tous les tiers."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Liste des tiers récupérée avec succès",
+            content = @Content(
+                    mediaType = "application/json",
+                    array = @ArraySchema(schema = @Schema(implementation = TierDto.class))
+            )
+    )
+    List<TierDto> getAllTiers();
+
 }

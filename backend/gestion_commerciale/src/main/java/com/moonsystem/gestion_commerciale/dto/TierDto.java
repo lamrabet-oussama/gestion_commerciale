@@ -56,7 +56,7 @@ public class TierDto {
     private String banq;
     private String numCompte;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
-    private BigDecimal solde;
+    private BigDecimal solde=BigDecimal.ZERO;
     private String note;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
 

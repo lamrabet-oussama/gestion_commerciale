@@ -3,6 +3,7 @@ package com.moonsystem.gestion_commerciale.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.moonsystem.gestion_commerciale.dto.ArticleAddBonDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,7 +82,17 @@ public class ArticleController implements ArticleApi {
         return articleService.findAllPaginated(page, size);
     }
     @Override
-    public     ArticleDto getArticleByDesAndChoix(@RequestParam("designation") String designation, @RequestParam("choix") String choix){
-        return this.articleService.findByDesignAndChoix(designation,choix);
+    public ArticleAddBonDto getArticleByDesAndChoix(String designation,  String choix){
+        return this.articleService.findByDesignationAndChoix(designation,choix);
+    }
+
+    @Override
+    public List<String> getAllDesignation(){
+        return this.articleService.getAllDesignation();
+    }
+
+    @Override
+    public List<String> getChoixByDes(String des){
+        return this.articleService.getChoixByDes(des);
     }
 }

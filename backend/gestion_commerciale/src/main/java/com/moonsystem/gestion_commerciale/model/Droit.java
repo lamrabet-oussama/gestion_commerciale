@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class Droit {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_Droi")
     private Integer id;
 

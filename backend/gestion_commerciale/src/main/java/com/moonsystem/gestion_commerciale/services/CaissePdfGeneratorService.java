@@ -224,7 +224,7 @@ public class CaissePdfGeneratorService {
 
     private void addReglementsData(PdfPTable table, CaisseJourDto caisseDto, Font normalFont, Font smallFont) {
         if (caisseDto.getReglements() != null && !caisseDto.getReglements().isEmpty()) {
-            for (Reglement reglement : caisseDto.getReglements()) {
+            for (ReglementDto reglement : caisseDto.getReglements()) {
                 addDataRow(table,
                         getReglementNumeroFormate(reglement), // MODIFIÉ : utilise le format "Reg N°XX"
                         getReglementMontant(reglement),
@@ -294,7 +294,7 @@ public class CaissePdfGeneratorService {
         BigDecimal totalReglementCheque = BigDecimal.ZERO;
 
         if (caisseDto.getReglements() != null) {
-            for (Reglement reglement : caisseDto.getReglements()) {
+            for (ReglementDto reglement : caisseDto.getReglements()) {
                 totalReglementMontant = totalReglementMontant.add(getReglementMontant(reglement));
                 totalReglementEspece = totalReglementEspece.add(getReglementEspece(reglement));
                 totalReglementCheque = totalReglementCheque.add(getReglementCheque(reglement));
@@ -402,18 +402,18 @@ public class CaissePdfGeneratorService {
     }
 
     // NOUVELLE MÉTHODE : formatage du numéro de règlement
-    private String getReglementNumeroFormate(Reglement reglement) {
-        if (reglement == null || reglement.getIdRegl() == null) {
+    private String getReglementNumeroFormate(ReglementDto reglement) {
+        if (reglement == null || reglement.getId() == null) {
             return "Reg N°0";
         }
-        return "Reg N°" + reglement.getIdRegl();
+        return "Reg N°" + reglement.getId();
     }
 
-    private BigDecimal getReglementMontant(Reglement reglement) {
+    private BigDecimal getReglementMontant(ReglementDto reglement) {
         if (reglement == null) return BigDecimal.ZERO;
 
         // Si l'attribut reglement est null, prendre la somme de espèce et chèque
-        if (reglement.getTotal() == null) {
+        if (reglement.getReglement() == null) {
             BigDecimal montantTotal = BigDecimal.ZERO;
 
             if (reglement.getEspece() != null) {
@@ -427,19 +427,19 @@ public class CaissePdfGeneratorService {
         }
 
         // Si l'attribut reglement existe, l'utiliser
-        return reglement.getTotal();
+        return reglement.getReglement();
     }
 
-    private BigDecimal getReglementEspece(Reglement reglement) {
+    private BigDecimal getReglementEspece(ReglementDto reglement) {
         return reglement != null && reglement.getEspece() != null ? reglement.getEspece() : BigDecimal.ZERO;
     }
 
-    private BigDecimal getReglementCheque(Reglement reglement) {
+    private BigDecimal getReglementCheque(ReglementDto reglement) {
         return reglement != null && reglement.getCheque() != null ? reglement.getCheque() : BigDecimal.ZERO;
     }
 
-    private String getReglementDetails(Reglement reglement) {
-        return reglement != null && reglement.getDet_cheque() != null ? reglement.getDet_cheque() : "";
+    private String getReglementDetails(ReglementDto reglement) {
+        return reglement != null && reglement.getDetailsCheque() != null ? reglement.getDetailsCheque() : "";
     }
 
     private void addMainTableHeaders(PdfPTable table, Font headerFont) {

@@ -170,4 +170,11 @@ public class TierServiceImpl implements TierService {
         return this.tierRepository.findFournisseur().stream()
                 .map(TierDto::fromEntity).collect(Collectors.toList());
     }
+
+    @Override
+    public List<TierDto> findAllTiers(){
+        return this.tierRepository.findAllActive().stream().map(
+                TierDto::fromEntity
+        ).toList();
+    }
 }

@@ -21,18 +21,18 @@ public class CaisseJourDto {
     private LocalDate date;               // jour considéré
     private List<BonSortieDto> bonsAchat;
     private List<BonSortieDto> bonsVente;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+  //  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
 // tous les bons du jour
     private BigDecimal totalMontant;
     // somme des montants (via SommeTotauxDto)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+   // @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalEspece;
     // somme des espèces
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+   // @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCheque;       // somme des chèques
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+    //@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCredit;
     private String nomUser;
-    private List<Reglement> reglements;
+    private List<ReglementDto> reglements;
 }

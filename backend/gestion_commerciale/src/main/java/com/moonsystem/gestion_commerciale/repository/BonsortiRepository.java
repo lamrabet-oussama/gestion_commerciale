@@ -49,7 +49,7 @@ public interface BonsortiRepository extends JpaRepository<Bonsorti, Integer> {
     @Query("SELECT new com.moonsystem.gestion_commerciale.dto.SommeTotauxDto("
             + "SUM(b.montant), SUM(b.espece), SUM(b.cheque),SUM(b.credit)) "
             + "FROM Bonsorti b "
-            + "WHERE CAST(b.datBon AS date) = :date AND b.user =:user")
+            + "WHERE CAST(b.datBon AS date) = :date AND (:user IS NULL OR b.user =:user )")
     SommeTotauxDto sumTotauxByDate(@Param("date") LocalDate date,@Param("user") User user);
 
     // Pour les créances (CLIENT)
@@ -58,7 +58,7 @@ SELECT new com.moonsystem.gestion_commerciale.dto.DettesDto(
     t.id,
     t.nom,
     COALESCE(SUM(b.espece), CAST(0 AS java.math.BigDecimal)) + COALESCE(SUM(b.cheque), CAST(0 AS java.math.BigDecimal)),
-    COALESCE(SUM(b.credit), CAST(0 AS java.math.BigDecimal)),
+    COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)),
     t.qualite,
     (SELECT MAX(r.datRegl) FROM Reglement r WHERE r.tier = t)
 )
@@ -66,14 +66,14 @@ FROM Bonsorti b
 JOIN b.tier t
 WHERE b.datBon BETWEEN :startOfYear AND :endOfYear
     AND (t.qualite = 'CLIENT' OR t.qualite = 'MIXTE')
-GROUP BY t.id, t.nom, t.qualite
-HAVING COALESCE(SUM(b.credit), CAST(0 AS java.math.BigDecimal)) > 0
-ORDER BY SUM(b.credit) DESC
+GROUP BY t.id, t.nom, t.qualite, t.solde
+HAVING COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)) > 0
+ORDER BY t.solde DESC
 """)
     List<DettesDto> findCreancesByYear(@Param("startOfYear") LocalDateTime startOfYear,@Param("endOfYear") LocalDateTime endOfYear);
 
-    @Query("SELECT COALESCE(SUM(b.credit), 0) FROM Bonsorti b JOIN b.tier t  WHERE t.id =:tierId")
-    BigDecimal findTotalCreditByTierId(@Param("tierId") Integer tierId);
+    @Query("SELECT COALESCE(SUM(b.credit), 0) FROM Bonsorti b JOIN b.tier t  WHERE t.id =:tierId AND (:year IS NULL OR EXTRACT(YEAR FROM b.datBon) = :year) ")
+    BigDecimal findTotalCreditByTierIdAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
 
     // Pour les dettes (FOURNISSEUR)
     @Query("""
@@ -81,7 +81,7 @@ SELECT new com.moonsystem.gestion_commerciale.dto.DettesDto(
     t.id,
     t.nom,
     COALESCE(SUM(b.espece), CAST(0 AS java.math.BigDecimal)) + COALESCE(SUM(b.cheque), CAST(0 AS java.math.BigDecimal)),
-    COALESCE(SUM(b.credit), CAST(0 AS java.math.BigDecimal)),
+    COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)),
     t.qualite,
     (SELECT MAX(r.datRegl) FROM Reglement r WHERE r.tier = t)
 )
@@ -89,12 +89,12 @@ FROM Bonsorti b
 JOIN b.tier t
 WHERE b.datBon BETWEEN :startOfYear AND :endOfYear
     AND (t.qualite = 'FOURNISSEUR' OR t.qualite = 'MIXTE')
-GROUP BY t.id, t.nom, t.qualite
-HAVING COALESCE(SUM(b.credit), CAST(0 AS java.math.BigDecimal)) < 0
-ORDER BY SUM(b.credit) DESC
+GROUP BY t.id, t.nom, t.qualite, t.solde
+HAVING COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)) < 0
+ORDER BY t.solde DESC
 """)
-    List<DettesDto> findDettesByYear(@Param("startOfYear") LocalDateTime startOfYear,@Param("endOfYear") LocalDateTime endOfYear);
-
+    List<DettesDto> findDettesByYear(@Param("startOfYear") LocalDateTime startOfYear,
+                                     @Param("endOfYear") LocalDateTime endOfYear);
 
 
 
@@ -121,9 +121,13 @@ SELECT b FROM Bonsorti b WHERE b.tier.id= :tierId
 """)
     List<Bonsorti> findByTierId(@Param("tierId") Integer tierId);
 
+    @Query("""
+SELECT b FROM Bonsorti b WHERE b.tier.id= :tierId  AND (:year IS NULL OR EXTRACT(YEAR FROM b.datBon) = :year)
+""")
+    List<Bonsorti> findByTierIdAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
 
     @Query("""
-        SELECT b.serie FROM Bonsorti b WHERE (:userCod IS NULL OR b.user.cod = :userCod) AND b.mvt = :mvt
+        SELECT b.serie FROM Bonsorti b WHERE (:userCod IS NULL OR b.user.cod = :userCod) AND b.mvt = :mvt ORDER BY b.datBon DESC
 """)
     List<String> getAllByMvt(@Param("userCod") Integer userCod, @Param("mvt") MvtType mvt);
 

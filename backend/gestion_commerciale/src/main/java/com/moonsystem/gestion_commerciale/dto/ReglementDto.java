@@ -20,19 +20,17 @@ public class ReglementDto {
     private Integer idUser;
     private String nomTier;
     private String nomUser;
-    @JsonFormat(shape =  JsonFormat.Shape.STRING,pattern = "0.00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal espece;
-    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal cheque;
     private String detailsCheque;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy/MM/dd")
     private LocalDateTime datRegl;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
     private BigDecimal reglement;
     private  BigDecimal totalEspece;
     private BigDecimal totalCheque;
-
     public static ReglementDto toDto(Reglement reg){
         return ReglementDto.builder()
                 .id(reg.getIdRegl())

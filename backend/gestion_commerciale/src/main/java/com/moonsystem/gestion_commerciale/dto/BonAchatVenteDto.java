@@ -31,8 +31,8 @@ public class BonAchatVenteDto {
     private BigDecimal credit;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal remis;
-    private String detCheque;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    private String detCheque="........";
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime datBon;
     private Integer idTier;
     private String nomTier;

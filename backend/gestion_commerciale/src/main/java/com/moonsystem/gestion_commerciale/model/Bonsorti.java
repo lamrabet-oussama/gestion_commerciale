@@ -1,5 +1,7 @@
 package com.moonsystem.gestion_commerciale.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.moonsystem.gestion_commerciale.model.enums.MvtType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,7 +29,7 @@ import java.util.List;
 public class Bonsorti {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_bon")
     private Integer idBon;
 
@@ -43,6 +45,7 @@ public class Bonsorti {
 
     @ManyToOne
     @JoinColumn(name = "tier", nullable = false)
+    @JsonIgnoreProperties("bonsortis")
     private Tier tier;
 
     @Column(name = "Dat_Bon")

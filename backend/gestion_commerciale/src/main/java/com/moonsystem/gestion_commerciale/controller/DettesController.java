@@ -26,13 +26,13 @@ public class DettesController implements DettesApi {
     }
 
     @Override
-    public List<BigDecimal>  getCreditByTierId(@PathVariable("id") Integer tierId){
+    public BigDecimal  getCreditByTierId(@PathVariable("id") Integer tierId){
         return this.dettesService.getTotalDettesByTierId(tierId);
     }
 
     @Override
-    public TierStatistiqueCreditDto getStsByTierId( Integer tierId){
-        return this.dettesService.getTierStatistiqueCreditByTierId(tierId);
+    public TierStatistiqueCreditDto getStsByTierId( Integer tierId,Integer year){
+        return this.dettesService.getTierStatistiqueCreditByTierId(tierId, year);
     }
 
 

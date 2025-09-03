@@ -26,7 +26,7 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
 
     @Query(
             """
-        SELECT t FROM Tier t WHERE t.qualite='CLIENT' OR t.qualite='MIXTE'
+        SELECT t FROM Tier t WHERE (t.qualite='CLIENT' OR t.qualite='MIXTE') AND t.actif=true ORDER BY t.nom
 """
     )
     List<Tier> findClient();
@@ -34,7 +34,7 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
 
     @Query(
             """
-        SELECT t FROM Tier t WHERE t.qualite='FOURNISSEUR' OR t.qualite='MIXTE'
+        SELECT t FROM Tier t WHERE (t.qualite='FOURNISSEUR' OR t.qualite='MIXTE') AND t.actif=true ORDER BY t.nom
 """
     )
     List<Tier> findFournisseur();
@@ -54,4 +54,10 @@ public interface TierRepository extends JpaRepository<Tier, Integer> {
 
     boolean existsByNom(String name);
 
+    @Query(
+            """
+        SELECT t FROM Tier t WHERE  t.actif=true ORDER BY t.nom
+"""
+    )
+    List<Tier> findAllActive();
 }

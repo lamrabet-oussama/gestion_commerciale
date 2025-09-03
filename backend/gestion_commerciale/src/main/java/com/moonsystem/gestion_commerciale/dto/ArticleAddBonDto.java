@@ -18,11 +18,19 @@ public class ArticleAddBonDto {
     private Integer cod;
     private Integer ref;
     private String designation;
+    private String choix;
     @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
     private BigDecimal prix;
+    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
+    private BigDecimal prixAchat;
+    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
+    private BigDecimal prixMin;
     private BigDecimal quantite;
     @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "0.00")
     private BigDecimal remisUni;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+
+    private BigDecimal stock;
 
 
     public static ArticleAddBonDto toDto(Article article) {
@@ -32,9 +40,14 @@ public class ArticleAddBonDto {
         return ArticleAddBonDto.builder()
                 .cod(article.getCod())
                 .ref(article.getRef())
+                .stock(article.getStock())
                 .designation(article.getDesignation())
                 .prix(article.getPrix())
+                .prixAchat(article.getPrixAchat())
+                .prixMin(article.getPrixMin())
+                .choix(article.getChoix())
                 .build();
     }
+
 
 }

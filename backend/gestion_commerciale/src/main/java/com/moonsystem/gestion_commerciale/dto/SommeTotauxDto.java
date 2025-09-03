@@ -7,13 +7,10 @@ import java.math.BigDecimal;
 
 @Data
 public class SommeTotauxDto {
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalMontant;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalEspece;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal totalCheque;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")

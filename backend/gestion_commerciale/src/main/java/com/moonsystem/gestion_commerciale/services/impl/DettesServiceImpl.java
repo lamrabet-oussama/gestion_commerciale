@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Data
@@ -119,53 +120,64 @@ public class DettesServiceImpl implements DettesService {
     }
 
     @Override
-    public   List<BigDecimal> getTotalDettesByTierId(Integer tierId){
+    public   BigDecimal getTotalDettesByTierId(Integer tierId){
+        if(tierId==null){
+            return  BigDecimal.ZERO;
+        }
 
         Tier tier= this.tierRepository.findById(tierId).orElseThrow(
                 ()-> new EntityNotFoundException("Tier non trouvé",List.of("Tier not found"),ErrorCodes.TIER_NOT_FOUND)
         );
 
-        return List.of(tier.getSoldeFact(),tier.getSolde());
+        return tier.getSolde();
 
     }
 
     @Override
-    public TierStatistiqueCreditDto getTierStatistiqueCreditByTierId(Integer tierId){
-        Tier tier= this.tierRepository.findById(tierId).orElseThrow(
-                ()->new EntityNotFoundException(
+    public TierStatistiqueCreditDto getTierStatistiqueCreditByTierId(Integer tierId, Integer year) {
+        Tier tier = this.tierRepository.findById(tierId).orElseThrow(
+                () -> new EntityNotFoundException(
                         "Tier non trouvé",
-                        List.of("Tier not found"),ErrorCodes.TIER_NOT_FOUND
+                        List.of("Tier not found"), ErrorCodes.TIER_NOT_FOUND
                 )
         );
-        List<BonSortieDto> bons = this.bonSortiRepository.findByTierId(tierId).stream()
+
+        List<BonSortieDto> bons = this.bonSortiRepository.findByTierIdAndYear(tierId, year).stream()
                 .map(BonSortieDto::of).toList();
 
-        List<ReglementDto> reglements = this.reglementRepository.findReglementByTierId(tierId).stream()
+        List<ReglementDto> reglements = this.reglementRepository.findReglementByTierIdAndYear(tierId, year).stream()
                 .map(ReglementDto::toDto).toList();
 
-        BigDecimal totalCredit = this.bonSortiRepository.findTotalCreditByTierId(tierId);
-        BigDecimal totalDebit = this.reglementRepository.getTotalEspeceChequeByTier(tierId);
+        BigDecimal totalCredit = Optional.ofNullable(
+                this.bonSortiRepository.findTotalCreditByTierIdAndYear(tierId, year)
+        ).orElse(BigDecimal.ZERO);
+
+        BigDecimal totalDebit = Optional.ofNullable(
+                this.reglementRepository.getTotalEspeceChequeByTierAndYear(tierId, year)
+        ).orElse(BigDecimal.ZERO);
+
+        BigDecimal resteAPayer = totalCredit.subtract(totalDebit);
+
         BigDecimal percentageDebitCredit;
-        if (totalCredit.compareTo(BigDecimal.ZERO) > 0) {
+        if (totalCredit.compareTo(BigDecimal.ZERO) == 0) {
+            percentageDebitCredit = BigDecimal.ZERO;
+        } else {
             percentageDebitCredit = totalDebit
                     .divide(totalCredit, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100))
                     .setScale(2, RoundingMode.HALF_UP);
-        } else {
-            percentageDebitCredit = BigDecimal.ZERO; // ou autre logique
         }
 
-
-        return
-                TierStatistiqueCreditDto.builder()
-                        .tierId(tierId)
-                        .nomTier(tier.getNom())
-                        .bonsorties(bons)
-                        .reglements(reglements)
-                        .totalCredit(totalCredit)
-                        .totalDebit(totalDebit)
-                        .percentageDebitCredit(percentageDebitCredit)
-                        .build();
-
+        return TierStatistiqueCreditDto.builder()
+                .tierId(tierId)
+                .nomTier(tier.getNom())
+                .bonsorties(bons)
+                .reglements(reglements)
+                .totalCredit(totalCredit)
+                .totalDebit(totalDebit)
+                .resteAPayer(resteAPayer)
+                .percentageDebitCredit(percentageDebitCredit)
+                .build();
     }
+
 }

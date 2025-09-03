@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -66,9 +68,13 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                         .cod(f.getArticle().getCod())
                         .ref(f.getArticle().getRef())
                         .designation(f.getArticle().getDesignation())
+                        .choix(f.getArticle().getChoix())
                         .quantite(BigDecimal.valueOf(bon.getMvt().equals(MvtType.ACHAT) ? f.getEntree() : f.getSortie()))
                         .prix(f.getPrixUni())
+                        .prixAchat(f.getArticle().getPrixAchat())
+                        .prixMin(f.getArticle().getPrixMin())
                         .remisUni(f.getFRemis())
+
                         .build()
                 )
                 .toList();
@@ -76,10 +82,14 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
 
     @Override
     public BonAchatVenteDto getBonAchat(Integer userId, String serie) {
+        if (serie == null || serie.isEmpty()) {
+            return new BonAchatVenteDto();
+        }
         Bonsorti bon = this.bonsortiRepository.findBySerieAndMvtAndUserCod(serie, MvtType.ACHAT, userId);
         if (bon == null) {
-            return null;
+            return new BonAchatVenteDto();
         }
+
 
         List<ArticleAddBonDto> articlesDto = createArticlesDto(bon);
         return BonAchatVenteDto.mapToDto(bon, articlesDto);
@@ -87,9 +97,12 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
 
     @Override
     public BonAchatVenteDto getBonVente(Integer userId, String serie) {
+        if (serie == null || serie.isEmpty()) {
+            return new BonAchatVenteDto();
+        }
         Bonsorti bon = this.bonsortiRepository.findBySerieAndMvtAndUserCod(serie, MvtType.VENTE, userId);
         if (bon == null) {
-            return null;
+            return new BonAchatVenteDto();
         }
 
         List<ArticleAddBonDto> articlesDto = createArticlesDto(bon);
@@ -101,9 +114,46 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
     }
 
 
+    @Override
     @Transactional
     public BonAchatVenteDto createBon(BonAchatVenteDto dto, MvtType mvt) {
-
+        if(dto.getArticles()==null || dto.getArticles().isEmpty()){
+            throw new InvalidOperationException(
+                    "Aucun Article ajouté",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Articles ajoutés=null")
+            );
+        }
+        if ((dto.getDetCheque() != null && !dto.getDetCheque().isEmpty())&& dto.getCheque()==null) {
+            throw new InvalidOperationException(
+                    "Montant Chèque n'est pas défini",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Montant Chèque n'est pas défini")
+            );        }
+        if (dto.getCheque() != null && dto.getCheque().signum() > 0
+                && !StringUtils.hasText(dto.getDetCheque())) {
+            throw new InvalidOperationException(
+                    "Détails de chèque sont obligatoires",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Détails Chèque")
+            );
+        }
+        dto.getArticles().forEach(article -> {
+            if (article.getQuantite() == null) {
+                throw new InvalidOperationException(
+                        "Quantité non définie pour l'article: " + article.getRef(),
+                        ErrorCodes.BAD_CREDENTIALS,
+                        List.of("Quantité null")
+                );
+            }
+        });
+        if(dto.getIdUser()==null){
+            throw new EntityNotFoundException(
+                    "Utilisateur n'est pas spécifié",
+                    List.of("idUser =null"),
+                    ErrorCodes.BAD_CREDENTIALS
+            );
+        }
         User user = userRepository.findByCod(dto.getIdUser())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Utilisateur non trouvé",
@@ -111,6 +161,13 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                         ErrorCodes.USER_NOT_FOUND
                 ));
 
+        if(dto.getIdTier()==null){
+            throw new EntityNotFoundException(
+                    "Tier n'est pas spécifié",
+                    List.of("idTier =null"),
+                    ErrorCodes.BAD_CREDENTIALS
+            );
+        }
         Tier tier = tierRepository.findById(dto.getIdTier())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Tier non trouvé",
@@ -155,6 +212,13 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
 
         // 2) Vérif stock (comme avant)
         dto.getArticles().forEach(ar -> {
+            if(ar.getQuantite().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new InvalidOperationException(
+                        "Quantité doit etre strictement positif: Artcile: "+ar.getRef()+":" + ar.getQuantite(),
+                        ErrorCodes.STOCK_INSUFFISANT,
+                        List.of("Stock insuffisant pour " + ar.getQuantite())
+                );
+            }
             Article article = articles.stream()
                     .filter(a -> a.getCod().equals(ar.getCod()))
                     .findFirst()
@@ -201,33 +265,22 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
         if (mvt.equals(MvtType.ACHAT)) credit = credit.multiply(BigDecimal.valueOf(-1));
 
         // 7) mise à jour du solde
-       // BigDecimal prevSolde = BigDecimal.ZERO;
+        // BigDecimal prevSolde = BigDecimal.ZERO;
 
         BigDecimal prevSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
         tier.setSolde(prevSolde.add(credit));
 
-//        if (credit.compareTo(BigDecimal.ZERO) < 0) {
-//            prevSolde = tier.getSolde() == null ? BigDecimal.ZERO : tier.getSolde();
-//            tier.setSolde(prevSolde.add(credit));
-//        } else if (credit.compareTo(prevSolde) >= 0) {
-//            prevSolde = tier.getSoldeFact() == null ? BigDecimal.ZERO : tier.getSoldeFact();
-//            tier.setSoldeFact(prevSolde.add(credit));
-//        }
 
-        if (dto.getCheque() != null && dto.getCheque().compareTo(BigDecimal.ZERO) > 0 && dto.getDetCheque() == null) {
+
+        if(dto.getEspece()!=null && dto.getEspece().compareTo(BigDecimal.ZERO)<0){
             throw new InvalidOperationException(
-                    "Détails de chèque sont obligatoires",
+                    "Espèce est négatif",
                     ErrorCodes.BAD_CREDENTIALS,
-                    List.of("Détails Chèque")
+                    List.of("Espèce négatif")
             );
         }
-        if ((dto.getDetCheque() != null && !dto.getDetCheque().isEmpty())
-                && dto.getCheque() == null) {
-            throw new InvalidOperationException(
-                    "Montant Chèque n'est pas défini",
-                    ErrorCodes.BAD_CREDENTIALS,
-                    List.of("Montant Chèque n'est pas défini")
-            );        }
+
+
 
 
 
@@ -276,6 +329,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
             return Flux.builder()
                     .bonSorti(savedBon)
                     .article(article)
+                    .dateFlux(dto.getDatBon()!=null ? dto.getDatBon() : LocalDateTime.now())
                     .libelle(article.getDesignation())
                     .montant(montantLigne)
                     .sortie(mvt.equals(MvtType.VENTE) ? ar.getQuantite().intValue() : 0)
@@ -296,8 +350,9 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                         .cod(f.getArticle().getCod())
                         .ref(f.getArticle().getRef())
                         .designation(f.getArticle().getDesignation())
-                        .quantite(BigDecimal.valueOf(mvt.equals(MvtType.ACHAT) ? f.getEntree() : f.getSortie()))
-                        .prix(f.getPrixUni())
+                        .quantite(mvt.equals(MvtType.ACHAT)
+                                ? BigDecimal.valueOf(f.getEntree() != null ? f.getEntree() : 0)
+                                : BigDecimal.valueOf(f.getSortie() != null ? f.getSortie() : 0))                        .prix(f.getPrixUni())
                         .remisUni(f.getFRemis()) // **IMPORTANT** : récupérer depuis le flux sauvegardé
                         .build()
                 )
@@ -306,6 +361,205 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
         tierRepository.saveAndFlush(tier);
         return BonAchatVenteDto.mapToDto(savedBon, articlesDto);
     }
+
+    @Override
+    @Transactional
+
+    public BonAchatVenteDto updateBon(String serie, BonAchatVenteDto dto, MvtType mvt) {
+        // 1) Vérifier que le bon existe
+        Bonsorti existingBon = bonsortiRepository.findBySerie(serie)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Bon avec la série " + serie + " introuvable",
+                        List.of("Bon non trouvé"),
+                        ErrorCodes.BONSOR_NOT_FOUND
+                ));
+
+        if(dto.getArticles()==null || dto.getArticles().isEmpty()){
+            throw new InvalidOperationException(
+                    "Aucun Article ajouté",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Articles ajoutés=null")
+            );
+        }
+        if ((dto.getDetCheque() != null && !dto.getDetCheque().isEmpty()&& dto.getCheque()==null) ) {
+            throw new InvalidOperationException(
+                    "Montant Chèque n'est pas défini",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Montant Chèque n'est pas défini")
+            );
+        }
+        if (dto.getCheque() != null && dto.getCheque().signum() > 0
+                && !StringUtils.hasText(dto.getDetCheque())) {
+            throw new InvalidOperationException(
+                    "Détails de chèque sont obligatoires",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Détails Chèque")
+            );
+        }
+        // Old tier (pour rollback)
+        Tier oldTier = existingBon.getTier();
+
+        // 2) Rollback du solde (null-safe)
+        BigDecimal oldTierSolde = oldTier.getSolde() == null ? BigDecimal.ZERO : oldTier.getSolde();
+        BigDecimal existingCredit = existingBon.getCredit() == null ? BigDecimal.ZERO : existingBon.getCredit();
+        oldTier.setSolde(oldTierSolde.subtract(existingCredit));
+
+        // rollback stock des flux existants (null-safe)
+        existingBon.getFluxes().forEach(flux -> {
+            Article article = flux.getArticle();
+            BigDecimal stock = article.getStock() == null ? BigDecimal.ZERO : article.getStock();
+            // flux.getSortie() et getEntree() sont des int
+            if (existingBon.getMvt() != null && existingBon.getMvt().equals(MvtType.VENTE)) {
+                article.setStock(stock.add(BigDecimal.valueOf(flux.getSortie())));
+            } else if (existingBon.getMvt() != null && existingBon.getMvt().equals(MvtType.ACHAT)) {
+                article.setStock(stock.subtract(BigDecimal.valueOf(flux.getEntree())));
+            }
+            articleRepository.save(article);
+        });
+
+        // 3) Supprimer anciens flux
+        existingBon.getFluxes().clear();
+
+        // 4) Validation articles
+        if (dto.getArticles() == null || dto.getArticles().isEmpty()) {
+            throw new InvalidOperationException(
+                    "Aucun Article ajouté",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Articles ajoutés=null")
+            );
+        }
+
+        // User
+        User user;
+        if (dto.getIdUser() != null) {
+            user = userRepository.findByCod(dto.getIdUser())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Utilisateur non trouvé",
+                            List.of("User not found"),
+                            ErrorCodes.USER_NOT_FOUND
+                    ));
+        } else {
+            user = existingBon.getUser();
+        }
+
+        // New tier
+        Tier newTier = tierRepository.findById(dto.getIdTier())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Tier non trouvé",
+                        List.of("Tier not found"),
+                        ErrorCodes.TIER_NOT_FOUND
+                ));
+
+        if (newTier.getQualite() == TypeTier.CLIENT && !mvt.equals(MvtType.VENTE)) {
+            throw new InvalidOperationException(
+                    "L'action disponible avec le client est juste le vente",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Tier type=Client mais mvt != VENTE")
+            );
+        }
+
+        if (newTier.getQualite() == TypeTier.FOURNISSEUR && !mvt.equals(MvtType.ACHAT)) {
+            throw new InvalidOperationException(
+                    "L'action disponible avec le fournisseur est juste l'achat",
+                    ErrorCodes.BAD_CREDENTIALS,
+                    List.of("Tier type=Fournisseur mais mvt != ACHAT")
+            );
+        }
+
+        // 5) Recalcul des flux (récupérer articles depuis DB)
+        List<Article> articles = articleRepository.findAllById(
+                dto.getArticles().stream().map(a -> a.getCod()).toList()
+        );
+
+        List<Flux> newFluxes = dto.getArticles().stream().map(ar -> {
+            Article article = articles.stream()
+                    .filter(a -> a.getCod().equals(ar.getCod()))
+                    .findFirst()
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Article introuvable",
+                            List.of("Article not found"),
+                            ErrorCodes.ARTICLE_NOT_FOUND
+                    ));
+
+            // null-safe stock
+            BigDecimal currentStock = article.getStock() == null ? BigDecimal.ZERO : article.getStock();
+            BigDecimal quantite = ar.getQuantite() == null ? BigDecimal.ZERO : ar.getQuantite();
+            BigDecimal prix = ar.getPrix() == null ? BigDecimal.ZERO : ar.getPrix();
+            BigDecimal fRemis = ar.getRemisUni() == null ? BigDecimal.ZERO : ar.getRemisUni();
+
+            if (mvt.equals(MvtType.VENTE)) {
+                article.setStock(currentStock.subtract(quantite));
+            } else if (mvt.equals(MvtType.ACHAT)) {
+                article.setStock(currentStock.add(quantite));
+            }
+            articleRepository.save(article);
+
+            BigDecimal montant = prix.multiply(quantite);
+
+            return Flux.builder()
+                    .bonSorti(existingBon)
+                    .article(article)
+                    .dateFlux(dto.getDatBon() != null ? dto.getDatBon() : LocalDateTime.now())
+                    .libelle(article.getDesignation())
+                    .montant(montant)
+                    .sortie(mvt.equals(MvtType.VENTE) ? quantite.intValue() : 0)
+                    .entree(mvt.equals(MvtType.ACHAT) ? quantite.intValue() : 0)
+                    .prixUni(prix)
+                    .fRemis(fRemis)
+                    .build();
+        }).toList();
+
+        // 6) Attacher les nouveaux flux
+        existingBon.getFluxes().addAll(newFluxes);
+
+        // 7) Recalcul montants et solde (null-safe)
+        BigDecimal montantSansRemise = newFluxes.stream()
+                .map(flux -> flux.getMontant() == null ? BigDecimal.ZERO : flux.getMontant())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal remiseTotaleFlux = newFluxes.stream()
+                .map(flux -> flux.getFRemis() == null ? BigDecimal.ZERO : flux.getFRemis())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal remiseTotale = remiseTotaleFlux.add(dto.getRemis() != null ? dto.getRemis() : BigDecimal.ZERO);
+
+        BigDecimal safeEspece = dto.getEspece() == null ? BigDecimal.ZERO : dto.getEspece();
+        BigDecimal safeCheque = dto.getCheque() == null ? BigDecimal.ZERO : dto.getCheque();
+        BigDecimal montantAvecRemise = montantSansRemise.subtract(remiseTotale);
+        BigDecimal credit = montantAvecRemise.subtract(safeEspece.add(safeCheque));
+        if (mvt.equals(MvtType.ACHAT)) credit = credit.multiply(BigDecimal.valueOf(-1));
+
+        // Appliquer le solde sur le bon tier (newTier) — et sauvegarder les deux tiers correctement
+        if (newTier.getId().equals(oldTier.getId())) {
+            // même tier : on a déjà fait rollback sur oldTier, maintenant appliquer le nouveau crédit
+            BigDecimal newSolde = (oldTier.getSolde() == null ? BigDecimal.ZERO : oldTier.getSolde()).add(credit);
+            oldTier.setSolde(newSolde);
+            tierRepository.saveAndFlush(oldTier);
+        } else {
+            // tiers différents : oldTier rollback déjà fait, appliquer crédit sur newTier
+            BigDecimal newTierSolde = (newTier.getSolde() == null ? BigDecimal.ZERO : newTier.getSolde()).add(credit);
+            newTier.setSolde(newTierSolde);
+            tierRepository.saveAndFlush(oldTier);   // persister rollback de l'ancien
+            tierRepository.saveAndFlush(newTier);   // persister application sur le nouveau
+        }
+
+        // 8) Mettre à jour les champs du bon
+        existingBon.setUser(user);
+        existingBon.setTier(newTier);
+        existingBon.setCheque(safeCheque);
+        existingBon.setEspece(safeEspece);
+        existingBon.setCredit(credit);
+        existingBon.setRemis(remiseTotale);
+        existingBon.setMontant(montantSansRemise);
+        existingBon.setDetCheq(dto.getDetCheque());
+        existingBon.setDatBon(dto.getDatBon() != null ? dto.getDatBon() : LocalDateTime.now());
+        existingBon.setMvt(mvt);
+        existingBon.setEtat(true);
+
+        // 9) Sauvegarde finale
+        Bonsorti savedBon = bonsortiRepository.save(existingBon);
+
+        return BonAchatVenteDto.mapToDto(savedBon, dto.getArticles());
+    }
+
 
     @Override
     @Transactional
@@ -362,11 +616,25 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
     public ResponseEntity<byte[]> downloadBon(Integer userCod, String serie, String mvt) {
 
         try {
+
+            if(serie==null || serie.isBlank()){
+                throw new InvalidOperationException(
+                        "Série non spécifié",
+                        ErrorCodes.BAD_CREDENTIALS,
+                        List.of("Série indéfinie")
+                );
+            }
             // Récupérer les données de caisse pour la date
             Bonsorti bonsorti = this.bonsortiRepository.findBySerieAndMvtAndUserCod(serie, MvtType.valueOf(mvt), userCod);
 
+
+
             if (bonsorti == null) {
-                return ResponseEntity.notFound().build();
+                 throw new InvalidOperationException(
+                        "Bon n'est pas encore existe clique sur Valider",
+                        ErrorCodes.BAD_CREDENTIALS,
+                        List.of("Bon non trouvé")
+                );
             }
 
             // **CORRECTION** : Créer la liste des articles DTO

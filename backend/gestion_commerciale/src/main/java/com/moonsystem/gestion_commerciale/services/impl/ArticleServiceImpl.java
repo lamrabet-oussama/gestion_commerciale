@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.moonsystem.gestion_commerciale.dto.ArticleAddBonDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -102,7 +103,6 @@ public class ArticleServiceImpl implements ArticleService {
     public ArticleDto save(ArticleDto dto) {
         List<String> errors = ArticleValidator.validate(dto, false);
         if (!errors.isEmpty()) {
-            log.error("Article non valide {}", dto);
             throw new InvalidEntityException("L'article n'est pas valide", ErrorCodes.ARTICLE_NOT_VALID, errors);
         }
 
@@ -113,6 +113,7 @@ public class ArticleServiceImpl implements ArticleService {
                     ErrorCodes.ARTICLE_NOT_VALID, errors
             );
         }
+        dto.setStock(BigDecimal.ZERO);
         checkUnicityDesignationAndChoix(dto,false);
         return ArticleDto.fromEntity(articleRepository.save(ArticleDto.toEntity(dto)));
     }
@@ -300,8 +301,17 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public ArticleDto findByDesignAndChoix(String designation,String choix){
-        return ArticleDto.fromEntity(this.articleRepository.findByDesignationAndChoix(designation,choix));
+    public ArticleAddBonDto findByDesignationAndChoix(String designation, String choix){
+        return ArticleAddBonDto.toDto(this.articleRepository.findByDesignationAndChoix(designation,choix));
+    }
+    @Override
+    public List<String> getAllDesignation(){
+        return this.articleRepository.findDistinctDesignation();
+    }
+
+    @Override
+    public List<String> getChoixByDes(String des){
+        return this.articleRepository.findChoixByDesignation(des);
     }
 
 }

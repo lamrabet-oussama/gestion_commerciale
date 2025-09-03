@@ -1,5 +1,6 @@
 package com.moonsystem.gestion_commerciale.controller.api;
 
+import com.moonsystem.gestion_commerciale.dto.ArticleAddBonDto;
 import com.moonsystem.gestion_commerciale.dto.ArticleDto;
 import com.moonsystem.gestion_commerciale.utils.PageResponse;
 
@@ -327,12 +328,67 @@ public interface ArticleApi {
             description = "Retourne le nombre total d'éléments présents dans la base de données."
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Nombre total d'éléments retourné avec succès"),
+        @ApiResponse(responseCode = "200", description = "Nombre total d'éléments retourné avec succès",
+                content = @Content(
+                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                        schema = @Schema(implementation = Integer.class)
+                )),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
     Integer getTotalElements();
 
-    @GetMapping(value=APP_ROOT+"/article")
-    ArticleDto getArticleByDesAndChoix(@RequestParam String designation,@RequestParam String choix);
+    @GetMapping(value = APP_ROOT + "/article",produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Récupérer un article par désignation et choix",
+            description = "Cette méthode permet de récupérer un article spécifique en fonction de la désignation et du choix sélectionnés."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Article trouvé"),
+            @ApiResponse(responseCode = "400", description = "Paramètres invalides"),
+            @ApiResponse(responseCode = "404", description = "Article non trouvé")
+    })
+    ArticleAddBonDto getArticleByDesAndChoix(
+            @Parameter(description = "La désignation de l'article", required = true)
+            @RequestParam String designation,
+
+            @Parameter(description = "Le choix associé à la désignation", required = true)
+            @RequestParam String choix
+    );
+
+
+    @GetMapping(value = APP_ROOT + "/articles/designations",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Lister les designations d'article disponibles",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Liste des designations",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    array = @ArraySchema(schema = @Schema(implementation = String.class))
+                            )
+                    )
+            }
+    )
+    List<String> getAllDesignation();
+
+
+    @GetMapping(value = APP_ROOT + "/article/choix",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Lister les choix d'article disponibles",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Liste des choix spécifiques à l'article",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    array = @ArraySchema(schema = @Schema(implementation = String.class))
+                            )
+                    )
+            }
+    )
+    List<String> getChoixByDes(@RequestParam String des);
 
 }

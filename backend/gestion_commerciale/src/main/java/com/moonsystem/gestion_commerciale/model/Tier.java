@@ -3,6 +3,9 @@ package com.moonsystem.gestion_commerciale.model;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.moonsystem.gestion_commerciale.model.enums.TypeTier;
 import com.moonsystem.gestion_commerciale.model.enums.VilleMaroc;
 
@@ -23,7 +26,7 @@ indexes = {
 public class Tier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_tier")
     private Integer id;
 

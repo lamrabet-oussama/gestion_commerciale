@@ -26,7 +26,7 @@ import java.util.List;
 )
 public class Article {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "Cod")
     private Integer cod;
 

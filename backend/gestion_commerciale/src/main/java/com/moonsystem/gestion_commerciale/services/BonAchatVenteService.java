@@ -16,5 +16,5 @@ public interface BonAchatVenteService {
     BonAchatVenteDto getBonVente(Integer userId,String serie);
     List<String> getAllBonAchatSeries(Integer userId);
     List<String> getAllBonVenteSeries(Integer userId);
-
+    BonAchatVenteDto updateBon(String serie, BonAchatVenteDto dto, MvtType mvt);
 }

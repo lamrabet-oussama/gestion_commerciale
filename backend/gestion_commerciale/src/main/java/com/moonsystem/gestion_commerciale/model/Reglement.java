@@ -1,5 +1,7 @@
 package com.moonsystem.gestion_commerciale.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.moonsystem.gestion_commerciale.model.enums.MvtType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -18,7 +20,7 @@ import java.time.LocalDateTime;
 @Table(name = "Reglement")
 public class Reglement {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id_regl")
     private Integer idRegl;
 
@@ -30,6 +32,7 @@ public class Reglement {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tier")
+
     private Tier tier;
 
     @ManyToOne(fetch = FetchType.LAZY)

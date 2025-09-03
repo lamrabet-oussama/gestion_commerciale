@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface DettesService {
     DettesResponseDto getDettesCreances(int year,String qualite);
-    List<BigDecimal>  getTotalDettesByTierId(Integer tierId);
-    TierStatistiqueCreditDto getTierStatistiqueCreditByTierId(Integer tierId);
+    BigDecimal  getTotalDettesByTierId(Integer tierId);
+    TierStatistiqueCreditDto getTierStatistiqueCreditByTierId(Integer tierId,Integer year);
 
 }

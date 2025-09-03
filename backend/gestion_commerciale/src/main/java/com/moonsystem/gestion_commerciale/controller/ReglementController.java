@@ -7,11 +7,13 @@ import com.moonsystem.gestion_commerciale.services.ReglementService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -25,8 +27,8 @@ public ReglementDto createReglement(@RequestBody ReglementDto dto){
     }
 
     @Override
-    public ReglementResponseDto listerReglements( Integer userId, Integer tierId){
-        return this.reglementService.listerReglements(userId,tierId);
+    public ReglementResponseDto listerReglements(Integer userId, Integer tierId, LocalDateTime date,Integer year){
+        return this.reglementService.listerReglements(userId,tierId,date,year);
     }
 
     @Override
@@ -42,8 +44,17 @@ public ReglementDto createReglement(@RequestBody ReglementDto dto){
     @Override
     public ResponseEntity<byte[]> downloadReglementPdf (
              Integer userCod,
-            Integer tierId
+            Integer tierId,
+             LocalDateTime date,
+             Integer year
     ){
-        return this.reglementService.downloadRegPdf(userCod,tierId);
+        return this.reglementService.downloadRegPdf(userCod,tierId,date,year);
+    }
+
+    @Override
+    public  ReglementDto getReglement(
+             Integer idReg
+    ){
+        return this.reglementService.getReglementById(idReg);
     }
 }
