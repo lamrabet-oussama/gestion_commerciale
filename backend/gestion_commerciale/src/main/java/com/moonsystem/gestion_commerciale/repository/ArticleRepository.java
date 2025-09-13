@@ -20,15 +20,16 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
     @Query("SELECT CAST(COUNT(a) AS integer) FROM Article a")
     Integer countAll();
 
+    @Query("""
+    SELECT a FROM Article a WHERE a.actif=true ORDER BY a.ref
+""")
+    List<Article> findAllArticles();
 
 
     Optional<Article> findByCod(Integer cod);
 
-    Optional<Article> findByRef(Integer ref);
 
-    Optional<Article> findByBarCode(String barCode);
 
-    boolean existsByCod(Integer cod);
 
     @Query("SELECT DISTINCT a.famille FROM Article a WHERE a.actif=true")
     List<String> findDistinctFamilles();
@@ -55,57 +56,23 @@ public interface ArticleRepository extends JpaRepository<Article, Integer> {
     @Query("SELECT DISTINCT a.choix FROM Article a")
     List<String> findDistinctChoix();
 
-    List<Article> findByDesignationContainingIgnoreCase(String designation);
 
-    List<Article> findByFamilleIgnoreCase(String famille);
 
-    List<Article> findByChoix(String choix);
 
      Article findByDesignationAndChoixAndActif(String designation, String choix, boolean actif);
-    List<Article> findAllByOrderByDesignationAsc();
 
-    List<Article> findByPrixBetween(BigDecimal min, BigDecimal max);
 
-    List<Article> findByStockLessThan(BigDecimal stock);
-
-    List<Article> findByStockGreaterThan(BigDecimal stock);
-
-    List<Article> findByStockAlertGreaterThanEqual(BigDecimal stockAlert);
-
-    List<Article> findByActifTrue();
-
-    List<Article> findByActifFalse();
-
-    List<Article> findByNoStockTrue();
-
-    List<Article> findByFamilleAndActifTrue(String famille);
-
-    List<Article> findByRefAndActifTrue(Integer ref);
-
-    List<Article> findByDesignationContainingAndPrixLessThan(String designation, BigDecimal prixMax);
-
-    List<Article> findAllByOrderByPrixDesc();
-
-    List<Article> findAllByOrderByStockAsc();
-
-    List<Article> findTop10ByOrderByStockAsc();
-
-    List<Article> findTop5ByOrderByPrixDesc();
-
-    @Query("SELECT a FROM Article a WHERE a.stock < a.stockAlert")
-    List<Article> findArticlesWithLowStock();
-
-    boolean existsByBarCode(String barCode);
 
     boolean existsByRef(Integer ref);
 
-    Page<Article> findByActifTrue(Pageable pageable);
+    Page<Article> findByActifTrueOrderByRefAsc(Pageable pageable);
 
     @Query("""
 SELECT a FROM Article a 
 WHERE LOWER(a.designation) = LOWER(:designation) 
 AND LOWER(a.choix) = LOWER(:choix) 
 AND a.actif = true
+ORDER BY a.ref
 """)
     Article findByDesignationAndChoix(String designation, String choix);
 

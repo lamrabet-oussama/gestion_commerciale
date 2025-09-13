@@ -1,0 +1,34 @@
+services:
+
+  api:
+    build: .
+    container_name: springboot_api
+    environment:
+
+      DB_URL: ${DATABASE_URL}
+      DB_USER: ${PGUSER}
+      DB_PASS: ${PGPASSWORD}
+      SECRET: SYTZ6XzP9NaJIgKm7ObBV6e2up7Fh6hJlL3AWDUZLq0=
+      DOC_PATH: /v1/api-docs
+      CLOUD_NAME: dxhw4mm3p
+      API_KEY: 745767343957771
+      API_SECRET: bq4dif1wbizN4ieL2Ba3NjACMIc
+      LANG: en_US.utf8
+      LC_ALL: en_US.utf8
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+volumes:
+  gestion_commerciale_postgres-data:
+    external: true
+
+
+networks:
+  app-network:
+    external: true

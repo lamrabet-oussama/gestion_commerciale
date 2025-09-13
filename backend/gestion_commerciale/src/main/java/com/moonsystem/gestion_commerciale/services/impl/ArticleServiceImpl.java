@@ -126,7 +126,7 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public List<ArticleDto> findAll() {
-        return articleRepository.findAll().stream()
+        return articleRepository.findAllArticles().stream()
                 .filter(Objects::nonNull)
                 .filter(article -> Boolean.TRUE.equals(article.getActif())) // garder seulement les actifs
                 .map(ArticleDto::fromEntity)
@@ -137,7 +137,7 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public PageResponse<ArticleDto> findAllPaginated(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Article> articlePage = articleRepository.findByActifTrue(pageable);
+        Page<Article> articlePage = articleRepository.findByActifTrueOrderByRefAsc(pageable);
 
         List<ArticleDto> dtos = articlePage
                 .map(ArticleDto::fromEntity)

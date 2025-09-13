@@ -1,0 +1,53 @@
+<div class="container my-4">
+  <div class="card mx-auto" style="max-width: 600px;">
+    <div class="card-header text-center">
+      <h3>Modifier / Bloquer / Débloquer Utilisateur</h3>
+    </div>
+
+    <div class="card-body">
+      <!-- Sélecteur d'utilisateur -->
+      <div class="mb-4">
+        <label for="user" class="form-label">Utilisateurs</label>
+        <select class="form-select" [(ngModel)]="selectedUser" id="user" name="user" (ngModelChange)="onUserSelected($event)">
+          <option [ngValue]="undefined">Tous</option>
+          <option *ngFor="let user of allUsersDto" [ngValue]="user">{{ user.username }}</option>
+        </select>
+      </div>
+
+      <!-- Formulaire de modification -->
+      <form [formGroup]="formVals" (ngSubmit)="onSubmit()">
+        <div class="mb-3">
+          <input type="text" class="form-control" formControlName="login" placeholder="Username">
+        </div>
+
+        <div class="mb-3">
+          <input type="text" class="form-control" formControlName="gsm" placeholder="0600000000">
+        </div>
+
+        <div class="mb-3">
+          <input type="password" class="form-control" formControlName="password" placeholder="Mot de passe">
+        </div>
+
+        <div class="mb-4">
+          <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="role" id="role" name="role">
+            <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+          </select>
+        </div>
+
+        <!-- Boutons -->
+        <div class="d-flex justify-content-between">
+          <button type="button" (click)="bloquerUser()" class="btn btn-danger">
+            <i class="fas fa-lock"></i>&nbsp;Bloquer
+          </button>
+          <button type="button" (click)="debloquerUser()" class="btn btn-success">
+            <i class="fas fa-unlock"></i>&nbsp;Débloquer
+          </button>
+          <button type="submit" [disabled]="formVals.invalid" class="btn btn-primary">
+            <i class="fas fa-check"></i>&nbsp;Modifier
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -3,6 +3,7 @@ package com.moonsystem.gestion_commerciale.controller.api;
 import java.util.List;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 
 public interface TierApi {
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PostMapping(value = APP_ROOT + "/tiers/create", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
 
@@ -59,6 +61,8 @@ public interface TierApi {
     })
     TierDto createTier(@Valid @RequestBody TierDto tierDto);
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(value = APP_ROOT + "/tiers/update", consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -92,6 +96,9 @@ public interface TierApi {
     })
     TierDto updateTier(@Valid @RequestBody TierDto tierDto);
 
+
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/types", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Lister les types de tier disponibles",
@@ -108,6 +115,8 @@ public interface TierApi {
     )
     List<String> getAllTierType();
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/villes", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Listerles villes disponibles pour les tiers",
@@ -124,6 +133,7 @@ public interface TierApi {
     )
     List<String> getAllTierVilles();
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/{id}")
     @Operation(
             summary = "Récupérer un article par son code",
@@ -151,6 +161,8 @@ public interface TierApi {
     })
     TierDto findById(@PathVariable("id") int id);
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @DeleteMapping(value = APP_ROOT + "/tiers/delete/{id}")
     @Operation(
             summary = "Supprimer un article",
@@ -183,6 +195,8 @@ public interface TierApi {
     })
     boolean deleteTier(@PathVariable("id") int id);
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/search", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Rechercher des tiers",
@@ -210,6 +224,8 @@ public interface TierApi {
     })
     PageResponse<TierDto> search(@RequestParam(defaultValue = "") String keyword, @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size);
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/number", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Nombre total de tiers",
@@ -223,6 +239,8 @@ public interface TierApi {
     Integer numberOfTiers();
 
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/client")
     @Operation(
             summary = "Récupérer tous les clients",
@@ -238,6 +256,7 @@ public interface TierApi {
     )
     List<TierDto> getAllClient();
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/fournisseur")
     @Operation(
             summary = "Récupérer tous les fournisseurs",
@@ -253,7 +272,7 @@ public interface TierApi {
     )
     List<TierDto> getAllFournisseur();
 
-
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/tiers/all")
     @Operation(
             summary = "Récupérer tous les tiers",

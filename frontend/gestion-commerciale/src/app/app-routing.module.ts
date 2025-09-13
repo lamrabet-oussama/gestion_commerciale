@@ -11,52 +11,107 @@ import {BonVenteComponent} from "./pages/bon-vente/bon-vente.component";
 import {BonAchatComponent} from "./pages/bon-achat/bon-achat/bon-achat.component";
 import {ReglementComponent} from "./pages/reglement/reglement.component";
 import {TierSituationComponent} from "./pages/tier-situation/tier-situation.component";
+import {PageLoginComponent} from "./pages/page-login/page-login.component";
+import {RegisterComponent} from "./pages/register/register.component";
+import {AuthGuard} from "./services/guard/guard.service";
+import {ModifierUtilisateurComponent} from "./pages/modifier-utilisateur/modifier-utilisateur.component";
+import {NousComponent} from "./pages/nous/nous.component";
 
 const routes: Routes = [
+
   {
+    path:'login',
+    component:PageLoginComponent,
+    canActivate: [AuthGuard],
+    data: { accessType: 'nonAuth' }
+
+  },
+  {
+
     path: '',
     component: PageDashboardComponent,
     children: [
       {
+        path: '',
+        component: NousComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
+
+      },
+      {
         path: 'articles',
         component: PageArticleComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
+
       },
       {
         path: 'tiers',
         component: PageTiersComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path: 'profile-entreprise',
         component: EntrepriseProfileComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'adminOnly' }
       },
       {
         path: 'page-caisse-jour',
-        component:PageCaisseJourComponent
+        component:PageCaisseJourComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'adminOnly' }
       },
       {
         path: 'dettes',
-        component:PageDettesComponent
+        component:PageDettesComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path: 'flux',
-        component:PageFluxComponent
+        component:PageFluxComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path:'bon-vente',
-        component:BonVenteComponent
+        component:BonVenteComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path:'bon-achat',
-        component:BonAchatComponent
+        component:BonAchatComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path:'reglement',
         component:ReglementComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
       },
       {
         path:'situation-tier',
-        component:TierSituationComponent
-      }
+        component:TierSituationComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'activeUser' }
+      },
+      {
+        path:'inscrire',
+        component:RegisterComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'adminOnly' }
+      },
+      {
+        path:'update-user',
+        component:ModifierUtilisateurComponent,
+        canActivate: [AuthGuard],
+        data: { accessType: 'adminOnly' }
+      },
+
     ],
   },
 ];

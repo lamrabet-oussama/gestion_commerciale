@@ -1,5 +1,7 @@
 export * from './articles.service';
 import { ArticlesService } from './articles.service';
+export * from './authentication.service';
+import { AuthenticationService } from './authentication.service';
 export * from './bonsAchatVente.service';
 import { BonsAchatVenteService } from './bonsAchatVente.service';
 export * from './caisseJourController.service';
@@ -16,4 +18,4 @@ export * from './tiers.service';
 import { TiersService } from './tiers.service';
 export * from './userController.service';
 import { UserControllerService } from './userController.service';
-export const APIS = [ArticlesService, BonsAchatVenteService, CaisseJourControllerService, DettesControllerService, FluxNormalControllerService, MesInfosService, RglementsService, TiersService, UserControllerService];
+export const APIS = [ArticlesService, AuthenticationService, BonsAchatVenteService, CaisseJourControllerService, DettesControllerService, FluxNormalControllerService, MesInfosService, RglementsService, TiersService, UserControllerService];

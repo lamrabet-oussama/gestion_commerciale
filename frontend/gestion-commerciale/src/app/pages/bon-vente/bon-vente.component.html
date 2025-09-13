@@ -5,13 +5,10 @@
       <h4 class="text-center text-primary mb-0">
         <i class="fas fa-receipt me-2"></i>Bon de Vente
         <span *ngIf="selectedSerie">
-                   N° {{selectedSerie}} créé par {{username}}
-
+          N° {{selectedSerie}} <span *ngIf="username">créé par {{username}}</span>
         </span>
       </h4>
     </div>
-
-    <!-- Alert de succès -->
 
     <!-- Informations Client et Date -->
     <form class="p-2 rounded w-sm bg-white">
@@ -25,14 +22,16 @@
 
         <!-- Date de Vente -->
         <div class="col-md-6 mb-3">
-          <label for="date_vente" class="form-label">Date de Vente <span class="required">*</span></label>
+          <label for="dateInput" class="form-label">Date de Vente <span class="required">*</span></label>
           <input
             type="date"
             [(ngModel)]="selectedDate"
+            (ngModelChange)="saveAllDataToDb()"
             class="form-control"
             name="dateInput"
             id="dateInput"
             [max]="maxDate"
+            required
           />
         </div>
 
@@ -41,7 +40,10 @@
           <label for="serie" class="form-label">Série</label>
 
           <!-- Bouton toggle -->
-          <button type="button" class="btn btn-sm btn-outline-primary mb-2 m-lg-1"
+          <button type="button"
+                  class="btn btn-sm mb-2 m-lg-1"
+                  [class.btn-outline-primary]="isSerieDisabled"
+                  [class.btn-primary]="!isSerieDisabled"
                   (click)="toggleSerie()">
             {{ isSerieDisabled ? 'Activer la sélection' : 'Désactiver la sélection' }}
           </button>
@@ -52,16 +54,15 @@
             id="serie"
             name="serie"
             [(ngModel)]="selectedSerie"
-            (ngModelChange)="getBonVente()"
+            (ngModelChange)="onSerieSelectionChange($event)"
             [disabled]="isSerieDisabled"
           >
-          <option [ngValue]="''" [selected]="true">-- Non Sélectionné --</option>
-          <option *ngFor="let s of allSeris" [value]="s">
-            {{ s }}
-          </option>
+            <option [ngValue]="''" [selected]="true">-- Non Sélectionné --</option>
+            <option *ngFor="let s of allSeris" [value]="s">
+              {{ s }}
+            </option>
           </select>
         </div>
-
 
         <!-- Client -->
         <div class="col-md-6 mb-3">
@@ -72,6 +73,7 @@
             name="client"
             [(ngModel)]="selectedClientId"
             (ngModelChange)="getTierSolde($event)"
+            required
           >
             <option [ngValue]="-1" [selected]="true">-- Sélectionnez un client --</option>
             <option *ngFor="let client of clients$ | async" [ngValue]="client.id">
@@ -82,25 +84,27 @@
 
         <!-- Solde Client -->
         <div class="col-md-6 mb-3">
-          <label for="solde" class="form-label">Solde</label>
-          <p class="form-control mb-0 text-danger border-danger btn-outline-danger">{{ soldeClient }}</p>
+          <label for="solde" class="form-label">Solde Client</label>
+          <div class="input-group">
+            <p class="form-control mb-0 text-danger border-danger">{{ soldeClient | number:'1.2-2' }}</p>
+            <span class="input-group-text">DH</span>
+          </div>
         </div>
 
-        <!-- Bouton Supprimer -->
-        <div class="col-12 d-flex justify-content-end">
-          <button type="button" class="btn btn-danger" (click)="supprimer()">
-            <i class="fas fa-eye me-1"></i> Supprimer
+        <!-- Boutons d'action pour la série -->
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <button type="button"
+                  class="btn btn-danger"
+                  (click)="supprimer()"
+                  [disabled]="!selectedSerie">
+            <i class="fas fa-trash me-1"></i> Supprimer
           </button>
         </div>
 
       </div>
-
-
     </form>
 
     <!-- Informations Article -->
-
-
     <form class="p-3 rounded w-sm bg-white mt-4">
 
       <!-- En-tête -->
@@ -113,10 +117,8 @@
       <!-- Première ligne -->
       <div class="row g-3 align-items-end">
 
-
-
-        <!-- Designation prend tout l'espace disponible -->
-        <div class="col mb-3">
+        <!-- Designation prend plus d'espace -->
+        <div class="col-md-4 mb-3">
           <label for="des" class="form-label">Designation <span class="required">*</span></label>
           <select
             class="form-select"
@@ -133,7 +135,7 @@
         </div>
 
         <!-- Choix -->
-        <div class="col-auto mb-3">
+        <div class="col-md-3 mb-3">
           <label for="choix" class="form-label">Choix <span class="required">*</span></label>
           <select
             class="form-select"
@@ -141,6 +143,7 @@
             name="choix"
             [(ngModel)]="selectedChoix"
             (ngModelChange)="onChoixChange($event)"
+            [disabled]="!selectedDesignation || choix.length === 0"
           >
             <option value="" [selected]="true">-- Sélectionnez un choix --</option>
             <option *ngFor="let ch of choix" [value]="ch">
@@ -148,48 +151,59 @@
             </option>
           </select>
         </div>
+
         <!-- Réf Article -->
-        <div class="col-auto mb-3">
-          <label for="refarticle" class="form-label">Réf Article <span class="required">*</span></label>
-          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.ref ?? 0 }}</p>
+        <div class="col-md-2 mb-3">
+          <label for="refarticle" class="form-label">Réf Article</label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.ref || '--' }}</p>
         </div>
 
         <!-- Stock -->
-        <div class="col-auto mb-3">
-          <label for="stockarticle" class="form-label">Stock <span class="required">*</span></label>
-          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.stock ?? 0 }}</p>
+        <div class="col-md-2 mb-3">
+          <label for="stockarticle" class="form-label">Stock</label>
+          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.stock || 0 }}</p>
         </div>
 
         <!-- Quantité -->
-        <div class="col-auto mb-3">
+        <div class="col-md-6 mb-3">
           <label for="quantite" class="form-label">Quantité <span class="required">*</span></label>
           <input
             type="number"
             class="form-control"
             id="quantite"
-            min="0"
+            min="1"
             name="quantite"
             [(ngModel)]="articleAddBonDto.quantite"
-            placeholder="0"
+            placeholder="1"
+            [disabled]="!articleAddBonDto.cod"
           />
         </div>
 
         <!-- Prix Vente -->
-        <div class="col-auto mb-3">
-          <label for="prixvente" class="form-label">Prix Vente <span class="required">*</span></label>
-          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prix ?? 0 }}</p>
+        <div class="col-md-6 mb-3">
+          <label for="prixvente" class="form-label">Prix Vente</label>
+          <div class="input-group">
+            <p class="form-control mb-0 disabled-color text-gray">{{ (articleAddBonDto.prix || 0) | number:'1.2-2' }}</p>
+            <span class="input-group-text">DH</span>
+          </div>
         </div>
 
         <!-- Prix Achat -->
-        <div class="col-auto mb-3">
-          <label for="prixachat" class="form-label">Prix Achat <span class="required">*</span></label>
-          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prixAchat ?? 0 }}</p>
+        <div class="col-md-6 mb-3">
+          <label for="prixachat" class="form-label">Prix Achat</label>
+          <div class="input-group">
+            <p class="form-control mb-0 disabled-color text-gray">{{ (articleAddBonDto.prixAchat || 0) | number:'1.2-2' }}</p>
+            <span class="input-group-text">DH</span>
+          </div>
         </div>
 
         <!-- Prix Min -->
-        <div class="col-auto mb-3">
-          <label for="prixmin" class="form-label">Prix Min <span class="required">*</span></label>
-          <p class="form-control mb-0 disabled-color text-gray">{{ articleAddBonDto.prixMin ?? 0 }}</p>
+        <div class="col-md-6 mb-3">
+          <label for="prixmin" class="form-label">Prix Min</label>
+          <div class="input-group">
+            <p class="form-control mb-0 disabled-color text-gray">{{ (articleAddBonDto.prixMin || 0) | number:'1.2-2' }}</p>
+            <span class="input-group-text">DH</span>
+          </div>
         </div>
 
       </div>
@@ -201,6 +215,7 @@
             type="button"
             class="btn btn-primary btn-responsive"
             (click)="ajouterListe()"
+            [disabled]="!articleAddBonDto.cod || !selectedDesignation || !selectedChoix"
           >
             <i class="fas fa-plus me-1"></i> Ajouter à la liste
           </button>
@@ -208,7 +223,6 @@
       </div>
 
     </form>
-
 
   </div>
 
@@ -228,15 +242,28 @@
             <div class="col-12">
               <label for="cheque" class="form-label">Montant Chèque</label>
               <div class="input-group">
-                <input type="number" class="form-control" id="cheque" name="cheque" [(ngModel)]="cheque" (ngModelChange)="recalculateTotal()" placeholder="0.00" step="1">
+                <input type="number"
+                       class="form-control"
+                       id="cheque"
+                       name="cheque"
+                       [(ngModel)]="cheque"
+                       (ngModelChange)="recalculateTotal()"
+                       placeholder="0.00"
+                       min="0"
+                       step="0.01">
                 <span class="input-group-text">DH</span>
               </div>
             </div>
             <div class="col-12">
               <label for="detailscheque" class="form-label">Détails du Chèque</label>
-              <textarea class="form-control" id="detailscheque" name="detailscheque"
-                        placeholder="N° chèque, banque, date..." rows="2" style="resize: none;"
-                        [(ngModel)]="detailsCheque"></textarea>
+              <textarea class="form-control"
+                        id="detailscheque"
+                        name="detailscheque"
+                        placeholder="N° chèque, banque, date..."
+                        rows="2"
+                        style="resize: none;"
+                        [(ngModel)]="detailsCheque"
+                        (ngModelChange)="saveAllDataToDb()"></textarea>
             </div>
           </div>
         </div>
@@ -249,56 +276,69 @@
             <div class="col-12">
               <label for="espece" class="form-label">Montant Espèces</label>
               <div class="input-group">
-                <input type="number" class="form-control" id="espece" name="espece" placeholder="0.00" [(ngModel)]="espece" (ngModelChange)="recalculateTotal()" step="1">
+                <input type="number"
+                       class="form-control"
+                       id="espece"
+                       name="espece"
+                       placeholder="0.00"
+                       [(ngModel)]="espece"
+                       (ngModelChange)="recalculateTotal()"
+                       min="0"
+                       step="0.01">
                 <span class="input-group-text">DH</span>
               </div>
             </div>
+
             <div class="col-12">
-              <label for="remisetotal" class="form-label">Remise sur bon </label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="remisetotal" name="remisetotal"
-                       placeholder="0.00" [(ngModel)]="remiseTotal"
-                       (ngModelChange)="onRemiseTotalChange($event)" step="1">
-                <span class="input-group-text">DH</span>
-              </div>
-            </div>
-            <div class="col-12">
-              <label for="remiseglobale" class="form-label">Remise Globale </label>
+              <label for="remisetotal" class="form-label">Remise sur bon</label>
               <div class="input-group">
                 <input type="number"
                        class="form-control"
-                       [value]="remiseGlobale"
+                       id="remisetotal"
+                       name="remisetotal"
+                       placeholder="0.00"
+                       [(ngModel)]="remiseTotal"
+                       (ngModelChange)="onRemiseTotalChange($event)"
+                       min="0"
+                       step="0.01">
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label for="remiseglobale" class="form-label">Remise Globale (Calculée)</label>
+              <div class="input-group">
+                <input type="number"
+                       class="form-control"
+                       [value]="remiseGlobale | number:'1.2-2'"
                        disabled
                        placeholder="0.00">
                 <span class="input-group-text">DH</span>
               </div>
             </div>
 
+            <div class="col-12">
+              <label for="totalventebrite" class="form-label">Total Brut</label>
+              <div class="input-group">
+                <p class="form-control mb-0 disabled-color text-gray font-weight-bold">{{ totalVenteBrute | number:'1.2-2' }}</p>
+                <span class="input-group-text">DH</span>
+              </div>
+            </div>
 
             <div class="col-12">
               <label for="totalvente" class="form-label">Total de la Vente</label>
               <div class="input-group">
-                <p class="form-control mb-0 disabled-color text-gray">{{ totalVenteAvecRemise }}</p>
-                <span class="input-group-text">DH</span>
-              </div>
-            </div>
-            <div class="col-12">
-              <label for="totalvente" class="form-label">Total Brute</label>
-              <div class="input-group">
-                <p class="form-control mb-0 disabled-color text-gray">{{ totalVenteBrute }}</p>
+                <p class="form-control mb-0 disabled-color text-success font-weight-bold">{{ totalVenteAvecRemise | number:'1.2-2' }}</p>
                 <span class="input-group-text">DH</span>
               </div>
             </div>
 
-            <!-- Solde Client -->
             <div class="col-12">
-              <label for="solde" class="form-label">Solde</label>
-              <p class="form-control mb-0 text-danger border-danger btn-outline-danger">{{ soldeClient }}</p>
-            </div>
-            <div class="col-12">
-              <label for="credit" class="form-label">Crédit</label>
+              <label for="credit" class="form-label">Crédit/Dette</label>
               <div class="input-group">
-                <p class="form-control mb-0 disabled-color text-gray">{{ credit }}</p>
+                <p class="form-control mb-0"
+                   [class.text-success]="credit >= 0"
+                   [class.text-danger]="credit < 0">{{ credit | number:'1.2-2' }}</p>
                 <span class="input-group-text">DH</span>
               </div>
             </div>
@@ -310,109 +350,155 @@
 
     <!-- Boutons d'action -->
     <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-3">
-      <button type="button" class="btn btn-danger btn-responsive" (click)="vider()" >
+      <button type="button"
+              class="btn btn-danger btn-responsive"
+              (click)="vider()">
         <i class="fas fa-ban me-1"></i> Vider
       </button>
-
-
     </div>
   </div>
 
   <!-- Liste des articles -->
-  <div class="articles-section mt-4 mt-md-5">
-    <div class="section-header  d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
-      <h4 class="section-title mb-0 text-white">Liste des articles</h4>
+  <div class="articles-section mt-4 mt-md-5" *ngIf="articlesAddToBon.length > 0">
+    <div class="section-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
+      <h4 class="section-title mb-0 text-white">
+        <i class="fas fa-list me-2"></i>Liste des articles
+      </h4>
       <div class="search-container">
-
-        <p class="section-title mb-0 text-whites text-center mt-2 mb-0">Résultats: {{articlesAddToBon.length}}</p>
+        <p class="section-title mb-0 text-white text-center mt-2 mb-0">
+          <i class="fas fa-box me-1"></i>Articles: {{articlesAddToBon.length}}
+        </p>
       </div>
     </div>
-    <div class="articles-section mt-4 mt-md-5">
 
     <!-- Table responsive wrapper -->
-    <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
-      <table class="table table-bordered table-hover text-center mb-0">
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+      <table class="table table-bordered table-hover text-center mb-0 align-middle">
         <thead class="table-dark sticky-top">
         <tr>
-          <th class="text-nowrap" style="width: 80px;">Réf</th>
-          <th style="width: auto;">Désignation</th> <!-- prend tout l'espace libre -->
-          <th class="text-nowrap d-none d-md-table-cell" style="width: auto">Choix</th>
-          <th class="text-nowrap" style="width: 120px;">Prix Vente</th>
-          <th class="text-nowrap d-none d-sm-table-cell" style="width: 90px;">Qté</th>
-          <th class="text-nowrap d-none d-sm-table-cell" style="width: 120px;">Remise Uni</th>
-          <th class="text-nowrap d-none d-sm-table-cell" style="width: 120px;"> Total Uni</th>
-          <th class="text-nowrap" style="width: 80px;">Actions</th>
+          <th class="text-nowrap fixed-col" style="width: 80px;">Réf</th>
+          <th class="designation-col">Désignation</th>
+          <th class="text-nowrap d-none d-md-table-cell fixed-col" style="width: 120px;">Choix</th>
+          <th class="text-nowrap fixed-col" style="width: 120px;">Prix Vente</th>
+          <th class="text-nowrap fixed-col" style="width: 100px;">Qté</th>
+          <th class="text-nowrap fixed-col" style="width: 120px;">Remise Unit.</th>
+          <th class="text-nowrap fixed-col" style="width: 120px;">Total</th>
+          <th class="text-nowrap fixed-col" style="width: 80px;">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr class="cursor" *ngFor="let art of articlesAddToBon">
+        <tr class="cursor" *ngFor="let art of articlesAddToBon; trackBy: trackByArticleCode">
           <td class="text-nowrap">{{ art.ref }}</td>
-          <td class="text-truncate" style="max-width: 200px;" [title]="art.designation">{{ art.designation }}</td>
-          <td class="d-none d-md-table-cell text-truncate" style="max-width: 100px;" [title]="art.choix">{{ art.choix }}</td>
-          <td class="text-nowrap">{{ art.prix }} DH</td>
-          <td>
-            <input type="number"
-                   class="form-control form-control-sm text-center border-none"
-                   min="0"
-                   [(ngModel)]="art.quantite"
-                   (ngModelChange)="recalculateTotal()"
-                   placeholder="0">
+
+          <!-- Désignation prend tout l'espace restant -->
+          <td class="text-start text-truncate designation-cell" [title]="art.designation">
+            {{ art.designation }}
           </td>
-          <td>
-            <input type="number"
-                   class="form-control form-control-sm text-center border-none"
-                   min="0"
-                   [(ngModel)]="art.remisUni"
-                   (ngModelChange)="recalculateTotal()"
-                   placeholder="0">
+
+          <td class="d-none d-md-table-cell text-truncate" [title]="art.choix">
+            {{ art.choix }}
           </td>
-          <td class="text-nowrap">{{ (art.prix ?? 0)*(art.quantite ?? 1) }} DH</td>
+
+          <td class="text-nowrap">{{ (art.prix || 0) | number:'1.2-2' }} DH</td>
 
           <td>
-            <button class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" (click)="supprimerArticle(art.cod ?? 0)">
-              <fa-icon [icon]="faX" style="color: #ff6666;"></fa-icon>
+            <input type="number"
+                   class="form-control form-control-sm text-center"
+                   min="1"
+                   [max]="art.stock || 999"
+                   [(ngModel)]="art.quantite"
+                   (ngModelChange)="recalculateTotal()"
+                   placeholder="1">
+          </td>
+
+          <td>
+            <input type="number"
+                   class="form-control form-control-sm text-center"
+                   min="0"
+                   [max]="art.prix || 0"
+                   [(ngModel)]="art.remisUni"
+                   (ngModelChange)="recalculateTotal()"
+                   placeholder="0"
+                   step="0.01">
+          </td>
+
+          <td class="text-nowrap">
+            {{ ((art.prix || 0) * (art.quantite || 1) - ((art.remisUni || 0) * (art.quantite || 1))) | number:'1.2-2' }} DH
+          </td>
+
+          <td>
+            <button class="btn btn-sm btn-outline-danger"
+                    (click)="supprimerArticle(art.cod ?? 0)"
+                    [title]="'Supprimer ' + art.designation">
+              <fa-icon [icon]="faX"></fa-icon>
             </button>
           </td>
         </tr>
         </tbody>
       </table>
     </div>
-</div>
-    <!-- Pagination -->
-  </div>
-  <div>
-    <div *ngIf="articlesAddToBon.length!=0" class="flex-row gap-4 w-100 text-end">
-      <button type="button" class="btn btn-secondary mt-4 btn-responsive" (click)="createBonVente()">
-        <i class="fas fa-eye me-1"></i> Valider
-      </button>
 
-    </div>
-    <div class="print-section text-center">
-      <button type="button" class="btn btn-primary btn-responsive" (click)="downloadBonVentePdf()">
-        <i class="fas fa-print me-2"></i>
-        <span class="btn-text">Imprimer</span>
-      </button>
-    </div>
-  </div>
-
-</div>
-
-<!-- Modal de suppression -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteModalLabel">Confirmation</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-      </div>
-      <div class="modal-body">
-        Êtes-vous sûr de vouloir supprimer cet article ?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Supprimer</button>
+    <!-- Résumé des totaux -->
+    <div class="row mt-3">
+      <div class="col-md-6 offset-md-6">
+        <div class="card">
+          <div class="card-body">
+            <h6 class="card-title">Résumé</h6>
+            <div class="d-flex justify-content-between">
+              <span>Total Brut:</span>
+              <span class="font-weight-bold">{{ totalVenteBrute | number:'1.2-2' }} DH</span>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Remise Totale:</span>
+              <span class="text-warning">-{{ remiseGlobale | number:'1.2-2' }} DH</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between font-weight-bold">
+              <span>Total Final:</span>
+              <span class="text-success">{{ totalVenteAvecRemise | number:'1.2-2' }} DH</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
+  </div>
+
+  <!-- Section de validation et impression -->
+  <div class="action-section mt-4">
+    <div class="row">
+      <div class="col-12 d-flex flex-column flex-md-row justify-content-end gap-3">
+
+        <!-- Bouton Valider -->
+        <button type="button"
+                class="btn btn-success btn-lg"
+                (click)="createBonVente()"
+                [disabled]="articlesAddToBon.length === 0 || selectedClientId === -1">
+          <i class="fas fa-check me-2"></i>
+          <span>{{ selectedSerie ? 'Mettre à jour' : 'Valider le bon' }}</span>
+        </button>
+
+        <!-- Bouton Imprimer -->
+        <button type="button"
+                class="btn btn-primary btn-lg"
+                (click)="downloadBonVentePdf()"
+                [disabled]="!selectedSerie">
+          <i class="fas fa-print me-2"></i>
+          <span>Imprimer PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message d'aide si pas d'articles -->
+  <div class="alert alert-info mt-4" *ngIf="articlesAddToBon.length === 0">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-info-circle me-2"></i>
+      <div>
+        <strong>Aucun article ajouté</strong>
+        <p class="mb-0">Sélectionnez une désignation et un choix, puis cliquez sur "Ajouter à la liste" pour commencer.</p>
+      </div>
+    </div>
+  </div>
+
+</div>

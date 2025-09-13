@@ -24,6 +24,23 @@ import com.moonsystem.gestion_commerciale.exception.InvalidOperationException;
 
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorDto> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException exception) {
+        final HttpStatus forbidden = HttpStatus.FORBIDDEN;
+
+        final ErrorDto errorDto = ErrorDto.builder()
+                .code(ErrorCodes.BAD_CREDENTIALS) // Ou crée un code spécifique, ex : ACCESS_DENIED
+                .httpCode(forbidden.value())
+                .message("Accès refusé : Vous n'avez pas les droits nécessaires pour effectuer cette action.")
+                .errors(Collections.singletonList(exception.getMessage()))
+                .build();
+
+        return new ResponseEntity<>(errorDto, forbidden);
+    }
+
+
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorDto> handleException(EntityNotFoundException exception, WebRequest webRequest) {
         System.out.println(">>> EntityNotFoundException interceptée : " + exception.getMessage());

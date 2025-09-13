@@ -17,7 +17,7 @@
 <aside id="layout-menu"
        class="layout-menu"
        [class.menu-open]="menuOpen"
-       [attr.aria-hidden]="!menuOpen">
+       [attr.aria-hidden]="!menuOpen ? 'true' : null">
 
   <!-- Header du menu mobile -->
   <div class="menu-header d-block d-md-none">
@@ -29,18 +29,25 @@
     </button>
     <h5 class="menu-title">Menu</h5>
     <div *ngIf="mesInfos$ | async as mesInfos" class="company-info d-flex align-items-center">
-      <img
-        [src]="mesInfos.blogo"
-        alt="Logo"
-        class="rounded-circle me-2 me-md-3 logo-img"
-      />
-      <span
-        class="fw-semibold text-dark company-name d-none d-sm-inline"
-        (mouseenter)="hover = true"
-        (mouseleave)="hover = false"
-        [style.color]="hover ? '#007bff' : '#212529'">
+      <div class="company-info d-flex align-items-center">
+        <img
+          [src]="mesInfos.blogo"
+          alt="Logo"
+          class="rounded-circle me-2 me-md-3 logo-img"
+        />
+        <span
+          class="fw-semibold text-dark company-name d-none d-sm-inline"
+          (mouseenter)="hover = true"
+          (mouseleave)="hover = false"
+          [style.color]="hover ? '#007bff' : '#212529'">
           {{ mesInfos.nomSociete }}
         </span>
+      </div>
+      <div
+        class="fw-semibold text-gray company-name d-none d-sm-inline"
+      >
+        {{ user?.username }}
+      </div>
     </div>
 
   </div>
@@ -49,25 +56,39 @@
   <div class="menu-content">
     <div class="menu-brand">
       <div class="  ">
-        <div *ngIf="mesInfos$ | async as mesInfos" class="company-info d-flex align-items-center">
-          <img
-            [src]="mesInfos.blogo"
-            alt="Logo"
-            class="rounded-circle me-2 me-md-3 logo-img"
-          />
-          <span
-            class="fw-semibold text-dark company-name d-none d-sm-inline"
-            (mouseenter)="hover = true"
-            (mouseleave)="hover = false"
-            [style.color]="hover ? '#007bff' : '#212529'">
+        <div *ngIf="mesInfos$ | async as mesInfos" >
+          <div class="company-info d-flex align-items-center">
+            <img
+              [src]="mesInfos.blogo"
+              alt="Logo"
+              class="rounded-circle me-2 me-md-3 logo-img"
+            />
+            <span
+              class="fw-semibold text-dark company-name d-none d-sm-inline"
+              (mouseenter)="hover = true"
+              (mouseleave)="hover = false"
+              [style.color]="hover ? '#007bff' : '#212529'">
           {{ mesInfos.nomSociete }}
         </span>
+          </div>
+          <div
+            class="fw-semibold text-gray company-name d-none d-sm-inline"
+            >
+          {{ user?.username }}
+        </div>
+
+        </div>
+        <div>
+          <button class="btn btn-outline-danger" (click)="logout()">
+            <fa-icon [icon]="faLogout"></fa-icon> Logout
+          </button>
+
         </div>
       </div>
     </div>
 
     <nav class="menu-navigation">
-      <ul *ngFor="let menu of menuProperties" class="menu-list">
+      <ul *ngFor="let menu of filteredMenuProperties" class="menu-list">
 
 
         <li class="menu-item">

@@ -19,14 +19,14 @@ import lombok.NoArgsConstructor;
 public class MesInfox {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "num")
     private Integer num;
 
     @Column(name = "Nom", length = 200)
     private String nomSociete;
 
-    @Column(name = "Activité", length = 250)
+    @Column(name = "activite", length = 250)
     private String activite;
 
     @Column(name = "Adres", length = 500)

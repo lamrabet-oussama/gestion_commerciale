@@ -3,8 +3,11 @@ package com.moonsystem.gestion_commerciale.controller;
 import com.moonsystem.gestion_commerciale.controller.api.BonAchatVenteApi;
 import com.moonsystem.gestion_commerciale.dto.BonAchatVenteDto;
 import com.moonsystem.gestion_commerciale.dto.BonSortieDto;
+import com.moonsystem.gestion_commerciale.dto.UserDto;
 import com.moonsystem.gestion_commerciale.model.enums.MvtType;
+import com.moonsystem.gestion_commerciale.repository.UserRepository;
 import com.moonsystem.gestion_commerciale.services.BonAchatVenteService;
+import com.moonsystem.gestion_commerciale.services.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,7 @@ import java.util.List;
 public class BonAchatVenteController implements BonAchatVenteApi {
 
     private final BonAchatVenteService bonAchatVenteService;
+    private final UserService userService;
 
     @Override
     public BonAchatVenteDto createBonAchat(
@@ -46,6 +50,7 @@ public class BonAchatVenteController implements BonAchatVenteApi {
     @Override
     public BonAchatVenteDto getBonAchat(Integer userId, String serie){
 
+        //UserDto currentUser =  userService.getCurrentUser();
         return bonAchatVenteService.getBonAchat(userId,serie);
     }
 
@@ -56,8 +61,8 @@ public class BonAchatVenteController implements BonAchatVenteApi {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadBonAchat(Integer userCod, String serie) {
-        return this.bonAchatVenteService.downloadBon(userCod, serie,MvtType.ACHAT.name());
+    public ResponseEntity<byte[]> downloadBonAchat( String serie) {
+        return this.bonAchatVenteService.downloadBon( serie,MvtType.ACHAT.name());
     }
     @Override
     public BonAchatVenteDto createBonVente(
@@ -80,8 +85,8 @@ public class BonAchatVenteController implements BonAchatVenteApi {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadBonVente(Integer userCod, String serie) {
-        return this.bonAchatVenteService.downloadBon(userCod, serie,MvtType.VENTE.name());
+    public ResponseEntity<byte[]> downloadBonVente( String serie) {
+        return this.bonAchatVenteService.downloadBon( serie,MvtType.VENTE.name());
     }
 
     @Override

@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_container_v2
+    environment:
+      POSTGRES_DB: ${DB_URL}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "5434:5432"
+    volumes:
+      - gestion_commerciale_postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: ./backend/gestion_commerciale
+      dockerfile: Dockerfile
+    container_name: springboot_api_v2
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      SECRET: ${SECRET}
+      DOC_PATH: ${DOC_PATH}
+      CLOUD_NAME: ${CLOUD_NAME}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+      LANG: ${LANG}
+      LC_ALL: ${LC_ALL}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+  angular-frontend:
+    build:
+      context: ./frontend/gestion-commerciale
+      dockerfile: Dockerfile
+    container_name: angular-frontend_v2
+    ports:
+      - "4200:80"
+    networks:
+      - app-network
+    depends_on:
+      - api
+
+volumes:
+  gestion_commerciale_postgres-data:
+    external: true
+
+networks:
+  app-network:
+    external: true

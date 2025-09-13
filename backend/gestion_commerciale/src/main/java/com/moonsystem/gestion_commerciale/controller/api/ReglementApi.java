@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static com.moonsystem.gestion_commerciale.utils.Constants.APP_ROOT;
@@ -27,6 +28,7 @@ public interface ReglementApi {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = ReglementDto.class))
     )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PostMapping(value = APP_ROOT + "/reglement/create")
     ReglementDto createReglement(@RequestBody ReglementDto dto);
 
@@ -37,6 +39,7 @@ public interface ReglementApi {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = ReglementResponseDto.class))
     )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/lister-reglements")
     ReglementResponseDto listerReglements(
             @RequestParam(required = false, name="userId") Integer userCod,
@@ -52,6 +55,7 @@ public interface ReglementApi {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = ReglementDto.class))
     )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(value = APP_ROOT + "/reglement/update")
     ReglementDto updateReglement(@RequestBody ReglementDto dto);
 
@@ -60,6 +64,7 @@ public interface ReglementApi {
             responseCode = "200",
             description = "Règlement supprimé avec succès"
     )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @DeleteMapping(value = APP_ROOT + "/reglement/delete/{id}")
     void deleteReglement(@PathVariable("id") Integer id);
 
@@ -78,6 +83,7 @@ public interface ReglementApi {
             ),
             @ApiResponse(responseCode = "404", description = "Règlement introuvable")
     })
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/reglements/download", produces = "application/pdf")
     ResponseEntity<byte[]> downloadReglementPdf(
             @Parameter(description = "Code utilisateur (optionnel)")
@@ -97,6 +103,7 @@ public interface ReglementApi {
             content = @Content(mediaType = "application/json",
                     schema = @Schema(implementation = ReglementDto.class))
     )
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/reglement/{idReg}")
     ReglementDto getReglement(
             @PathVariable(required = false, name="idReg") Integer idReg

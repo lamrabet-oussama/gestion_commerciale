@@ -29,63 +29,47 @@ public class MesInfoxServiceImp implements MesInfoxService {
 
     @Override
     public MesInfoxDto saveMesInfox(MultipartFile file, MesInfoxDto dto) {
-        // Cherche l'entité existante par ID
-        Optional<MesInfox> existingOpt = mesInfoxRepository.findById(dto.getNum());
 
-        MesInfox entityToSave;
+        MesInfox entityToSave = mesInfoxRepository.findById(dto.getNum())
+                .map(existing -> {
+                    // Mise à jour des champs
+                    existing.setNomSociete(dto.getNomSociete());
+                    existing.setAdresse(dto.getAdresse());
+                    existing.setActivite(dto.getActivite());
 
-        if (existingOpt.isPresent()) {
-            // Si l'entité existe, on met à jour ses champs manuellement
-            MesInfox existing = existingOpt.get();
-            existing.setNomSociete(dto.getNomSociete());
-            existing.setAdresse(dto.getAdresse());
-            // etc. pour tous les champs de dto vers l'entité existante
 
-            // Gérer l'image
-            if (file != null && !file.isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadFile(file, "mes_infos");
-                if (uploadedUrl != null) {
-                    existing.setBLogo(uploadedUrl);
-                }
-            }
 
-            entityToSave = existing;
-        } else {
-            // Sinon, c'est une nouvelle entité (création)
-            if (file != null && !file.isEmpty()) {
-                String uploadedUrl = cloudinaryService.uploadFile(file, "mes_infos");
-                if (uploadedUrl != null) {
-                    dto.setBLogo(uploadedUrl);
-                }
-            }
-            entityToSave = MesInfoxDto.toEntity(dto);
-        }
+                    // Gérer l'image
+                    if (file != null && !file.isEmpty()) {
+                        String uploadedUrl = cloudinaryService.uploadFile(file, "mes_infos");
+                        if (uploadedUrl != null) {
+                            existing.setBLogo(uploadedUrl);
+                        }
+                    }
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    // Création d'une nouvelle entité
+                    if (file != null && !file.isEmpty()) {
+                        String uploadedUrl = cloudinaryService.uploadFile(file, "mes_infos");
+                        if (uploadedUrl != null) {
+                            dto.setBLogo(uploadedUrl);
+                        }
+                    }
+                    return MesInfoxDto.toEntity(dto);
+                });
 
-        // Sauvegarde
         MesInfox saved = mesInfoxRepository.save(entityToSave);
         return MesInfoxDto.fromEntity(saved);
     }
 
     @Override
     public MesInfoxDto findById(int id) {
-        Optional<MesInfox> existingInfos = mesInfoxRepository.findById(id);
-
-        if (!existingInfos.isPresent()) {
-//            throw new EntityNotFoundException(
-//                    "Aucune information trouvée avec l'ID : " + id,
-//                    ErrorCodes.INFOX_NOT_FOUND
-//            );
-            return null;
-        }
-
-        return MesInfoxDto.fromEntity(existingInfos.get());
+        Optional<MesInfox> existingInfos = mesInfoxRepository.findByNum((id));
+            System.out.println(existingInfos);
+        return existingInfos.map(MesInfoxDto::fromEntity).orElse(null);
 
     }
 
-    @Override
-    public MesInfoxDto findFirst() {
-        return this.mesInfoxRepository.findFirstInfo()
-                .map(MesInfoxDto::fromEntity).orElseThrow(() -> new EntityNotFoundException(
-                        "Tier not found with id: ", ErrorCodes.TIER_NOT_FOUND));
-    }
+
 }

@@ -31,6 +31,8 @@ public class BonAchatVenteDto {
     private BigDecimal credit;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal remis;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
+    private BigDecimal remisSurBon;
     private String detCheque="........";
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime datBon;
@@ -68,7 +70,7 @@ public class BonAchatVenteDto {
         dto.setDetCheque(bon.getDetCheq());
         dto.setIdUser(bon.getUser().getCod());
         dto.setNomUser(bon.getUser().getLogin());
-
+    dto.setRemisSurBon(bon.getRemisSurBon()!=null ? bon.getRemisSurBon():BigDecimal.ZERO);
         // **MODIFICATION** : recevoir la liste d'articles depuis le service
         dto.setArticles(articlesDto);
 

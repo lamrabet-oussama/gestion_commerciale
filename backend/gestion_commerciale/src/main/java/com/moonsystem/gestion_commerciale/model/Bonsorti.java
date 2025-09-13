@@ -29,7 +29,7 @@ import java.util.List;
 public class Bonsorti {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id_bon")
     private Integer idBon;
 
@@ -48,7 +48,7 @@ public class Bonsorti {
     @JsonIgnoreProperties("bonsortis")
     private Tier tier;
 
-    @Column(name = "Dat_Bon")
+    @Column(name = "dat_bon", nullable = false, columnDefinition = "TIMESTAMP")
     private LocalDateTime datBon;
 
     @Column(name = "Montant", scale = 2)
@@ -63,8 +63,8 @@ public class Bonsorti {
     @Column(name = "Det_cheq")
     private String detCheq;
 
-    @Column(name = "Echeance")
-    private LocalDateTime echeance;
+    @Column(name = "echeance", nullable = false, columnDefinition = "TIMESTAMP")
+    private LocalDateTime echeance=LocalDateTime.now();
 
     @Column(name = "Credit", precision = 12, scale = 2)
     private BigDecimal credit;
@@ -77,6 +77,8 @@ public class Bonsorti {
 
     @Column(name = "mRemis", precision = 12, scale = 2)
     private BigDecimal mRemis;
+    @Column(name = "remisSurBon", precision = 12, scale = 2)
+    private BigDecimal remisSurBon;
 
     @Column(name = "Livraison", length = 200)
     private String livraison;

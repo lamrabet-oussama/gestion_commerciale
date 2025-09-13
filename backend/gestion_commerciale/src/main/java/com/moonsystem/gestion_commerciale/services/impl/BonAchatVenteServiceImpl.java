@@ -38,7 +38,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
     private final BonGeneratePdf pdfGenerator;
 
     @Transactional
-    public String generateSerie(String mvt, LocalDateTime dateTime) {
+    public String generateSerie( LocalDateTime dateTime) {
         // Utiliser la dateTime passée en argument, ou maintenant si null
         LocalDateTime targetDateTime = dateTime != null ? dateTime : LocalDateTime.now();
 
@@ -243,8 +243,10 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                     .findFirst()
                     .get();
 
-            // Utiliser le prix du DTO s'il existe, sinon celui de la base
-            BigDecimal linePrice = safe(article.getPrix());
+            // MODIFICATION: Utiliser prixAchat si mvt est ACHAT, sinon prix
+            BigDecimal linePrice = mvt.equals(MvtType.ACHAT)
+                    ? safe(article.getPrixAchat())
+                    : safe(article.getPrix());
 
             BigDecimal lineMontant = safe(linePrice).multiply(safe(a.getQuantite()));
             montantSansRemise = montantSansRemise.add(lineMontant);
@@ -290,12 +292,13 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                 .user(user)
                 .tier(tier)
                 .detCheq(dto.getDetCheque())
-                .serie(generateSerie(mvt.name(),dto.getDatBon()))
+                .serie(generateSerie(dto.getDatBon()))
                 .datBon(dto.getDatBon() != null ? dto.getDatBon() : LocalDateTime.now())
                 .mvt(mvt)
                 .cheque(safeCheque)
                 .credit(credit)
                 .espece(safeEspece)
+                .echeance(LocalDateTime.now())
                 .remis(remiseTotale)
                 .montant(montantSansRemise)
                 .etat(true)
@@ -317,11 +320,10 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
 
             articleRepository.save(article);
 
-            // Utiliser le prix du DTO s'il existe, sinon celui de la base
-            BigDecimal prixUni = safe(article.getPrix());
-            /*safe(ar.getPrix()).compareTo(BigDecimal.ZERO) > 0
-                    ? safe(ar.getPrix())
-                    : safe(article.getPrix());*/
+            // MODIFICATION: Utiliser prixAchat si mvt est ACHAT, sinon prix
+            BigDecimal prixUni = mvt.equals(MvtType.ACHAT)
+                    ? safe(article.getPrixAchat())
+                    : safe(article.getPrix());
 
             // montant ligne (avant remise)
             BigDecimal montantLigne = prixUni.multiply(ar.getQuantite());
@@ -343,6 +345,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
         // **ENREGISTRER LES FLUX EN PREMIER**
         fluxRepository.saveAll(fluxes);
         savedBon.setFluxes(fluxes);
+        savedBon.setRemisSurBon(dto.getRemisSurBon()!=null ? dto.getRemisSurBon():BigDecimal.ZERO);
 
         // **CRÉATION DE LA LISTE DES ARTICLES DTO DANS LE SERVICE**
         List<ArticleAddBonDto> articlesDto = fluxes.stream()
@@ -361,7 +364,6 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
         tierRepository.saveAndFlush(tier);
         return BonAchatVenteDto.mapToDto(savedBon, articlesDto);
     }
-
     @Override
     @Transactional
 
@@ -410,6 +412,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
             BigDecimal stock = article.getStock() == null ? BigDecimal.ZERO : article.getStock();
             // flux.getSortie() et getEntree() sont des int
             if (existingBon.getMvt() != null && existingBon.getMvt().equals(MvtType.VENTE)) {
+
                 article.setStock(stock.add(BigDecimal.valueOf(flux.getSortie())));
             } else if (existingBon.getMvt() != null && existingBon.getMvt().equals(MvtType.ACHAT)) {
                 article.setStock(stock.subtract(BigDecimal.valueOf(flux.getEntree())));
@@ -484,7 +487,12 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
             // null-safe stock
             BigDecimal currentStock = article.getStock() == null ? BigDecimal.ZERO : article.getStock();
             BigDecimal quantite = ar.getQuantite() == null ? BigDecimal.ZERO : ar.getQuantite();
-            BigDecimal prix = ar.getPrix() == null ? BigDecimal.ZERO : ar.getPrix();
+
+            // MODIFICATION: Utiliser prixAchat si mvt est ACHAT, sinon prix
+            BigDecimal prix = mvt.equals(MvtType.ACHAT)
+                    ? (article.getPrixAchat() == null ? BigDecimal.ZERO : article.getPrixAchat())
+                    : (article.getPrix() == null ? BigDecimal.ZERO : article.getPrix());
+
             BigDecimal fRemis = ar.getRemisUni() == null ? BigDecimal.ZERO : ar.getRemisUni();
 
             if (mvt.equals(MvtType.VENTE)) {
@@ -553,13 +561,14 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
         existingBon.setDatBon(dto.getDatBon() != null ? dto.getDatBon() : LocalDateTime.now());
         existingBon.setMvt(mvt);
         existingBon.setEtat(true);
+        existingBon.setSerie(this.generateSerie(existingBon.getDatBon()));
+        existingBon.setRemisSurBon(dto.getRemisSurBon() !=null ? dto.getRemisSurBon():BigDecimal.ZERO);
 
         // 9) Sauvegarde finale
         Bonsorti savedBon = bonsortiRepository.save(existingBon);
 
         return BonAchatVenteDto.mapToDto(savedBon, dto.getArticles());
     }
-
 
     @Override
     @Transactional
@@ -613,7 +622,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
     }
 
     @Override
-    public ResponseEntity<byte[]> downloadBon(Integer userCod, String serie, String mvt) {
+    public ResponseEntity<byte[]> downloadBon(String serie, String mvt) {
 
         try {
 
@@ -625,7 +634,7 @@ public class BonAchatVenteServiceImpl implements BonAchatVenteService {
                 );
             }
             // Récupérer les données de caisse pour la date
-            Bonsorti bonsorti = this.bonsortiRepository.findBySerieAndMvtAndUserCod(serie, MvtType.valueOf(mvt), userCod);
+            Bonsorti bonsorti = this.bonsortiRepository.findBySerieAndMvtAndUserCod(serie, MvtType.valueOf(mvt), null);
 
 
 

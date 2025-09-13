@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Table(name = "Reglement")
 public class Reglement {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id_regl")
     private Integer idRegl;
 

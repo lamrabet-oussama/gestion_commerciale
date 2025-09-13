@@ -141,6 +141,31 @@ body {
 .table {
   margin: 0;
 }
+/* ✅ Pour que Désignation prenne tout l'espace disponible */
+.designation-col {
+  width: 100%;
+}
+
+.designation-cell {
+  max-width: 350px; /* Limite visuelle, ajustable */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+/* Colonnes fixes (Réf, Prix, Actions, etc.) */
+.fixed-col {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Inputs plus propres dans le tableau */
+.table input {
+  max-width: 80px;
+  margin: 0 auto;
+  padding: 0.25rem;
+}
 
 .table thead th {
   background-color: #343a40;

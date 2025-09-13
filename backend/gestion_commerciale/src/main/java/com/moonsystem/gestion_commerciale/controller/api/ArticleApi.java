@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ import static com.moonsystem.gestion_commerciale.utils.Constants.APP_ROOT;
 
 public interface ArticleApi {
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PostMapping(value = APP_ROOT + "/articles/create",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -57,6 +59,8 @@ public interface ArticleApi {
             @RequestBody ArticleDto dto
     );
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/{codeArticle}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -88,6 +92,7 @@ public interface ArticleApi {
             @PathVariable("codeArticle") Integer code
     );
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/all",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -111,6 +116,7 @@ public interface ArticleApi {
     })
     List<ArticleDto> findAll();
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping(value = APP_ROOT + "/articles/delete/{codeArticle}")
     @Operation(
             summary = "Supprimer un article",
@@ -145,7 +151,7 @@ public interface ArticleApi {
             @Parameter(description = "Code unique de l'article à supprimer", required = true, example = "1001")
             @PathVariable("codeArticle") Integer code
     );
-
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PutMapping(value = APP_ROOT + "/articles/update/{codeArticle}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -185,6 +191,7 @@ public interface ArticleApi {
             @RequestBody ArticleDto dto
     );
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/familles",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -202,6 +209,8 @@ public interface ArticleApi {
     )
     List<String> getFamilles();
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/choix",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -219,6 +228,7 @@ public interface ArticleApi {
     )
     List<String> getChoix();
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/search",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -250,6 +260,7 @@ public interface ArticleApi {
             @RequestParam String keyword
     );
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @PatchMapping(value = APP_ROOT + "/articles/stock/{codeArticle}",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -289,6 +300,7 @@ public interface ArticleApi {
             @RequestBody BigDecimal newStock
     );
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -322,6 +334,7 @@ public interface ArticleApi {
             @RequestParam(defaultValue = "10") int size
     );
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/totalelements")
     @Operation(
             summary = "Obtenir le nombre total d'éléments",
@@ -337,6 +350,8 @@ public interface ArticleApi {
     })
     Integer getTotalElements();
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/article",produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Récupérer un article par désignation et choix",
@@ -356,6 +371,7 @@ public interface ArticleApi {
     );
 
 
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/articles/designations",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -374,6 +390,8 @@ public interface ArticleApi {
     List<String> getAllDesignation();
 
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/article/choix",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(

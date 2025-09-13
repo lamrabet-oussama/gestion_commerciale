@@ -1,10 +1,10 @@
-import { NgModule } from '@angular/core';
+import {APP_INITIALIZER, NgModule} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
-import {HttpClient, HttpClientModule} from "@angular/common/http";
+import {HTTP_INTERCEPTORS, HttpClient, HttpClientModule} from "@angular/common/http";
 import { PageDashboardComponent } from './pages/page-dashboard/page-dashboard.component';
 import { PageArticleComponent } from './pages/page-article/page-article.component';
 import {MenuComponent} from "./composants/menu/menu.component";
@@ -36,6 +36,16 @@ import {fournisseursReducers} from "../store/fournisseurs/fournisseurs.reducers"
 import {FournisseursEffects} from "../store/fournisseurs/fournisseurs.effects";
 import { ReglementComponent } from './pages/reglement/reglement.component';
 import { TierSituationComponent } from './pages/tier-situation/tier-situation.component';
+import { PageLoginComponent } from './pages/page-login/page-login.component';
+import { RegisterComponent } from './pages/register/register.component';
+import { LoaderComponent } from './composants/loader/loader.component';
+import {InterceptorService} from './services/interceptor/interceptor.service';
+import {CurrentUserEffects} from "../store/currentUser/currentUser.effects";
+import {currentUserReducers} from "../store/currentUser/currentUser.reducers";
+import {StoreDevtoolsModule} from "@ngrx/store-devtools";
+import { ModifierUtilisateurComponent } from './pages/modifier-utilisateur/modifier-utilisateur.component';
+import { NousComponent } from './pages/nous/nous.component';
+
 
 @NgModule({
   declarations: [
@@ -54,7 +64,12 @@ import { TierSituationComponent } from './pages/tier-situation/tier-situation.co
     BonVenteComponent,
     BonAchatComponent,
     ReglementComponent,
-    TierSituationComponent
+    TierSituationComponent,
+    PageLoginComponent,
+    RegisterComponent,
+    LoaderComponent,
+    ModifierUtilisateurComponent,
+    NousComponent
   ],
   imports: [
     BrowserModule,
@@ -62,8 +77,11 @@ import { TierSituationComponent } from './pages/tier-situation/tier-situation.co
     FormsModule,
     HttpClientModule,
     FontAwesomeModule,
-    StoreModule.forRoot({mesInfos:mesInfosReducer,mesArticles:mesArticlesReducers,allUsers:allUsersReducers,clients:clientsReducers,fournisseurs:fournisseursReducers}),
-    EffectsModule.forRoot([MesInfosEffects,MesArticlesEffects,AllUsersEffects,ClientsEffects,FournisseursEffects]),
+    StoreDevtoolsModule.instrument({
+      maxAge: 25, // nombre d'états à conserver
+    }),
+    StoreModule.forRoot({mesInfos:mesInfosReducer,mesArticles:mesArticlesReducers,allUsers:allUsersReducers,clients:clientsReducers,fournisseurs:fournisseursReducers,currentUser:currentUserReducers}),
+    EffectsModule.forRoot([MesInfosEffects,MesArticlesEffects,AllUsersEffects,ClientsEffects,FournisseursEffects,CurrentUserEffects]),
     ApiModule.forRoot(() => new Configuration({
       basePath: 'http://localhost:8080'
     })),
@@ -75,7 +93,12 @@ import { TierSituationComponent } from './pages/tier-situation/tier-situation.co
     ),
     ReactiveFormsModule
   ],
-  providers: [HttpClient],
+  providers: [HttpClient,{
+    provide:HTTP_INTERCEPTORS,
+    useClass:InterceptorService,
+    multi: true
+  },
+    ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

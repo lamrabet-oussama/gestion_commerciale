@@ -4,6 +4,7 @@ api.base.service.ts
 api.module.ts
 api/api.ts
 api/articles.service.ts
+api/authentication.service.ts
 api/bonsAchatVente.service.ts
 api/caisseJourController.service.ts
 api/dettesController.service.ts
@@ -18,6 +19,8 @@ git_push.sh
 index.ts
 model/articleAddBonDto.ts
 model/articleDto.ts
+model/authenticationRequest.ts
+model/authenticationResponse.ts
 model/bonAchatVenteDto.ts
 model/bonSortieDto.ts
 model/caisseJourDto.ts
@@ -28,10 +31,12 @@ model/fluxNormalResponseDto.ts
 model/mesInfoxDto.ts
 model/models.ts
 model/pageResponse.ts
+model/registerRequest.ts
 model/reglementDto.ts
 model/reglementResponseDto.ts
 model/tierDto.ts
 model/tierStatistiqueCreditDto.ts
+model/updateUserRequest.ts
 model/userDto.ts
 param.ts
 variables.ts

@@ -45,24 +45,7 @@ public class ReglementGeneratePdf {
 
     @PostConstruct
     public void init() {
-        MesInfoxDto dto = new MesInfoxDto(
-                1,
-                "Ma Société",
-                "Commerce",
-                "123 Rue Exemple",
-                "Pied de page",
-                "SER123",
-                "logo.png",
-                "codeF",
-                "Banque Nom",
-                "B123",
-                "Activité B",
-                "Adresse B",
-                "logoB.png",
-                "codeB",
-                "Note 1",
-                "Note 2"
-        );//this.mesInfoxService.findById(1);
+     MesInfoxDto dto=this.mesInfoxService.findById(1);
         this.nomEntreprise = dto.getNomSociete();
         this.logo = dto.getBLogo();
         this.adresse = dto.getAdresse() != null ? dto.getAdresse() : "Adresse de l'entreprise";

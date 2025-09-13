@@ -15,4 +15,5 @@ public interface MesInfoxRepository extends JpaRepository<MesInfox, Integer> {
     @Query("SELECT m FROM MesInfox m")
     Optional<MesInfox> findFirstInfo();
 
+    Optional<MesInfox> findByNum(Integer num);
 }

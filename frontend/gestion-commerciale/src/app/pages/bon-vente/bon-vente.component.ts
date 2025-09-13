@@ -14,6 +14,7 @@ import {selectClientsList} from "../../../store/clients/clients.selectors";
 import {loadClients} from "../../../store/clients/clients.actions";
 import {faTimes} from "@fortawesome/free-solid-svg-icons/faTimes";
 import {DettesService} from "../../services/dettes/dettes.service";
+import {selectCurrentUser} from "../../../store/currentUser/currentUser.selectors";
 
 @Component({
   selector: 'app-bon-vente',
@@ -24,9 +25,10 @@ export class BonVenteComponent implements OnInit {
 
   selectedSerie: string = "";
   allSeris: string[] = [];
-  userId: number | undefined = 1;
+  userId: number | undefined;
   selectedClientId: number = -1;
   clients$: Observable<TierDto[]>;
+  currentUser$: Observable<UserDto|null>;
   articlesAddToBon: ArticleAddBonDto[] = [];
   selectedDate: string = '';
   selectedDesignation: string = '';
@@ -51,9 +53,8 @@ export class BonVenteComponent implements OnInit {
   remiseGlobale: number=0;
   remiseUnitairesTotal: number = 0;
 
-  // Clé pour localStorage
-  //private readonly STORAGE_KEY = 'bonVente_data';
-
+  // Flag pour éviter les chargements multiples
+  private isInitializing: boolean = false;
 
   public constructor(
     private articleService: ArticleService,
@@ -64,21 +65,47 @@ export class BonVenteComponent implements OnInit {
     private indexedDbService: IndexedDBService
   ) {
     this.clients$ = this.store.select(selectClientsList)
+    this.currentUser$ = this.store.select(selectCurrentUser)
+
+    // Amélioration de la souscription à l'utilisateur courant
+    this.currentUser$.subscribe(user => {
+      console.log('Current user changed:', user);
+      this.userId = user?.cod;
+
+      // Si on a un userId et une série sélectionnée, recharger le bon
+      if (this.userId && this.selectedSerie && !this.isInitializing) {
+        this.getBonVente();
+      }
+    });
+
     this.clients$.subscribe(clients => {
       console.log("All Clients:", clients)
     });
   }
 
   async ngOnInit() {
-    await this.loadAllDataFromDb(); // Charger toutes les données sauvegardées
-    await this.getAllBonVSeris();
-    this.store.dispatch(loadClients());
-    await this.getAllDesignations();
-    this.initializeDateLimits();
+    this.isInitializing = true;
+    await this.loadAllDataFromDb();
 
-    // Ne définir la date d'aujourd'hui que si aucune date n'est chargée
-    if (!this.selectedDate) {
-      await this.setTodayAsDefault();
+    try {
+      // Charger les données de base
+      await this.getAllBonVSeris();
+      await this.getAllDesignations();
+      this.initializeDateLimits();
+
+      // Dispatch pour charger les clients
+      this.store.dispatch(loadClients());
+
+      // Charger les données sauvegardées
+
+      // Ne définir la date d'aujourd'hui que si aucune date n'est chargée
+      if (!this.selectedDate) {
+        await this.setTodayAsDefault();
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'initialisation:', error);
+    } finally {
+      this.isInitializing = false;
     }
   }
 
@@ -88,49 +115,68 @@ export class BonVenteComponent implements OnInit {
     this.totalVenteBrute = 0;
     this.cheque = 0;
     this.detailsCheque = "";
-    this.soldeClient=0;
+    this.soldeClient = 0;
     this.credit = 0;
     this.bonVenteDto = {} as BonAchatVenteDto;
     this.articlesAddToBon = [];
     this.selectedClientId = -1;
-    this.selectedSerie="";
+    this.selectedSerie = "";
     this.selectedDesignation = '';
     this.selectedChoix = '';
     this.remiseTotal = 0;
+    this.remiseGlobale = 0;
+    this.remiseUnitairesTotal = 0;
     this.articleAddBonDto = {};
-    await this.setTodayAsDefault();
+    this.username = "";
+    this.choix = [];
 
-    // Sauvegarder après reset
+    await this.setTodayAsDefault();
     await this.saveAllDataToDb();
   }
 
   async toggleSerie() {
     this.isSerieDisabled = !this.isSerieDisabled;
+
     if (this.isSerieDisabled) {
+      // Si on désactive, reset complet
       await this.resetValues();
-      this.selectedSerie = '';
-      this.username="";
+    } else {
+      // Si on active et qu'il y a une série sélectionnée, charger le bon
+      if (this.selectedSerie && this.userId) {
+        await this.getBonVente();
+      }
     }
+
     await this.saveAllDataToDb();
   }
 
   protected async getTierSolde(selectedClientId: number) {
+    if (selectedClientId === -1) {
+      this.soldeClient = 0;
+      await this.saveAllDataToDb();
+      return;
+    }
+
     try {
       const result = await firstValueFrom(this.dettesService.getSoldeByTierId(selectedClientId));
       this.soldeClient = result;
       await this.saveAllDataToDb();
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, 'Erreur');
+      console.error('Erreur lors du chargement du solde:', error);
+      this.notificationService.error(error?.error?.message || 'Erreur lors du chargement du solde', 'Erreur');
+      this.soldeClient = 0;
     }
   }
 
   private async getAllBonVSeris() {
     try {
-      const data = await firstValueFrom(this.bonVenteService.getAllBonsVenteSeris(this.userId));
-      this.allSeris = data;
+      const data = await firstValueFrom(this.bonVenteService.getAllBonsVenteSeris());
+      this.allSeris = data || [];
       await this.saveAllDataToDb();
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, 'Erreur');
+      console.error('Erreur lors du chargement des séries:', error);
+      this.notificationService.error(error?.error?.message || 'Erreur lors du chargement des séries', 'Erreur');
+      this.allSeris = [];
     }
   }
 
@@ -140,12 +186,19 @@ export class BonVenteComponent implements OnInit {
   }
 
   private async getChoixByDesignation(designation: string) {
+    if (!designation) {
+      this.choix = [];
+      return;
+    }
+
     try {
       const result = await firstValueFrom(this.articleService.getChoixByDes(designation));
-      this.choix = result;
+      this.choix = result || [];
       await this.saveAllDataToDb();
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, 'Erreur');
+      console.error('Erreur lors du chargement des choix:', error);
+      this.notificationService.error(error?.error?.message || 'Erreur lors du chargement des choix', 'Erreur');
+      this.choix = [];
     }
   }
 
@@ -154,84 +207,138 @@ export class BonVenteComponent implements OnInit {
     this.selectedChoix = '';
     this.choix = [];
 
-    if (!designation) {
-      await this.saveAllDataToDb();
-      return;
+    // Reset article
+    this.articleAddBonDto = {};
+
+    if (designation) {
+      await this.getChoixByDesignation(designation);
     }
 
-    await this.getChoixByDesignation(designation);
+    await this.saveAllDataToDb();
   }
 
   async onChoixChange(choix: string) {
     this.selectedChoix = choix;
 
     if (!this.selectedDesignation) {
-      this.choix = [];
       this.notificationService.error("Vous devez sélectionner une designation", 'Erreur');
-      await this.saveAllDataToDb();
       return;
     }
-    if (!this.selectedChoix) {
-      this.choix = [];
-      this.notificationService.error("Vous devez sélectionner un choix", 'Erreur');
+
+    if (!choix) {
+      this.articleAddBonDto = {};
       await this.saveAllDataToDb();
       return;
     }
 
-    await this.findArticle(this.selectedDesignation, this.selectedChoix);
+    await this.findArticle(this.selectedDesignation, choix);
   }
 
   private async findArticle(designation: string, choix: string) {
     try {
       const result = await firstValueFrom(this.articleService.findArticleByDesignationAndChoix(designation, choix));
-      this.articleAddBonDto = result;
-      console.log("Article:", result);
+      this.articleAddBonDto = result || {};
+      console.log("Article trouvé:", result);
       await this.saveAllDataToDb();
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, 'Erreur');
+      console.error('Erreur lors de la recherche de l\'article:', error);
+      this.notificationService.error(error?.error?.message || 'Erreur lors de la recherche de l\'article', 'Erreur');
+      this.articleAddBonDto = {};
     }
   }
 
   private async getAllDesignations() {
     try {
       const result = await firstValueFrom(this.articleService.getAllDesognations());
-      this.designations = result;
+      this.designations = result || [];
       await this.saveAllDataToDb();
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, 'Erreur');
+      console.error('Erreur lors du chargement des désignations:', error);
+      this.notificationService.error(error?.error?.message || 'Erreur lors du chargement des désignations', 'Erreur');
+      this.designations = [];
     }
   }
 
-  protected async getBonVente() {
-    if (!this.selectedSerie) {
+  async onSerieSelectionChange(selectedSerie: string) {
+    console.log('Série sélectionnée:', selectedSerie);
+    this.selectedSerie = selectedSerie;
+
+    // Si la série est vide, reset
+    if (!selectedSerie) {
       this.bonVenteDto = {} as BonAchatVenteDto;
       this.articlesAddToBon = [];
+      this.username = "";
       await this.saveAllDataToDb();
       return;
     }
 
+    await this.getBonVente();
+  }
+
+  protected async getBonVente() {
+    console.log('getBonVente() appelée - selectedSerie:', this.selectedSerie, 'userId:', this.userId);
+
+    if (!this.selectedSerie) {
+      this.bonVenteDto = {} as BonAchatVenteDto;
+      this.articlesAddToBon = [];
+      this.username = "";
+      await this.saveAllDataToDb();
+      return;
+    }
+
+    if (!this.userId) {
+      console.log('userId non défini, attente...');
+      // On peut essayer d'attendre un peu que userId soit défini
+      setTimeout(() => {
+        if (this.userId) {
+          this.getBonVente();
+        }
+      }, 100);
+      return;
+    }
+
     try {
-      const result = await firstValueFrom(this.bonVenteService.getBonVente(this.userId, this.selectedSerie));
-      this.bonVenteDto = result;
-      this.espece = result.espece ?? 0;
-      this.cheque = result.cheque ?? 0;
-      this.selectedClientId = result.idTier ?? -1;
-      this.userId = result.idUser ?? -1;
-      this.username=result.nomUser ?? "";
-      this.detailsCheque = result.detCheque ?? "";
-      this.articlesAddToBon = result.articles ?? [];
-      this.totalVenteBrute = result.montantSansRemise ?? 0;
-      this.totalVenteAvecRemise = result.montant ?? 0;
-      this.remiseGlobale = result.remis ?? 0;
-      this.selectedDate = result.datBon
-        ? new Date(result.datBon).toISOString().split('T')[0]
+      console.log('Appel du service getBonVente avec userId:', this.userId, 'serie:', this.selectedSerie);
+
+      // CORRECTION: Ajouter le paramètre userId manquant
+      const result = await firstValueFrom(this.bonVenteService.getBonVente( this.selectedSerie));
+      console.log("Bon Vente Result:", result);
+
+      this.bonVenteDto = result || ({} as BonAchatVenteDto);
+
+      // CORRECTION: Éviter la duplication
+      this.selectedClientId = result?.idTier ?? -1;
+      this.espece = result?.espece ?? 0;
+      this.cheque = result?.cheque ?? 0;
+      this.userId = result?.idUser ?? this.userId; // Garder la valeur actuelle si pas dans le résultat
+      this.username = result?.nomUser ?? "";
+      this.detailsCheque = result?.detCheque ?? "";
+      this.articlesAddToBon = result?.articles ?? [];
+      this.totalVenteBrute = result?.montantSansRemise ?? 0;
+      this.totalVenteAvecRemise = result?.montant ?? 0;
+      this.remiseGlobale = result?.remis ?? 0;
+      this.remiseTotal = result?.remis ?? 0; // Sync avec remise globale
+
+      this.selectedDate = result?.datBon
+        ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
+          .toISOString()
+          .split('T')[0]
         : new Date().toISOString().split('T')[0];
-      console.log("Bon Vente:", this.bonVenteDto);
-      await this.getTierSolde(this.selectedClientId);
+
+
+      console.log("Bon Vente Récupéré:", this.bonVenteDto);
+
+      // Charger le solde client si nécessaire
+      if (this.selectedClientId !== -1) {
+        await this.getTierSolde(this.selectedClientId);
+      }
+
       await this.recalculateTotal();
       await this.saveAllDataToDb();
+
     } catch (error: any) {
-      this.notificationService.error(error?.error?.message, "Erreur");
+      console.error('Erreur dans getBonVente:', error);
+      this.notificationService.error(error?.error?.message || "Erreur lors du chargement du bon", "Erreur");
     }
   }
 
@@ -245,20 +352,17 @@ export class BonVenteComponent implements OnInit {
     await this.saveAllDataToDb();
   }
 
-
-
-
   protected async recalculateTotal(): Promise<void> {
     const totalBrutInitial = this.articlesAddToBon.reduce((sum, a) => {
       const prix = Number(a.prix ?? 0);
-      const qte  = Number(a.quantite ?? 0);
+      const qte = Number(a.quantite ?? 0);
       return sum + (prix * qte);
     }, 0);
 
     const totalRemiseUnit = this.articlesAddToBon.reduce((sum, a) => {
       const rUnit = Number(a.remisUni ?? 0);
-      const prix  = Number(a.prix ?? 0);
-      const qte   = Number(a.quantite ?? 0);
+      const prix = Number(a.prix ?? 0);
+      const qte = Number(a.quantite ?? 0);
       const rUnitCapped = Math.max(0, Math.min(rUnit, prix));
       return sum + (rUnitCapped * qte);
     }, 0);
@@ -320,11 +424,13 @@ export class BonVenteComponent implements OnInit {
         quantite: qtyToAdd
       };
       this.articlesAddToBon.push(toPush);
-      this.notificationService.success("Article ajouté",'Succès');
+      this.notificationService.success("Article ajouté", 'Succès');
     }
 
+    // Reset la sélection d'article
+    this.resetArticleSelection();
     await this.recalculateTotal();
-    console.log("Articles à ajoutés", this.articlesAddToBon);
+    console.log("Articles ajoutés", this.articlesAddToBon);
   }
 
   protected async onRemiseChange(): Promise<void> {
@@ -335,6 +441,7 @@ export class BonVenteComponent implements OnInit {
     const found = this.articlesAddToBon.find(a => a.cod === cod);
     if (!found) {
       console.warn('Article à supprimer non trouvé:', cod);
+      return;
     }
 
     this.articlesAddToBon = this.articlesAddToBon.filter(a => a.cod !== cod);
@@ -343,16 +450,19 @@ export class BonVenteComponent implements OnInit {
   }
 
   protected async createBonVente() {
+    if (!this.validateBon()) {
+      return;
+    }
+
     if (!this.bonVenteDto) {
       this.bonVenteDto = {} as BonAchatVenteDto;
     }
 
     // Préparer le DTO
-    this.bonVenteDto.idTier = Number(this.selectedClientId ?? -1);
+    this.bonVenteDto.idTier = Number(this.selectedClientId);
     this.bonVenteDto.idUser = Number(this.userId ?? -1);
     this.bonVenteDto.espece = this.toNumber(this.espece);
     this.bonVenteDto.cheque = this.toNumber(this.cheque);
-
     this.bonVenteDto.detCheque = this.detailsCheque ?? '';
     this.bonVenteDto.datBon = this.selectedDate ? `${this.selectedDate}T00:00:00` : undefined;
     this.bonVenteDto.remis = this.toNumber(this.remiseTotal);
@@ -369,39 +479,48 @@ export class BonVenteComponent implements OnInit {
       stock: Number(a.stock ?? 0)
     }));
 
-    if (!this.selectedSerie || this.selectedSerie.trim() === "") {
-      this.selectedSerie = "";
-    }
+    const isUpdate = this.selectedSerie && this.selectedSerie.trim() !== "";
 
-    console.log("Bon Vente Avant:",this.bonVenteDto);
+    console.log("Bon Vente Avant:", this.bonVenteDto);
 
     try {
+      console.log("Update:",isUpdate);
       const result = await firstValueFrom(
-        this.selectedSerie
+        isUpdate
           ? this.bonVenteService.updateBonVente(this.bonVenteDto, this.selectedSerie)
           : this.bonVenteService.createBonVente(this.bonVenteDto)
       );
 
       this.bonVenteDto = result ?? ({} as BonAchatVenteDto);
-      this.selectedSerie = this.bonVenteDto.serie ?? "";
-      this.selectedDate = result.datBon
-        ? new Date(result.datBon).toISOString().split('T')[0]
+      this.selectedSerie = result?.serie ?? "";
+      this.selectedDate = result?.datBon
+        ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
+          .toISOString()
+          .split('T')[0]
         : new Date().toISOString().split('T')[0];
-      this.username=result.nomUser ?? "";
-
-      const message = this.selectedSerie
+      this.username = result?.nomUser ?? "";
+console.log("Date bon:",result.datBon);
+      const message = isUpdate
         ? "BonVente mis à jour avec succès"
         : "BonVente créé avec succès";
 
       this.notificationService.success(message, "Succès");
-      await this.getTierSolde(result.idTier ?? -1);
-      this.selectedSerie=result.serie ?? "";
-      console.log("Bon Vente Après:",result);
-  await this.getBonVente();
+
+      if (result?.idTier) {
+        await this.getTierSolde(result.idTier);
+      }
+
+      console.log("Bon Vente Après:", result);
+
+      // Recharger les séries si c'était une création
+        await this.getAllBonVSeris();
+
+
       await this.saveAllDataToDb();
+
     } catch (err: any) {
       console.error('Erreur create/update BonVente (frontend):', err);
-      this.notificationService.error(err?.error?.message, 'Erreur');
+      this.notificationService.error(err?.error?.message || 'Erreur lors de la sauvegarde', 'Erreur');
     }
   }
 
@@ -416,19 +535,22 @@ export class BonVenteComponent implements OnInit {
       try {
         await firstValueFrom(this.bonVenteService.annuler(serie));
         this.notificationService.success("Bon N° " + serie + " est supprimé", 'Succès');
+
+        // Recharger les séries
+        await this.getAllBonVSeris();
         await this.resetValues();
+
       } catch (err: any) {
-        this.notificationService.error(err?.error?.message ?? 'Erreur');
+        console.error('Erreur suppression:', err);
+        this.notificationService.error(err?.error?.message ?? 'Erreur lors de la suppression', 'Erreur');
       }
     }
   }
 
-  // NOUVELLES MÉTHODES POUR GÉRER TOUTES LES DONNÉES EN LOCALSTORAGE
-
   /**
-   * Sauvegarde toutes les données importantes du composant en localStorage
+   * Sauvegarde toutes les données importantes du composant en IndexedDB
    */
-  private async saveAllDataToDb(): Promise<void> {
+   async saveAllDataToDb(): Promise<void> {
     try {
       const dataToSave: BonAchatVenteDto = {
         serie: this.selectedSerie,
@@ -442,7 +564,9 @@ export class BonVenteComponent implements OnInit {
         detCheque: this.detailsCheque,
         montant: this.totalVenteAvecRemise,
         montantSansRemise: this.totalVenteBrute,
-        remis: this.remiseGlobale
+        remis: this.remiseGlobale,
+        // Ajouter des données supplémentaires
+        idUser: this.userId
       };
 
       await this.indexedDbService.saveBon(dataToSave);
@@ -451,22 +575,26 @@ export class BonVenteComponent implements OnInit {
       console.error('Erreur sauvegarde IndexedDB', error);
     }
   }
-  async vider(){
+
+  async vider() {
     await this.resetValues();
     await this.clearDbData();
   }
+
   /**
-   * Charge toutes les données sauvegardées depuis localStorage
+   * Charge toutes les données sauvegardées depuis IndexedDB
    */
   private async loadAllDataFromDb(): Promise<void> {
     try {
       const data = await this.indexedDbService.loadBon();
       if (data) {
+        console.log('Données chargées depuis IndexedDB', data);
+
         this.selectedSerie = data.serie || "";
         this.selectedClientId = data.idTier || -1;
         this.articlesAddToBon = data.articles || [];
         this.selectedDate = data.datBon || '';
-        this.username=data.nomUser|| '';
+        this.username = data.nomUser || '';
         this.espece = data.espece || 0;
         this.cheque = data.cheque || 0;
         this.credit = data.credit || 0;
@@ -474,11 +602,27 @@ export class BonVenteComponent implements OnInit {
         this.totalVenteAvecRemise = data.montant || 0;
         this.totalVenteBrute = data.montantSansRemise || 0;
         this.remiseGlobale = this.toNumber(data.remis);
-        console.log('Données chargées depuis IndexedDB', data);
+        this.remiseTotal = this.toNumber(data.remis); // Sync
 
-        if (this.articlesAddToBon.length > 0) await this.recalculateTotal();
-        if (this.selectedClientId && this.selectedClientId !== -1) await this.getTierSolde(this.selectedClientId);
-        if (this.selectedDesignation) await this.getChoixByDesignation(this.selectedDesignation);
+        // CORRECTION: Gérer l'état du champ série
+        if (this.selectedSerie) {
+          this.isSerieDisabled = false; // Activer si une série est sauvegardée
+        }
+
+        // Recalculer si nécessaire
+        if (this.articlesAddToBon.length > 0) {
+          await this.recalculateTotal();
+        }
+
+        // Charger le solde client si nécessaire
+        if (this.selectedClientId && this.selectedClientId !== -1) {
+          await this.getTierSolde(this.selectedClientId);
+        }
+
+        // Charger les choix si une désignation est sélectionnée
+        if (this.selectedDesignation) {
+          await this.getChoixByDesignation(this.selectedDesignation);
+        }
       }
     } catch (error) {
       console.error('Erreur chargement IndexedDB', error);
@@ -486,7 +630,7 @@ export class BonVenteComponent implements OnInit {
   }
 
   /**
-   * Efface toutes les données sauvegardées en localStorage
+   * Efface toutes les données sauvegardées en IndexedDB
    */
   public async clearDbData(): Promise<void> {
     try {
@@ -497,37 +641,28 @@ export class BonVenteComponent implements OnInit {
     }
   }
 
-  /**
-   * Méthode pour restaurer les données depuis une sauvegarde (peut être appelée depuis le template)
-   */
-
   private toNumber(v: any): number {
     if (v === null || v === undefined || v === '') return 0;
     const n = Number(v);
     return isNaN(n) ? 0 : n;
   }
+
   protected async onRemiseTotalChange(value: any): Promise<void> {
-    this.remiseTotal = this.toNumber(value); // conversion obligatoire
+    this.remiseTotal = this.toNumber(value);
     await this.recalculateTotal();
   }
 
-
-
- protected downloadBonVentePdf() {
-
-    if(!this.selectedSerie || this.selectedSerie.trim()==""){
-      this.notificationService.error("Sélectionner une série",'Erreur');
+  protected downloadBonVentePdf() {
+    if (!this.userId || this.selectedSerie.trim() == "") {
+      this.notificationService.error("Sélectionner une série", 'Erreur');
       return;
     }
 
     this.bonVenteService
-      .downloadBonVente(
-        this.selectedUser.cod ?? -1,
-        this.selectedSerie
-      )
+      .downloadBonVente(this.selectedSerie)
       .subscribe({
         next: (pdf: Blob) => {
-          const fileName = `Bon_Vente_${this.selectedSerie}.pdf`; // nom voulu
+          const fileName = `Bon_Vente_${this.selectedSerie}.pdf`;
           const fileURL = URL.createObjectURL(pdf);
           const a = document.createElement('a');
           a.href = fileURL;
@@ -538,10 +673,73 @@ export class BonVenteComponent implements OnInit {
           URL.revokeObjectURL(fileURL);
         },
         error: (err) => {
-          console.log(err);
-          this.notificationService.error(err.error.message, 'Erreur');
+          console.error('Erreur téléchargement PDF:', err);
+          this.notificationService.error(err.error || 'Erreur lors du téléchargement', 'Erreur');
         },
       });
   }
 
+  /**
+   * TrackBy function pour optimiser ngFor
+   */
+  trackByArticleCode(index: number, article: ArticleAddBonDto): any {
+    return article.cod ? article.cod : index;
+  }
+
+  /**
+   * Méthode utilitaire pour valider le bon avant sauvegarde
+   */
+  private validateBon(): boolean {
+    if (this.selectedClientId === -1) {
+      this.notificationService.error("Veuillez sélectionner un client", "Erreur");
+      return false;
+    }
+
+    if (this.articlesAddToBon.length === 0) {
+      this.notificationService.error("Veuillez ajouter au moins un article", "Erreur");
+      return false;
+    }
+
+    if (!this.selectedDate) {
+      this.notificationService.error("Veuillez sélectionner une date", "Erreur");
+      return false;
+    }
+
+    // Vérifier les stocks
+    const invalidArticles = this.articlesAddToBon.filter(art =>
+      (art.quantite || 0) > (art.stock || 0)
+    );
+    const isUpdate = this.selectedSerie && this.selectedSerie.trim() !== "";
+
+    if (invalidArticles.length > 0 && !isUpdate) {
+      this.notificationService.error(
+        `Stock insuffisant pour: ${invalidArticles.map(a => a.designation).join(', ')}`,
+        "Erreur"
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Méthode pour réinitialiser la sélection d'article
+   */
+  private resetArticleSelection(): void {
+    this.articleAddBonDto = {};
+    this.selectedDesignation = '';
+    this.selectedChoix = '';
+    this.choix = [];
+  }
+
+  /**
+   * Méthode pour calculer le total d'un article
+   */
+  calculateArticleTotal(article: ArticleAddBonDto): number {
+    const prix = Number(article.prix || 0);
+    const quantite = Number(article.quantite || 1);
+    const remiseUni = Number(article.remisUni || 0);
+
+    return this.round2((prix - Math.min(remiseUni, prix)) * quantite);
+  }
 }

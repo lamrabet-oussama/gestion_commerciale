@@ -44,26 +44,8 @@ public class BonGeneratePdf {
     private String ice;
     private final MesInfoxService mesInfoxService;
 
-    @PostConstruct
     public void init() {
-//        MesInfoxDto dto = new MesInfoxDto(
-//                1,
-//                "Ma Société",
-//                "Commerce",
-//                "123 Rue Exemple",
-//                "Pied de page",
-//                "SER123",
-//                "logo.png",
-//                "codeF",
-//                "Banque Nom",
-//                "B123",
-//                "Activité B",
-//                "Adresse B",
-//                "logoB.png",
-//                "codeB",
-//                "Note 1",
-//                "Note 2"
-//        );
+//
         MesInfoxDto dto=this.mesInfoxService.findById(1);
         this.nomEntreprise = dto.getNomSociete();
         this.logo = dto.getBLogo();
@@ -226,11 +208,11 @@ public class BonGeneratePdf {
         PdfPCell companyCell = new PdfPCell();
         companyCell.setBorder(Rectangle.BOX);
         companyCell.setPadding(10);
-        Paragraph companyName = new Paragraph(nomEntreprise != null ? nomEntreprise : "Nom Entreprise", titleFont);
+        Paragraph companyName = new Paragraph(this.nomEntreprise != null ? this.nomEntreprise : "Nom Entreprise", titleFont);
         companyName.setAlignment(Element.ALIGN_CENTER);
         companyCell.addElement(companyName);
 
-        Paragraph companyDesc = new Paragraph(activite!=null ? activite :"Activité", normalFont);
+        Paragraph companyDesc = new Paragraph(this.activite!=null ? this.activite :"Activité", normalFont);
         companyDesc.setAlignment(Element.ALIGN_CENTER);
         companyCell.addElement(companyDesc);
 

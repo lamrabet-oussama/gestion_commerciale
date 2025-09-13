@@ -3,10 +3,14 @@ import {Menu} from "./menu";
 import {Router} from "@angular/router";
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { MesInfoxDto } from 'src/app/api-client';
+import {MesInfoxDto, UserDto} from 'src/app/api-client';
 import { AppState } from 'src/app/app.state';
 import { loadMesInfos } from 'src/store/mes-infos/mesInfos.actions';
 import { selectInfos } from 'src/store/mes-infos/mesInfos.selectors';
+import {CurrentUserState} from "../../../store/currentUser/currentUser.state";
+import {selectCurrentUserState} from "../../../store/currentUser/currentUser.selectors";
+import {LogoutService} from "../../services/logout/logout.service";
+import {faCaretRight} from "@fortawesome/free-solid-svg-icons";
 
 @Component({
   selector: 'app-menu',
@@ -14,10 +18,12 @@ import { selectInfos } from 'src/store/mes-infos/mesInfos.selectors';
   styleUrls: ['./menu.component.scss'],
 })
 export class MenuComponent implements OnInit{
+  currentUser$: Observable<CurrentUserState | null>;
+  user:UserDto|null=null;
   public menuProperties: Array<Menu> = [
     {
       id: '1',
-      title: 'Tableau de bord',
+      title: 'Qui sommes-nous ?',
       icon: 'fa-solid fa-boxes-stacked',
       url: '/',
     },
@@ -81,21 +87,64 @@ export class MenuComponent implements OnInit{
       icon: '',
       url: '/situation-tier',
     },
+    {
+      id: '12',
+      title: 'Ajouter Utilisateur',
+      icon: '',
+      url: '/inscrire',
+    },
+    {
+      id: '13',
+      title: 'Modifier Utilisateur',
+      icon: '',
+      url: '/update-user',
+    },
   ];
+  filteredMenuProperties: Menu[] = [];
+
   mesInfos$: Observable<MesInfoxDto | null>;
 
   hover = false;
+   adminOnlyUrls = ['/inscrire', '/page-caisse-jour', '/profile-entreprise','/update-user'];
 
+    faLogout=faCaretRight;
   ngOnInit(): void {
     this.store.dispatch(loadMesInfos());
-  }
-  menuOpen:boolean=false;
-  constructor(private router: Router,private store: Store<AppState>) {
+
+    this.currentUser$.subscribe(userState => {
+      if (userState?.currentUser) {
+         this.user = userState.currentUser;
+        const isUserActive = this.user.etat === true;
+        const isAdmin = this.user.role === 'ADMIN';
+
+        this.filteredMenuProperties = this.menuProperties.filter(menu => {
+          // Si utilisateur inactif, cacher tout sauf dashboard
+          if (!isUserActive && menu.url !== '/') return false;
+
+          // Pages réservées aux admins
+          if (this.adminOnlyUrls.includes(menu.url) && !isAdmin) return false;
+
+          return true;
+        });
+      } else {
+        // Aucun utilisateur connecté
+        this.filteredMenuProperties = [];
+      }
+    });
+  }  menuOpen:boolean=false;
+  constructor(private router: Router,private store: Store<AppState>,private logoutSrv:LogoutService) {
     this.mesInfos$ = this.store.select(selectInfos);
+    this.currentUser$ = this.store.select(selectCurrentUserState);
+
 
   }
   navigate(route: string) {
     this.router.navigate([route]);
+
+
+  }
+  logout(){
+    this.logoutSrv.logout();
   }
   toggleMenu() {
     const layoutMenu = document.getElementById('layout-menu');
@@ -113,4 +162,6 @@ export class MenuComponent implements OnInit{
       layoutMenu.classList.remove('open');
     }
   }
+
+
 }

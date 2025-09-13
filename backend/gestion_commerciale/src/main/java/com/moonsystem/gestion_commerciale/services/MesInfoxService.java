@@ -10,6 +10,5 @@ public interface MesInfoxService {
 
     MesInfoxDto findById(int id);
 
-    MesInfoxDto findFirst();
 
 }

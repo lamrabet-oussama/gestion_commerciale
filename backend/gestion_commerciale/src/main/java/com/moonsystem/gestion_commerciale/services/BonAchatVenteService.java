@@ -10,7 +10,7 @@ import java.util.List;
 public interface BonAchatVenteService {
 
     BonAchatVenteDto createBon(BonAchatVenteDto dto, MvtType mvt);
-    ResponseEntity<byte[]> downloadBon(Integer userCod,String serie,String mvt);
+    ResponseEntity<byte[]> downloadBon(String serie,String mvt);
      void annulerBon(String serie);
     BonAchatVenteDto getBonAchat(Integer userId,String serie);
     BonAchatVenteDto getBonVente(Integer userId,String serie);

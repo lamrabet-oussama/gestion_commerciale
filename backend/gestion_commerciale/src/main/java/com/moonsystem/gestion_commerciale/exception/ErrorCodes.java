@@ -1,7 +1,9 @@
 package com.moonsystem.gestion_commerciale.exception;
 
 public enum ErrorCodes {
-
+    USER_DISABLED(4000),
+    INVALID_TOKEN(40000),
+    USER_ALREADY_EXISTS(4000),
     ARTICLE_NOT_FOUND(1000),
     ARTICLE_NOT_VALID(1001),
     ARTICLE_ALREADY_IN_USE(1002),

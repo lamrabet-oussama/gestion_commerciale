@@ -213,22 +213,16 @@ export class BonsAchatVenteService extends BaseService {
     /**
      * Télécharger un bon d\&#39;achat en PDF
      * Retourne le fichier PDF du bon d\&#39;achat correspondant à la série donnée.
-     * @param userCod Code utilisateur (optionnel)
      * @param serie Série du bon à télécharger
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public downloadBonAchat(userCod: number, serie?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any>;
-    public downloadBonAchat(userCod: number, serie?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpResponse<any>>;
-    public downloadBonAchat(userCod: number, serie?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpEvent<any>>;
-    public downloadBonAchat(userCod: number, serie?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any> {
-        if (userCod === null || userCod === undefined) {
-            throw new Error('Required parameter userCod was null or undefined when calling downloadBonAchat.');
-        }
+    public downloadBonAchat(serie?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any>;
+    public downloadBonAchat(serie?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpResponse<any>>;
+    public downloadBonAchat(serie?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpEvent<any>>;
+    public downloadBonAchat(serie?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any> {
 
         let localVarQueryParameters = new HttpParams({encoder: this.encoder});
-        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
-          <any>userCod, 'userCod');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>serie, 'serie');
 
@@ -273,22 +267,16 @@ export class BonsAchatVenteService extends BaseService {
     /**
      * Télécharger un bon de vente en PDF
      * Retourne le fichier PDF du bon de vente correspondant à la série donnée.
-     * @param userCod Code utilisateur (optionnel)
      * @param serie Série du bon à télécharger
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public downloadBonVente(userCod: number, serie?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any>;
-    public downloadBonVente(userCod: number, serie?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpResponse<any>>;
-    public downloadBonVente(userCod: number, serie?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpEvent<any>>;
-    public downloadBonVente(userCod: number, serie?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any> {
-        if (userCod === null || userCod === undefined) {
-            throw new Error('Required parameter userCod was null or undefined when calling downloadBonVente.');
-        }
+    public downloadBonVente(serie?: string, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any>;
+    public downloadBonVente(serie?: string, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpResponse<any>>;
+    public downloadBonVente(serie?: string, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<HttpEvent<any>>;
+    public downloadBonVente(serie?: string, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/pdf', context?: HttpContext}): Observable<any> {
 
         let localVarQueryParameters = new HttpParams({encoder: this.encoder});
-        localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
-          <any>userCod, 'userCod');
         localVarQueryParameters = this.addToHttpParams(localVarQueryParameters,
           <any>serie, 'serie');
 

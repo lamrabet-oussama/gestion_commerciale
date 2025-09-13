@@ -19,6 +19,7 @@ export interface BonAchatVenteDto {
     cheque?: number;
     credit?: number;
     remis?: number;
+    remisSurBon?: number;
     detCheque?: string;
     datBon?: string;
     idTier?: number;

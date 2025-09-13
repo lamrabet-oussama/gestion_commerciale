@@ -13,5 +13,7 @@ export interface UserDto {
     cod?: number;
     username?: string;
     role?: string;
+    gsm?: string;
+    etat?: boolean;
 }
 

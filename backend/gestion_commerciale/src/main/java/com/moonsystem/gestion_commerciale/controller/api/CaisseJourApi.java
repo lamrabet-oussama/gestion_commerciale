@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -20,6 +21,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 public interface CaisseJourApi {
 
+
+
     @Operation(
             summary = "Récupérer les données de caisse pour une journée",
             description = "Retourne les détails de la caisse pour un utilisateur donné et une période donnée."
@@ -29,6 +32,8 @@ public interface CaisseJourApi {
         @ApiResponse(responseCode = "400", description = "Requête invalide"),
         @ApiResponse(responseCode = "500", description = "Erreur interne du serveur")
     })
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/caisse-jour", produces = MediaType.APPLICATION_JSON_VALUE)
      CaisseJourDto getCaisseJour(
             @Parameter(description = "Code utilisateur (optionnel)") @RequestParam(required = false) Integer userCod,
@@ -49,6 +54,8 @@ public interface CaisseJourApi {
         @ApiResponse(responseCode = "400", description = "Requête invalide"),
         @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
     })
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/caisse-jour/download", produces = "application/pdf")
      ResponseEntity<byte[]> downloadCaisseJourPdf(
             @Parameter(description = "Code utilisateur (optionnel)")

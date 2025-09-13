@@ -17,38 +17,8 @@ import java.util.Optional;
 
 public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
 
-    @Query("""
-    SELECT r FROM Reglement r
-    WHERE (:user IS NULL OR r.user.cod = :iduser)
-      AND (:startDate IS NULL OR r.datRegl >= :startDate)
-      AND (:endDate IS NULL OR r.datRegl <= :endDate)
-      
-    ORDER BY r.datRegl DESC
-    
-""")
-
-    List<Reglement> findByDateAndUser(
-            @Param("iduser") Integer idUser,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
-    );
-
-    @Query("""
-    SELECT r FROM Reglement r
-    WHERE (:tier IS NULL OR r.tier.id = :idtier)
-      AND (:startDate IS NULL OR r.datRegl >= :startDate)
-      AND (:endDate IS NULL OR r.datRegl <= :endDate)
-      
-    ORDER BY r.datRegl DESC
-    
-""")
 
 
-    List<Reglement> findByDateAndTier(
-            @Param("idtier") Integer idTier,
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
-    );
 
     @Query("""
     SELECT r FROM Reglement r
@@ -76,29 +46,27 @@ public interface ReglementRepository extends JpaRepository<Reglement, Integer> {
             @Param("year") Integer year
     );
 
-    @Query("SELECT COALESCE(SUM(r.espece+ r.cheque), 0) FROM Reglement r WHERE r.tier.id =:tierId AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)")
-    BigDecimal getTotalEspeceChequeByTierAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
+    @Query("SELECT COALESCE(SUM(r.espece + r.cheque), 0) FROM Reglement r WHERE r.tier.id = :tierId AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)")
+    BigDecimal getTotalEspeceChequeByTierAndYear(@Param("tierId") Integer tierId, @Param("year") Integer year);
 
-    @Query("""
-    SELECT r FROM Reglement r WHERE r.tier.id = :tierId
-""")
-    List<Reglement> findReglementByTierId(@Param("tierId") Integer tierId);
+
 
     @Query("""
     SELECT r FROM Reglement r WHERE r.tier.id = :tierId AND (:year IS NULL OR EXTRACT(YEAR FROM r.datRegl) = :year)
 """)
-    List<Reglement> findReglementByTierIdAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
+    List<Reglement> findReglementByTierIdAndYear(@Param("tierId") Integer tierId, @Param("year") Integer year);
 
     Optional<Reglement> findReglementByIdRegl(Integer id);
 
     @Query("""
     SELECT r FROM Reglement r
-    WHERE (:user IS NULL OR r.user = :user)
-      AND (:dateDebut IS NULL OR r.datRegl >= :dateDebut)
-      AND (:dateFin IS NULL OR r.datRegl <= :dateFin)
+    WHERE   r.datRegl >= :dateDebut
+      AND r.datRegl <= :dateFin
       
     ORDER BY r.datRegl DESC
     
 """)
-    List<Reglement> findByDate(LocalDateTime dateDebut, LocalDateTime dateFin,User user);
+    List<Reglement> findByDate(
+            @Param("dateDebut") LocalDateTime dateDebut,
+            @Param("dateFin") LocalDateTime dateFin);
 }

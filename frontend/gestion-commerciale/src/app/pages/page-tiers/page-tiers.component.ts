@@ -86,6 +86,7 @@ errorMsgValidation: string[] = [];
         this.handleSuccess('Tier créé avec succès');
         this.listerTiers();
         this.cancel();
+        this.getNumber();
       },
       error: (err) =>{
         this.notification.error(err?.error?.message,'Erreur')

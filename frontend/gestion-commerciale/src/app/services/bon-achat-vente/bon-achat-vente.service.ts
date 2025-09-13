@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import {BonsAchatVenteService, BonAchatVenteDto} from "../../api-client";
+import {Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class BonAchatVenteService {
     return this.bonAchatVenteService.createBonVente( bonVente);
   }
   updateBonVente(bonVente:BonAchatVenteDto, serie:string){
+    console.log("Update bonVente");
     return this.bonAchatVenteService.updateBonVente(serie,bonVente);
   }
 
@@ -20,11 +22,11 @@ export class BonAchatVenteService {
      return this.bonAchatVenteService.deleteBon(serie);
   }
 
-  getBonVente(userId:number|undefined, serie:string){
+  getBonVente(serie:string,userId?:number){
     return this.bonAchatVenteService.getBonVente(serie,userId);
   }
-  downloadBonVente(userCode:number,serie:string){
-    return this.bonAchatVenteService.downloadBonVente(1,serie);
+  downloadBonVente(serie:string):Observable<Blob>{
+    return this.bonAchatVenteService.downloadBonVente(serie);
   }
 
   createBonAchat(bonAchat:BonAchatVenteDto){
@@ -37,14 +39,14 @@ export class BonAchatVenteService {
   getBonAchat(userId:number|undefined, serie:string|undefined){
     return this.bonAchatVenteService.getBonAchat(userId,serie);
   }
-  downloadBonAchat(userCode:number,serie:string){
-    return this.bonAchatVenteService.downloadBonAchat(userCode,serie);
+  downloadBonAchat(serie:string):Observable<Blob>{
+    return this.bonAchatVenteService.downloadBonAchat(serie);
 }
-getAllBonsAchatSeris(userCod:number){
+getAllBonsAchatSeris(userCod?:number){
     return this.bonAchatVenteService.getAllBonsAchat(userCod);
 }
 
-  getAllBonsVenteSeris(userCod:number|undefined){
+  getAllBonsVenteSeris(userCod?:number){
     return this.bonAchatVenteService.getAllBonsVente(userCod);
   }
 }

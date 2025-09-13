@@ -16,7 +16,8 @@ public class UserDto {
     private Integer cod;
     private String username;
     private String role;
-
+    private String gsm;
+    private boolean etat=true;
     // Additional fields can be added as needed
     public static UserDto fromEntity(User user) {
         if (user == null) {
@@ -24,19 +25,12 @@ public class UserDto {
         }
         return UserDto.builder()
                 .cod(user.getCod())
+                .role(user.getRole().name())
                 .username(user.getLogin())
-                .role(user.getRole())
+                .etat(user.isEnabled())
+                .gsm(user.getGsm())
                 .build();
     }
 
-    public static User toEntity(UserDto dto) {
-        if (dto == null) {
-            return null;
-        }
-        User user = new User();
-        user.setCod(dto.getCod());
-        user.setLogin(dto.getUsername());
-        user.setRole(dto.getRole());
-        return user;
-    }
+
 }

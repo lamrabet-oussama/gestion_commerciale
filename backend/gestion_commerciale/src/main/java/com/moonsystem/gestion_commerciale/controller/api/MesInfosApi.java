@@ -1,6 +1,7 @@
 package com.moonsystem.gestion_commerciale.controller.api;
 
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 public interface MesInfosApi {
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(
             value = APP_ROOT + "/mes-infos/update",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
@@ -47,10 +49,12 @@ public interface MesInfosApi {
         )
     })
 
-    public MesInfoxDto update(
+     MesInfoxDto update(
             @RequestPart("mesInfos") MesInfoxDto mesInfos,
-            MultipartFile file);
+            @RequestPart(value = "file", required = false) MultipartFile file);
 
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/mes-infos/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Récupérer les informations de l'entreprise",
@@ -76,5 +80,5 @@ public interface MesInfosApi {
                 content = @Content
         )
     })
-    public MesInfoxDto findById(@PathVariable("id") Integer id);
+     MesInfoxDto findById(@PathVariable("id") Integer id);
 }

@@ -14,7 +14,7 @@ import java.util.List;
 @Table(name = "Taches")
 public class Tache {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "Num")
     private Integer num;
 

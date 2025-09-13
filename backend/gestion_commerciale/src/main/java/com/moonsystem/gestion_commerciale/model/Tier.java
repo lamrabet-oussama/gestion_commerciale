@@ -26,7 +26,7 @@ indexes = {
 public class Tier {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id_tier")
     private Integer id;
 

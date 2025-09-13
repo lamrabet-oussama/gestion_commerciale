@@ -21,15 +21,10 @@ import com.moonsystem.gestion_commerciale.model.User;
 
 public interface BonsortiRepository extends JpaRepository<Bonsorti, Integer> {
 
-    Optional<Bonsorti> findByIdBon(Integer idBon);
-
-
+    List<Bonsorti> findByUserAndDatBonBetween(User user, LocalDateTime startDate, LocalDateTime endDate);
     List<Bonsorti> findByDatBonBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<Bonsorti> findByUser(User user);
 
-    @Query("SELECT b FROM Bonsorti b WHERE b.montant > :amount")
-    List<Bonsorti> findByMontantGreaterThan(@Param("amount") BigDecimal amount);
 
     @Query("""
     SELECT b FROM Bonsorti b
@@ -47,9 +42,9 @@ public interface BonsortiRepository extends JpaRepository<Bonsorti, Integer> {
     );
 
     @Query("SELECT new com.moonsystem.gestion_commerciale.dto.SommeTotauxDto("
-            + "SUM(b.montant), SUM(b.espece), SUM(b.cheque),SUM(b.credit)) "
+            + "CAST(SUM(b.montant) AS bigdecimal ) , CAST(SUM(b.espece) AS bigdecimal ), CAST(SUM(b.cheque) AS bigdecimal ),CAST(SUM(b.credit) AS bigdecimal )) "
             + "FROM Bonsorti b "
-            + "WHERE CAST(b.datBon AS date) = :date AND (:user IS NULL OR b.user =:user )")
+            + "WHERE DATE(b.datBon) = :date AND (:user IS NULL OR b.user =:user )")
     SommeTotauxDto sumTotauxByDate(@Param("date") LocalDate date,@Param("user") User user);
 
     // Pour les créances (CLIENT)
@@ -57,8 +52,8 @@ public interface BonsortiRepository extends JpaRepository<Bonsorti, Integer> {
 SELECT new com.moonsystem.gestion_commerciale.dto.DettesDto(
     t.id,
     t.nom,
-    COALESCE(SUM(b.espece), CAST(0 AS java.math.BigDecimal)) + COALESCE(SUM(b.cheque), CAST(0 AS java.math.BigDecimal)),
-    COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)),
+    COALESCE(SUM(b.espece), 0.0) + COALESCE(SUM(b.cheque), 0.0),
+    COALESCE(t.solde, 0.0),
     t.qualite,
     (SELECT MAX(r.datRegl) FROM Reglement r WHERE r.tier = t)
 )
@@ -67,12 +62,12 @@ JOIN b.tier t
 WHERE b.datBon BETWEEN :startOfYear AND :endOfYear
     AND (t.qualite = 'CLIENT' OR t.qualite = 'MIXTE')
 GROUP BY t.id, t.nom, t.qualite, t.solde
-HAVING COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)) > 0
+HAVING COALESCE(t.solde, 0.0) > 0
 ORDER BY t.solde DESC
 """)
     List<DettesDto> findCreancesByYear(@Param("startOfYear") LocalDateTime startOfYear,@Param("endOfYear") LocalDateTime endOfYear);
 
-    @Query("SELECT COALESCE(SUM(b.credit), 0) FROM Bonsorti b JOIN b.tier t  WHERE t.id =:tierId AND (:year IS NULL OR EXTRACT(YEAR FROM b.datBon) = :year) ")
+    @Query("SELECT COALESCE(SUM(b.credit), 0) FROM Bonsorti b JOIN b.tier t  WHERE t.id = :tierId AND (:year IS NULL OR EXTRACT(YEAR FROM b.datBon) = :year) ")
     BigDecimal findTotalCreditByTierIdAndYear(@Param("tierId") Integer tierId,@Param("year") Integer year);
 
     // Pour les dettes (FOURNISSEUR)
@@ -80,8 +75,8 @@ ORDER BY t.solde DESC
 SELECT new com.moonsystem.gestion_commerciale.dto.DettesDto(
     t.id,
     t.nom,
-    COALESCE(SUM(b.espece), CAST(0 AS java.math.BigDecimal)) + COALESCE(SUM(b.cheque), CAST(0 AS java.math.BigDecimal)),
-    COALESCE(t.solde, CAST(0 AS java.math.BigDecimal)),
+    COALESCE(SUM(b.espece), 0.0) + COALESCE(SUM(b.cheque), 0.0),
+    COALESCE(t.solde, 0.0),
     t.qualite,
     (SELECT MAX(r.datRegl) FROM Reglement r WHERE r.tier = t)
 )
@@ -98,10 +93,6 @@ ORDER BY t.solde DESC
 
 
 
-    @Query("SELECT COUNT(b) FROM Bonsorti b WHERE  b.datBon BETWEEN :startDate AND :endDate AND b.mvt= :mvt")
-    Long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
-                                    @Param("endDate") LocalDateTime endDate,String mvt);
-
 
     @Query(
             """
@@ -116,10 +107,7 @@ ORDER BY t.solde DESC
                               @Param("end") LocalDateTime end
                             );
 
-    @Query("""
-SELECT b FROM Bonsorti b WHERE b.tier.id= :tierId
-""")
-    List<Bonsorti> findByTierId(@Param("tierId") Integer tierId);
+
 
     @Query("""
 SELECT b FROM Bonsorti b WHERE b.tier.id= :tierId  AND (:year IS NULL OR EXTRACT(YEAR FROM b.datBon) = :year)

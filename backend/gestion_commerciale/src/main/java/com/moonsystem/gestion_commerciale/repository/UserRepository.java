@@ -13,7 +13,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByCod(Integer id);
 
-    Optional<User> findByLogin(String username);
+    Optional<User> findByLogin(String login);
+    boolean existsByLogin(String login);
 
     List<User> findAll();
     // @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))")

@@ -85,7 +85,12 @@ public class CaisseJourServiceImpl implements CaisseJourService {
         SommeTotauxDto totaux = bonsortiRepository.sumTotauxByDate(jour,user);
 
 
-        List<Bonsorti> bons = bonsortiRepository.findByFilters(user, debutJour, finJour);
+        List<Bonsorti> bons;
+        if(user != null) {
+             bons=bonsortiRepository.findByUserAndDatBonBetween(user, debutJour, finJour);
+        } else {
+             bons=bonsortiRepository.findByDatBonBetween(debutJour, finJour);
+        }
         List<BonSortieDto> bonsDtos = bons.stream()
                 .map(BonSortieDto::of)
                 .toList();
@@ -95,7 +100,7 @@ public class CaisseJourServiceImpl implements CaisseJourService {
         List<BonSortieDto> bonsAchat = bonsGroupes.getOrDefault("ACHAT", Collections.emptyList());
         List<BonSortieDto> bonsVentes = bonsGroupes.getOrDefault("VENTE", Collections.emptyList());
 
-        List<ReglementDto> reglements=reglementRepository.findByDate(debutJour,finJour,null).stream().map(reg->{
+        List<ReglementDto> reglements=reglementRepository.findByDate(debutJour,finJour).stream().map(reg->{
                     ReglementDto dto=ReglementDto.toDto(reg);
             totaux.setTotalEspece(totaux.getTotalEspece().add(reg.getEspece()));
             totaux.setTotalCheque(totaux.getTotalCheque().add(reg.getCheque()));

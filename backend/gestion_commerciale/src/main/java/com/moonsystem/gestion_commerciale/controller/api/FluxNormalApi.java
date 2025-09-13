@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +19,8 @@ import java.util.List;
 import static com.moonsystem.gestion_commerciale.utils.Constants.APP_ROOT;
 
 public interface FluxNormalApi {
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     @GetMapping(value = APP_ROOT + "/flux/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
             summary = "Récupérer le flux d'un article",
