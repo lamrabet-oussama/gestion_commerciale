@@ -40,6 +40,7 @@ export class BonVenteComponent implements OnInit {
   totalVenteAvecRemise: number = 0;
   totalVenteBrute: number = 0;
   remiseTotal: number = 0;
+  remisSurBon: number = 0;
   detailsCheque: string = "";
   isSerieDisabled: boolean = true;
   faX = faTimes;
@@ -288,7 +289,6 @@ export class BonVenteComponent implements OnInit {
 
     if (!this.userId) {
       console.log('userId non défini, attente...');
-      // On peut essayer d'attendre un peu que userId soit défini
       setTimeout(() => {
         if (this.userId) {
           this.getBonVente();
@@ -300,24 +300,27 @@ export class BonVenteComponent implements OnInit {
     try {
       console.log('Appel du service getBonVente avec userId:', this.userId, 'serie:', this.selectedSerie);
 
-      // CORRECTION: Ajouter le paramètre userId manquant
-      const result = await firstValueFrom(this.bonVenteService.getBonVente( this.selectedSerie));
+      const result = await firstValueFrom(this.bonVenteService.getBonAchat(this.userId, this.selectedSerie));
       console.log("Bon Vente Result:", result);
 
+      // CORRECTION: bonVenteDto au lieu de bonAchatDto
       this.bonVenteDto = result || ({} as BonAchatVenteDto);
 
-      // CORRECTION: Éviter la duplication
       this.selectedClientId = result?.idTier ?? -1;
       this.espece = result?.espece ?? 0;
       this.cheque = result?.cheque ?? 0;
-      this.userId = result?.idUser ?? this.userId; // Garder la valeur actuelle si pas dans le résultat
+      this.userId = result?.idUser ?? this.userId;
       this.username = result?.nomUser ?? "";
       this.detailsCheque = result?.detCheque ?? "";
       this.articlesAddToBon = result?.articles ?? [];
       this.totalVenteBrute = result?.montantSansRemise ?? 0;
       this.totalVenteAvecRemise = result?.montant ?? 0;
-      this.remiseGlobale = result?.remis ?? 0;
-      this.remiseTotal = result?.remis ?? 0; // Sync avec remise globale
+
+      // CORRECTION: Bien récupérer les valeurs depuis l'API
+      this.remiseGlobale = this.toNumber(result?.remis ?? 0);
+      this.remisSurBon = this.toNumber(result?.remisSurBon ?? 0);
+      // Pour la compatibilité avec l'ancien système
+      this.remiseTotal = this.toNumber(result?.remis ?? 0);
 
       this.selectedDate = result?.datBon
         ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
@@ -325,15 +328,17 @@ export class BonVenteComponent implements OnInit {
           .split('T')[0]
         : new Date().toISOString().split('T')[0];
 
-
-      console.log("Bon Vente Récupéré:", this.bonVenteDto);
+      console.log("Valeurs récupérées - remiseGlobale:", this.remiseGlobale, "remisSurBon:", this.remisSurBon);
 
       // Charger le solde client si nécessaire
       if (this.selectedClientId !== -1) {
         await this.getTierSolde(this.selectedClientId);
       }
 
-      await this.recalculateTotal();
+      // CORRECTION: Ne pas recalculer les remises, juste calculer les remises unitaires et le crédit
+      this.calculateRemiseUnitairesTotal();
+      this.calculateCredit();
+
       await this.saveAllDataToDb();
 
     } catch (error: any) {
@@ -342,6 +347,229 @@ export class BonVenteComponent implements OnInit {
     }
   }
 
+  // CORRECTION 3: Ajouter les méthodes manquantes
+  private calculateRemiseUnitairesTotal(): void {
+    this.remiseUnitairesTotal = this.articlesAddToBon.reduce((sum, a) => {
+      const rUnit = Number(a.remisUni ?? 0);
+      const prix = Number(a.prix ?? 0);
+      const qte = Number(a.quantite ?? 0);
+      const rUnitCapped = Math.max(0, Math.min(rUnit, prix));
+      return sum + (rUnitCapped * qte);
+    }, 0);
+    this.remiseUnitairesTotal = this.round2(this.remiseUnitairesTotal);
+  }
+
+  private calculateCredit(): void {
+    this.credit = this.round2(
+      (this.toNumber(this.espece) + this.toNumber(this.cheque)) - this.totalVenteAvecRemise
+    );
+  }
+
+  // CORRECTION 4: Modifier recalculateTotal pour éviter d'écraser lors du chargement API
+  protected async recalculateTotal(skipRemiseCalculation: boolean = false): Promise<void> {
+    const totalBrutInitial = this.articlesAddToBon.reduce((sum, a) => {
+      const prix = Number(a.prix ?? 0);
+      const qte = Number(a.quantite ?? 0);
+      return sum + (prix * qte);
+    }, 0);
+
+    this.calculateRemiseUnitairesTotal();
+
+    // Si on doit ignorer le recalcul des remises (lors du chargement API)
+    if (skipRemiseCalculation) {
+      this.totalVenteBrute = this.round2(totalBrutInitial);
+      this.calculateCredit();
+      await this.saveAllDataToDb();
+      return;
+    }
+
+    // Logique normale pour les modifications manuelles
+    // SIMPLE : remiseGlobale = remiseTotal + remiseUnitairesTotal
+    this.remiseGlobale = this.round2(this.toNumber(this.remiseTotal) + this.remiseUnitairesTotal);
+    this.remisSurBon = this.remiseGlobale; // Pour compatibilité
+
+    this.totalVenteBrute = this.round2(totalBrutInitial);
+    this.totalVenteAvecRemise = this.round2(this.totalVenteBrute - this.remiseGlobale);
+
+    if (this.totalVenteAvecRemise < 0) this.totalVenteAvecRemise = 0;
+
+    this.calculateCredit();
+
+    console.log({
+      totalBrutInitial: this.totalVenteBrute,
+      remiseUnitaires: this.remiseUnitairesTotal,
+      remiseTotale: this.remiseTotal, // Saisie utilisateur
+      remiseGlobale: this.remiseGlobale, // Calculée
+      remisSurBon: this.remisSurBon,
+      totalVenteAvecRemise: this.totalVenteAvecRemise,
+      credit: this.credit,
+      skipRemiseCalculation: skipRemiseCalculation
+    });
+
+    await this.saveAllDataToDb();
+  }
+
+  // CORRECTION 5: Modifier loadAllDataFromDb pour éviter de recalculer lors du chargement
+  private async loadAllDataFromDb(): Promise<void> {
+    try {
+      const data = await this.indexedDbService.loadBon();
+      if (data) {
+        console.log('Données chargées depuis IndexedDB', data);
+
+        this.selectedSerie = data.serie || "";
+        this.selectedClientId = data.idTier || -1;
+        this.articlesAddToBon = data.articles || [];
+        this.selectedDate = data.datBon || '';
+        this.username = data.nomUser || '';
+        this.espece = data.espece || 0;
+        this.cheque = data.cheque || 0;
+        this.credit = data.credit || 0;
+        this.detailsCheque = data.detCheque || '';
+        this.totalVenteAvecRemise = data.montant || 0;
+        this.totalVenteBrute = data.montantSansRemise || 0;
+        this.remiseGlobale = this.toNumber(data.remis);
+        this.remiseTotal = this.toNumber(data.remis); // Sync
+        this.remisSurBon = this.toNumber(data.remisSurBon || data.remis); // Support des deux formats
+
+        // CORRECTION: Gérer l'état du champ série
+        if (this.selectedSerie) {
+          this.isSerieDisabled = false; // Activer si une série est sauvegardée
+        }
+
+        // CORRECTION: Ne pas recalculer si on a déjà des totaux chargés, juste calculer le crédit
+        if (this.articlesAddToBon.length > 0) {
+          if (this.totalVenteAvecRemise > 0) {
+            // Données déjà calculées, juste mettre à jour le crédit
+            this.calculateCredit();
+          } else {
+            // Pas de totaux sauvegardés, recalculer
+            await this.recalculateTotal();
+          }
+        }
+
+        // Charger le solde client si nécessaire
+        if (this.selectedClientId && this.selectedClientId !== -1) {
+          await this.getTierSolde(this.selectedClientId);
+        }
+
+        // Charger les choix si une désignation est sélectionnée
+        if (this.selectedDesignation) {
+          await this.getChoixByDesignation(this.selectedDesignation);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur chargement IndexedDB', error);
+    }
+  }
+
+  // CORRECTION 6: Mettre à jour saveAllDataToDb pour inclure remisSurBon
+  async saveAllDataToDb(): Promise<void> {
+    try {
+      const dataToSave: BonAchatVenteDto = {
+        serie: this.selectedSerie,
+        idTier: this.selectedClientId,
+        articles: this.articlesAddToBon,
+        datBon: this.selectedDate,
+        nomUser: this.username,
+        espece: this.espece,
+        cheque: this.cheque,
+        credit: this.credit,
+        detCheque: this.detailsCheque,
+        montant: this.totalVenteAvecRemise,
+        montantSansRemise: this.totalVenteBrute,
+        remis: this.remiseGlobale,
+        remisSurBon: this.remisSurBon, // Ajouter cette propriété
+        // Ajouter des données supplémentaires
+        idUser: this.userId
+      };
+
+      await this.indexedDbService.saveBon(dataToSave);
+      console.log('Données sauvegardées dans IndexedDB', dataToSave);
+    } catch (error) {
+      console.error('Erreur sauvegarde IndexedDB', error);
+    }
+  }
+
+  // CORRECTION 7: Mettre à jour createBonVente pour envoyer remisSurBon
+  protected async createBonVente() {
+    if (!this.validateBon()) {
+      return;
+    }
+
+    if (!this.bonVenteDto) {
+      this.bonVenteDto = {} as BonAchatVenteDto;
+    }
+
+    // Préparer le DTO
+    this.bonVenteDto.idTier = Number(this.selectedClientId);
+    this.bonVenteDto.idUser = Number(this.userId ?? -1);
+    this.bonVenteDto.espece = this.toNumber(this.espece);
+    this.bonVenteDto.cheque = this.toNumber(this.cheque);
+    this.bonVenteDto.detCheque = this.detailsCheque ?? '';
+    this.bonVenteDto.datBon = this.selectedDate ? `${this.selectedDate}T00:00:00` : undefined;
+    this.bonVenteDto.remis = this.toNumber(this.remiseTotal); // Remise saisie par l'utilisateur
+    this.bonVenteDto.remisSurBon = this.toNumber(this.remiseGlobale); // Remise totale calculée
+    this.bonVenteDto.articles = this.articlesAddToBon.map(a => ({
+      cod: a.cod,
+      ref: a.ref,
+      designation: a.designation,
+      choix: a.choix,
+      prix: Number(a.prix ?? 0),
+      prixAchat: Number(a.prixAchat ?? 0),
+      prixMin: Number(a.prixMin ?? 0),
+      quantite: Number(a.quantite ?? 0),
+      remisUni: a.remisUni == null ? undefined : Number(a.remisUni),
+      stock: Number(a.stock ?? 0)
+    }));
+
+    const isUpdate = this.selectedSerie && this.selectedSerie.trim() !== "";
+
+    console.log("Bon Vente Avant:", this.bonVenteDto);
+
+    try {
+      console.log("Update:", isUpdate);
+      const result = await firstValueFrom(
+        isUpdate
+          ? this.bonVenteService.updateBonVente(this.bonVenteDto, this.selectedSerie)
+          : this.bonVenteService.createBonVente(this.bonVenteDto)
+      );
+
+      this.bonVenteDto = result ?? ({} as BonAchatVenteDto);
+      this.selectedSerie = result?.serie ?? "";
+      this.selectedDate = result?.datBon
+        ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
+          .toISOString()
+          .split('T')[0]
+        : new Date().toISOString().split('T')[0];
+      this.username = result?.nomUser ?? "";
+
+      // Mettre à jour les remises depuis la réponse
+      this.remiseGlobale = this.toNumber(result?.remis ?? 0);
+      this.remisSurBon = this.toNumber(result?.remisSurBon ?? 0);
+      this.remiseTotal = this.toNumber(result?.remis ?? 0);
+
+      console.log("Date bon:", result.datBon);
+      const message = isUpdate
+        ? "BonVente mis à jour avec succès"
+        : "BonVente créé avec succès";
+
+      this.notificationService.success(message, "Succès");
+
+      if (result?.idTier) {
+        await this.getTierSolde(result.idTier);
+      }
+
+      console.log("Bon Vente Après:", result);
+
+      // Recharger les séries si c'était une création
+      await this.getAllBonVSeris();
+      await this.saveAllDataToDb();
+
+    } catch (err: any) {
+      console.error('Erreur create/update BonVente (frontend):', err);
+      this.notificationService.error(err?.error?.message || 'Erreur lors de la sauvegarde', 'Erreur');
+    }
+  }
   private formatDateForInput(date: Date): string {
     return date.toISOString().split('T')[0];
   }
@@ -352,47 +580,6 @@ export class BonVenteComponent implements OnInit {
     await this.saveAllDataToDb();
   }
 
-  protected async recalculateTotal(): Promise<void> {
-    const totalBrutInitial = this.articlesAddToBon.reduce((sum, a) => {
-      const prix = Number(a.prix ?? 0);
-      const qte = Number(a.quantite ?? 0);
-      return sum + (prix * qte);
-    }, 0);
-
-    const totalRemiseUnit = this.articlesAddToBon.reduce((sum, a) => {
-      const rUnit = Number(a.remisUni ?? 0);
-      const prix = Number(a.prix ?? 0);
-      const qte = Number(a.quantite ?? 0);
-      const rUnitCapped = Math.max(0, Math.min(rUnit, prix));
-      return sum + (rUnitCapped * qte);
-    }, 0);
-
-    // STOCKER la somme des remises unitaires
-    this.remiseUnitairesTotal = this.round2(totalRemiseUnit);
-
-    // SIMPLE : remiseGlobale = remiseTotal + remiseUnitairesTotal
-    this.remiseGlobale = this.round2(this.toNumber(this.remiseTotal) + this.remiseUnitairesTotal);
-
-    this.totalVenteBrute = this.round2(totalBrutInitial);
-    this.totalVenteAvecRemise = this.round2(this.totalVenteBrute - this.remiseGlobale);
-
-    if (this.totalVenteAvecRemise < 0) this.totalVenteAvecRemise = 0;
-
-    this.credit = this.round2(
-      (this.toNumber(this.espece) + this.toNumber(this.cheque)) - this.totalVenteAvecRemise
-    );
-
-    console.log({
-      totalBrutInitial: this.totalVenteBrute,
-      remiseUnitaires: this.remiseUnitairesTotal,
-      remiseTotale: this.remiseTotal, // Saisie utilisateur
-      remiseGlobale: this.remiseGlobale, // Calculée
-      totalVenteAvecRemise: this.totalVenteAvecRemise,
-      credit: this.credit,
-    });
-
-    await this.saveAllDataToDb();
-  }
 
   private round2(n: number): number {
     return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -449,80 +636,6 @@ export class BonVenteComponent implements OnInit {
     console.log("Articles après suppression:", this.articlesAddToBon);
   }
 
-  protected async createBonVente() {
-    if (!this.validateBon()) {
-      return;
-    }
-
-    if (!this.bonVenteDto) {
-      this.bonVenteDto = {} as BonAchatVenteDto;
-    }
-
-    // Préparer le DTO
-    this.bonVenteDto.idTier = Number(this.selectedClientId);
-    this.bonVenteDto.idUser = Number(this.userId ?? -1);
-    this.bonVenteDto.espece = this.toNumber(this.espece);
-    this.bonVenteDto.cheque = this.toNumber(this.cheque);
-    this.bonVenteDto.detCheque = this.detailsCheque ?? '';
-    this.bonVenteDto.datBon = this.selectedDate ? `${this.selectedDate}T00:00:00` : undefined;
-    this.bonVenteDto.remis = this.toNumber(this.remiseTotal);
-    this.bonVenteDto.articles = this.articlesAddToBon.map(a => ({
-      cod: a.cod,
-      ref: a.ref,
-      designation: a.designation,
-      choix: a.choix,
-      prix: Number(a.prix ?? 0),
-      prixAchat: Number(a.prixAchat ?? 0),
-      prixMin: Number(a.prixMin ?? 0),
-      quantite: Number(a.quantite ?? 0),
-      remisUni: a.remisUni == null ? undefined : Number(a.remisUni),
-      stock: Number(a.stock ?? 0)
-    }));
-
-    const isUpdate = this.selectedSerie && this.selectedSerie.trim() !== "";
-
-    console.log("Bon Vente Avant:", this.bonVenteDto);
-
-    try {
-      console.log("Update:",isUpdate);
-      const result = await firstValueFrom(
-        isUpdate
-          ? this.bonVenteService.updateBonVente(this.bonVenteDto, this.selectedSerie)
-          : this.bonVenteService.createBonVente(this.bonVenteDto)
-      );
-
-      this.bonVenteDto = result ?? ({} as BonAchatVenteDto);
-      this.selectedSerie = result?.serie ?? "";
-      this.selectedDate = result?.datBon
-        ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
-          .toISOString()
-          .split('T')[0]
-        : new Date().toISOString().split('T')[0];
-      this.username = result?.nomUser ?? "";
-console.log("Date bon:",result.datBon);
-      const message = isUpdate
-        ? "BonVente mis à jour avec succès"
-        : "BonVente créé avec succès";
-
-      this.notificationService.success(message, "Succès");
-
-      if (result?.idTier) {
-        await this.getTierSolde(result.idTier);
-      }
-
-      console.log("Bon Vente Après:", result);
-
-      // Recharger les séries si c'était une création
-        await this.getAllBonVSeris();
-
-
-      await this.saveAllDataToDb();
-
-    } catch (err: any) {
-      console.error('Erreur create/update BonVente (frontend):', err);
-      this.notificationService.error(err?.error?.message || 'Erreur lors de la sauvegarde', 'Erreur');
-    }
-  }
 
   protected async supprimer() {
     if (!this.selectedSerie) {
@@ -550,31 +663,6 @@ console.log("Date bon:",result.datBon);
   /**
    * Sauvegarde toutes les données importantes du composant en IndexedDB
    */
-   async saveAllDataToDb(): Promise<void> {
-    try {
-      const dataToSave: BonAchatVenteDto = {
-        serie: this.selectedSerie,
-        idTier: this.selectedClientId,
-        articles: this.articlesAddToBon,
-        datBon: this.selectedDate,
-        nomUser: this.username,
-        espece: this.espece,
-        cheque: this.cheque,
-        credit: this.credit,
-        detCheque: this.detailsCheque,
-        montant: this.totalVenteAvecRemise,
-        montantSansRemise: this.totalVenteBrute,
-        remis: this.remiseGlobale,
-        // Ajouter des données supplémentaires
-        idUser: this.userId
-      };
-
-      await this.indexedDbService.saveBon(dataToSave);
-      console.log('Données sauvegardées dans IndexedDB', dataToSave);
-    } catch (error) {
-      console.error('Erreur sauvegarde IndexedDB', error);
-    }
-  }
 
   async vider() {
     await this.resetValues();
@@ -584,50 +672,6 @@ console.log("Date bon:",result.datBon);
   /**
    * Charge toutes les données sauvegardées depuis IndexedDB
    */
-  private async loadAllDataFromDb(): Promise<void> {
-    try {
-      const data = await this.indexedDbService.loadBon();
-      if (data) {
-        console.log('Données chargées depuis IndexedDB', data);
-
-        this.selectedSerie = data.serie || "";
-        this.selectedClientId = data.idTier || -1;
-        this.articlesAddToBon = data.articles || [];
-        this.selectedDate = data.datBon || '';
-        this.username = data.nomUser || '';
-        this.espece = data.espece || 0;
-        this.cheque = data.cheque || 0;
-        this.credit = data.credit || 0;
-        this.detailsCheque = data.detCheque || '';
-        this.totalVenteAvecRemise = data.montant || 0;
-        this.totalVenteBrute = data.montantSansRemise || 0;
-        this.remiseGlobale = this.toNumber(data.remis);
-        this.remiseTotal = this.toNumber(data.remis); // Sync
-
-        // CORRECTION: Gérer l'état du champ série
-        if (this.selectedSerie) {
-          this.isSerieDisabled = false; // Activer si une série est sauvegardée
-        }
-
-        // Recalculer si nécessaire
-        if (this.articlesAddToBon.length > 0) {
-          await this.recalculateTotal();
-        }
-
-        // Charger le solde client si nécessaire
-        if (this.selectedClientId && this.selectedClientId !== -1) {
-          await this.getTierSolde(this.selectedClientId);
-        }
-
-        // Charger les choix si une désignation est sélectionnée
-        if (this.selectedDesignation) {
-          await this.getChoixByDesignation(this.selectedDesignation);
-        }
-      }
-    } catch (error) {
-      console.error('Erreur chargement IndexedDB', error);
-    }
-  }
 
   /**
    * Efface toutes les données sauvegardées en IndexedDB

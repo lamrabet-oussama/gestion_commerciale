@@ -380,7 +380,7 @@
           <th class="designation-col">Désignation</th>
           <th class="text-nowrap d-none d-md-table-cell fixed-col" style="width: 120px;">Choix</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Prix Vente</th>
-          <th class="text-nowrap fixed-col" style="width: 100px;">Qté</th>
+          <th class="text-nowrap fixed-col" style="width: 200px;">Qté</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Remise Unit.</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Total</th>
           <th class="text-nowrap fixed-col" style="width: 80px;">Actions</th>
@@ -403,7 +403,7 @@
 
           <td>
             <input type="number"
-                   class="form-control form-control-sm text-center"
+                   class="form-control w-px-150 form-control-sm text-center"
                    min="1"
                    [max]="art.stock || 999"
                    [(ngModel)]="art.quantite"

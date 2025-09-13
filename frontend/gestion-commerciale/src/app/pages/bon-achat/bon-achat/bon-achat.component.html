@@ -381,8 +381,8 @@
           <th class="text-nowrap d-none d-md-table-cell fixed-col" style="width: 120px;">Choix</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Prix Vente</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Prix Achat</th>
-          <th class="text-nowrap fixed-col" style="width: 100px;">Qté</th>
-          <th class="text-nowrap fixed-col" style="width: 120px;">Remise Unit.</th>
+          <th class="text-nowrap fixed-col" style="width: 200px">Qté</th>
+          <th class="text-nowrap fixed-col" style="width: 100px;">Remise Unit.</th>
           <th class="text-nowrap fixed-col" style="width: 120px;">Total</th>
           <th class="text-nowrap fixed-col" style="width: 80px;">Actions</th>
         </tr>
@@ -405,7 +405,7 @@
 
           <td>
             <input type="number"
-                   class="form-control form-control-sm text-center"
+                   class="form-control w-px-150 form-control-sm text-center"
                    min="1"
                    [(ngModel)]="art.quantite"
                    (ngModelChange)="recalculateTotal()"

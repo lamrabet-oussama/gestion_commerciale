@@ -273,6 +273,7 @@ export class BonAchatComponent implements OnInit {
     await this.getBonAchat();
   }
 
+// Dans getBonAchat(), après avoir assigné les valeurs depuis l'API
   protected async getBonAchat() {
     console.log('getBonAchat() appelée - selectedAchatSerie:', this.selectedAchatSerie, 'userId:', this.userId);
 
@@ -286,7 +287,6 @@ export class BonAchatComponent implements OnInit {
 
     if (!this.userId) {
       console.log('userId non défini, attente...');
-      // On peut essayer d'attendre un peu que userId soit défini
       setTimeout(() => {
         if (this.userId) {
           this.getBonAchat();
@@ -312,8 +312,10 @@ export class BonAchatComponent implements OnInit {
       this.articlesAddToBon = result?.articles ?? [];
       this.totalVenteBrute = result?.montantSansRemise ?? 0;
       this.totalVenteAvecRemise = result?.montant ?? 0;
-      this.remiseGlobale = result?.remis ?? 0;
-      this.remisSurBon = result?.remisSurBon ?? 0;
+
+      // CORRECTION: Bien récupérer les valeurs depuis l'API
+      this.remiseGlobale = this.toNumber(result?.remis ?? 0);
+      this.remisSurBon = this.toNumber(result?.remisSurBon ?? 0);
 
       this.selectedDate = result?.datBon
         ? new Date(new Date(result.datBon).setDate(new Date(result.datBon).getDate() + 1))
@@ -321,14 +323,18 @@ export class BonAchatComponent implements OnInit {
           .split('T')[0]
         : new Date().toISOString().split('T')[0];
 
-      console.log("Bon Achat Récupéré:", this.bonAchatDto);
+      console.log("Valeurs récupérées - remiseGlobale:", this.remiseGlobale, "remisSurBon:", this.remisSurBon);
 
       // Charger le solde fournisseur si nécessaire
       if (this.selectedFournisseurId !== -1) {
         await this.getTierSolde(this.selectedFournisseurId);
       }
 
-      await this.recalculateTotal();
+      // CORRECTION: Calculer seulement les remises unitaires et le crédit
+      // Ne pas recalculer les remises qui viennent de l'API
+      this.calculateRemiseUnitairesTotal();
+      this.calculateCredit();
+
       await this.saveAllDataToDb();
 
     } catch (error: any) {
@@ -337,38 +343,48 @@ export class BonAchatComponent implements OnInit {
     }
   }
 
-  private formatDateForInput(date: Date): string {
-    return date.toISOString().split('T')[0];
-  }
-
-  private async setTodayAsDefault(): Promise<void> {
-    const today = new Date();
-    this.selectedDate = this.formatDateForInput(today);
-    await this.saveAllDataToDb();
-  }
-
-  protected async recalculateTotal(remisSurBonInput?: number): Promise<void> {
-    const totalBrutInitial = this.articlesAddToBon.reduce((sum, a) => {
-      const prix = Number(a.prixAchat ?? 0);
-      const qte = Number(a.quantite ?? 0);
-      return sum + (prix * qte);
-    }, 0);
-
-    const totalRemiseUnit = this.articlesAddToBon.reduce((sum, a) => {
+// NOUVELLE MÉTHODE: Calculer seulement les remises unitaires
+  private calculateRemiseUnitairesTotal(): void {
+    this.remiseUnitairesTotal = this.articlesAddToBon.reduce((sum, a) => {
       const rUnit = Number(a.remisUni ?? 0);
       const prix = Number(a.prixAchat ?? 0);
       const qte = Number(a.quantite ?? 0);
       const rUnitCapped = Math.max(0, Math.min(rUnit, prix));
       return sum + (rUnitCapped * qte);
     }, 0);
+    this.remiseUnitairesTotal = this.round2(this.remiseUnitairesTotal);
+  }
 
-    this.remiseUnitairesTotal = this.round2(totalRemiseUnit);
-    this.remiseGlobale = this.toNumber(this.remiseGlobale);
+// NOUVELLE MÉTHODE: Calculer seulement le crédit
+  private calculateCredit(): void {
+    this.credit = this.round2(
+      (this.toNumber(this.espece) + this.toNumber(this.cheque)) - this.totalVenteAvecRemise
+    );
+  }
 
-    // Logique corrigée avec remisSurBon
+// MÉTHODE MODIFIÉE: recalculateTotal pour distinguer les cas
+  protected async recalculateTotal(remisSurBonInput?: number, isFromApiLoad: boolean = false): Promise<void> {
+    const totalBrutInitial = this.articlesAddToBon.reduce((sum, a) => {
+      const prix = Number(a.prixAchat ?? 0);
+      const qte = Number(a.quantite ?? 0);
+      return sum + (prix * qte);
+    }, 0);
+
+    this.calculateRemiseUnitairesTotal();
+
+    // Si les données viennent de l'API, ne pas recalculer les remises
+    if (isFromApiLoad) {
+      this.totalVenteBrute = this.round2(totalBrutInitial);
+      this.calculateCredit();
+      await this.saveAllDataToDb();
+      return;
+    }
+
+    // Logique pour les modifications manuelles
     if (remisSurBonInput !== undefined && remisSurBonInput !== null) {
       this.remisSurBon = this.toNumber(remisSurBonInput);
     } else {
+      // Lors d'ajout/suppression d'articles, recalculer remisSurBon
       this.remisSurBon = this.round2(this.remiseGlobale + this.remiseUnitairesTotal);
     }
 
@@ -379,9 +395,7 @@ export class BonAchatComponent implements OnInit {
 
     if (this.totalVenteAvecRemise < 0) this.totalVenteAvecRemise = 0;
 
-    this.credit = this.round2(
-      (this.toNumber(this.espece) + this.toNumber(this.cheque)) - this.totalVenteAvecRemise
-    );
+    this.calculateCredit();
 
     console.log({
       totalBrutInitial: this.totalVenteBrute,
@@ -390,11 +404,29 @@ export class BonAchatComponent implements OnInit {
       remiseGlobale: this.remiseGlobale,
       totalVenteAvecRemise: this.totalVenteAvecRemise,
       credit: this.credit,
-      remisSurBonInput: remisSurBonInput
+      remisSurBonInput: remisSurBonInput,
+      isFromApiLoad: isFromApiLoad
     });
 
     await this.saveAllDataToDb();
   }
+
+// Mettre à jour la méthode pour indiquer que c'est un chargement API dans getBonAchat
+// Remplacer l'appel dans getBonAchat par :
+// await this.recalculateTotal(undefined, true);
+
+// Pour les autres cas (ajout d'article, modification), garder :
+// await this.recalculateTotal();
+  private formatDateForInput(date: Date): string {
+    return date.toISOString().split('T')[0];
+  }
+
+  private async setTodayAsDefault(): Promise<void> {
+    const today = new Date();
+    this.selectedDate = this.formatDateForInput(today);
+    await this.saveAllDataToDb();
+  }
+
 
   protected async onRemisSurBonChange(value: any): Promise<void> {
     const inputValue = this.toNumber(value);

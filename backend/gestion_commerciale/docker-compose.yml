@@ -1,20 +1,40 @@
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_container
+    environment:
+      - POSTGRES_DB=gestion_commerciale
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=oussama
+    ports:
+      - "5433:5432"
+    volumes:
+      - gestion_commerciale_postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   api:
     build: .
     container_name: springboot_api
     environment:
-
-      DB_URL: ${DATABASE_URL}
-      DB_USER: ${PGUSER}
-      DB_PASS: ${PGPASSWORD}
-      SECRET: SYTZ6XzP9NaJIgKm7ObBV6e2up7Fh6hJlL3AWDUZLq0=
-      DOC_PATH: /v1/api-docs
-      CLOUD_NAME: dxhw4mm3p
-      API_KEY: 745767343957771
-      API_SECRET: bq4dif1wbizN4ieL2Ba3NjACMIc
-      LANG: en_US.utf8
-      LC_ALL: en_US.utf8
+      - DB_URL=jdbc:postgresql://postgres:5432/gestion_commerciale
+      - DB_USER=postgres
+      - DB_PASS=oussama
+      - SECRET=SYTZ6XzP9NaJIgKm7ObBV6e2up7Fh6hJlL3AWDUZLq0=
+      - DOC_PATH=/v1/api-docs
+      - CLOUD_NAME=dxhw4mm3p
+      - API_KEY=745767343957771
+      - API_SECRET=bq4dif1wbizN4ieL2Ba3NjACMIc
+      - LANG=en_US.utf8
+      - LC_ALL=en_US.utf8
     ports:
       - "8080:8080"
     depends_on:
@@ -27,7 +47,6 @@ services:
 volumes:
   gestion_commerciale_postgres-data:
     external: true
-
 
 networks:
   app-network:
